@@ -1,0 +1,17 @@
+### IDE Data ###
+.idea/
+out/
+.DS_STORE
+*.iml
+
+### Gradle ###
+.gradle/
+build/
+
+### Images ###
+*.gif
+*.jpg
+*.png
+
+### Testing ###
+test-config.json

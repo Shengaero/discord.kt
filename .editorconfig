@@ -1,0 +1,19 @@
+root = true
+
+[*]
+charset = utf-8
+
+[*.{java, kt, kts, gradle}]
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+end_of_line = lf
+indent_size = 4
+
+[*.{xml, conf}]
+indent_size = 2
+
+[*.{md}]
+insert_final_newline = false
+trim_trailing_whitespace = true
+indent_size = 2
