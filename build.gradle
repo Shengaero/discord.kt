@@ -116,8 +116,6 @@ dependencies {
     
     // okhttp
     compile "com.squareup.okhttp3:okhttp:$ok_http_version"
-    
-    compile "net.dv8tion:JDA:3.8.0_432"
 
     // ktor
     compile "io.ktor:ktor-client-core-jvm:$ktor_version"
