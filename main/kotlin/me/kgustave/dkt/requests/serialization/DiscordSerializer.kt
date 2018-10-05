@@ -48,7 +48,7 @@ class DiscordSerializer: JsonSerializer {
         val encoding = response.headers[HttpHeaders.ContentEncoding]
         // Gzip is slightly more complicated to parse using
         //ktor client at the moment (see utility function
-        //in me/kgustave/dkt/internal/util/http.kt).
+        //in me/kgustave/dkt/util/http.kt).
         val text = if(encoding == "gzip") readHttpResponseBody(response, true) else {
             // If this isn't gzip we should go for
             //the more optimized response read.

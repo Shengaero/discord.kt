@@ -17,12 +17,40 @@ package me.kgustave.dkt.requests
 
 import io.ktor.client.call.HttpClientCall
 import io.ktor.client.response.HttpResponse
+import io.ktor.client.utils.EmptyContent
 import io.ktor.http.Headers
 import io.ktor.http.HttpProtocolVersion
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.headersOf
 import io.ktor.util.date.GMTDate
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.io.ByteReadChannel
+
+// Calls
+
+data class DiscordCall(val request: DiscordRequest, val response: DiscordResponse)
+
+// Requests
+
+class DiscordRequest(
+    val route: Route,
+    val headers: Headers = headersOf(),
+    val body: Any = EmptyContent,
+    val rateLimit: Boolean = true
+) {
+    val completion: CompletableDeferred<DiscordResponse> =
+        CompletableDeferred()
+
+    constructor(task: RestTask<*>): this(
+        route = task.route,
+        headers = task.headers,
+        body = task.body,
+        rateLimit = task.rateLimit
+    )
+}
+
+// Responses
 
 sealed class DiscordResponse: HttpResponse {
     abstract val base: HttpResponse?
@@ -37,11 +65,23 @@ internal data class BasicDiscordResponse(
 internal sealed class FailedDiscordResponse: DiscordResponse() {
     override val call: HttpClientCall get() = base?.call ?: cannotGet("call")
     override val status: HttpStatusCode get() = base?.status ?: cannotGet("status")
-    override val content: ByteReadChannel get() = base?.content ?: cannotGet("content")
-    override val executionContext: Job get() = base?.executionContext ?: cannotGet("executionContext")
+    override val content: ByteReadChannel
+        get() = base?.content ?: cannotGet(
+            "content"
+        )
+    override val executionContext: Job
+        get() = base?.executionContext ?: cannotGet(
+            "executionContext"
+        )
     override val headers: Headers get() = base?.headers ?: cannotGet("headers")
-    override val requestTime: GMTDate get() = base?.requestTime ?: cannotGet("requestTime")
-    override val responseTime: GMTDate get() = base?.responseTime ?: cannotGet("responseTime")
+    override val requestTime: GMTDate
+        get() = base?.requestTime ?: cannotGet(
+            "requestTime"
+        )
+    override val responseTime: GMTDate
+        get() = base?.responseTime ?: cannotGet(
+            "responseTime"
+        )
     override val version: HttpProtocolVersion get() = base?.version ?: cannotGet("version")
 
     override fun close() { base?.close() }

@@ -23,17 +23,17 @@ import kotlinx.coroutines.async
 import me.kgustave.dkt.internal.impl.DiscordBotImpl
 import kotlin.coroutines.suspendCoroutine
 
-abstract class RestPromise<T> internal constructor(
-    protected val bot: DiscordBotImpl,
-    route: Route
-): RestTask<T>(bot.requester, route) {
+abstract class RestPromise<T>
+internal constructor(protected val bot: DiscordBotImpl, route: Route): RestTask<T>(bot.requester, route) {
     fun promise(then: (T) -> Unit, catch: (Throwable) -> Unit): Deferred<T> {
-        return GlobalScope.async(bot.promiseDispatcher, onCompletion = {
-            if(it != null && it !is CancellationException) catch(it)
-        }) {
+        val deferred = GlobalScope.async(bot.promiseDispatcher) {
             val value = await()
             suspendCoroutine<Unit> { it.resumeWith(runCatching { then(value) }) }
             return@async value
         }
+        deferred.invokeOnCompletion {
+            if(it != null && it !is CancellationException) catch(it)
+        }
+        return deferred
     }
 }

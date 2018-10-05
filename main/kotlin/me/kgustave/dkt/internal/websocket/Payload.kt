@@ -16,11 +16,12 @@
 package me.kgustave.dkt.internal.websocket
 
 import kotlinx.serialization.*
-import kotlinx.serialization.internal.ArrayClassDesc
-import kotlinx.serialization.internal.IntDescriptor
 import kotlinx.serialization.internal.makeNullable
 import kotlinx.serialization.json.*
+import me.kgustave.dkt.entities.OnlineStatus
 import me.kgustave.dkt.internal.data.events.RawReadyEvent
+import me.kgustave.dkt.internal.data.serializers.IntPairArraySerializer
+import me.kgustave.dkt.util.IntPair
 import me.kgustave.dkt.util.stringify
 
 @Serializable
@@ -43,7 +44,7 @@ internal data class Payload(
         val presence: Presence,
         @Optional val compress: Boolean = false,
         @Optional @SerialName("large_threshold") val largeThreshold: Int = 50,
-        @Optional val shard: ShardInfo? = null
+        @Optional val shard: IntPair? = null
     ) {
         @Serializable
         data class Properties(
@@ -53,24 +54,8 @@ internal data class Payload(
         )
 
         @Serializable
-        data class ShardInfo(val id: Int, val total: Int) {
-            @Serializer(forClass = ShardInfo::class)
-            companion object {
-                override val descriptor: SerialDescriptor = ArrayClassDesc(IntDescriptor)
-
-                override fun serialize(output: Encoder, obj: ShardInfo) {
-                    @Suppress("NAME_SHADOWING")
-                    val output = output.beginCollection(descriptor, 2, Int.serializer())
-                    output.encodeIntElement(descriptor, 1, obj.id)
-                    output.encodeIntElement(descriptor, 2, obj.total)
-                    output.endStructure(descriptor)
-                }
-            }
-        }
-
-        @Serializable
         data class Presence(
-            val status: String,
+            val status: OnlineStatus,
             val afk: Boolean,
             @Optional val game: Activity? = null
         ) {
@@ -81,8 +66,8 @@ internal data class Payload(
         @Serializer(forClass = Identify::class)
         companion object {
             override fun serialize(output: Encoder, obj: Identify) {
-                require(output is CompositeEncoder)
-                output.beginStructure(descriptor)
+                @Suppress("NAME_SHADOWING")
+                val output = output.beginStructure(descriptor)
                 val (token, properties, presence, compress, largeThreshold, shard) = obj
                 output.encodeStringElement(descriptor, descriptor.getElementIndex("token"), token)
                 output.encodeSerializableElement(descriptor, descriptor.getElementIndex("properties"),
@@ -93,7 +78,7 @@ internal data class Payload(
                 output.encodeIntElement(descriptor, descriptor.getElementIndex("large_threshold"), largeThreshold)
                 if(shard != null) {
                     output.encodeSerializableElement(descriptor, descriptor.getElementIndex("shard"),
-                        ShardInfo.serializer(), shard)
+                        IntPairArraySerializer, shard)
                 }
                 output.endStructure(descriptor)
             }

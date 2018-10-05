@@ -41,7 +41,7 @@ abstract class CoroutineTestBase {
 
     protected fun runTestWithTimeout(time: Long, unit: TimeUnit, block: suspend CoroutineScope.() -> Unit) {
         val job = GlobalScope.launch(runContext, start = LAZY) {
-            withTimeoutOrNull(time, unit, block) ?: fail {
+            withTimeoutOrNull(unit.toMillis(time), block) ?: fail {
                 "Test timed out!"
             }
         }

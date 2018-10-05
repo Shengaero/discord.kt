@@ -16,12 +16,16 @@
 @file:Suppress("unused", "MemberVisibilityCanBePrivate")
 package me.kgustave.dkt.internal.websocket
 
+// TODO Convert to Enum?
 internal object OP {
     const val Event = 0
     const val Heartbeat = 1
     const val Identify = 2
+    const val StatusUpdate = 3
+    const val VoiceStateUpdate = 4
     const val Resume = 6
     const val Reconnect = 7
+    const val RequestGuildMembers = 8
     const val InvalidSession = 9
     const val Hello = 10
     const val HeartbeatACK = 11
@@ -30,8 +34,11 @@ internal object OP {
         Event -> "Event"
         Heartbeat -> "Heartbeat"
         Identify -> "Identify"
+        StatusUpdate -> "Status Update"
+        VoiceStateUpdate -> "Voice Status Update"
         Resume -> "Resume"
         Reconnect -> "Reconnect"
+        RequestGuildMembers -> "Request Guild Members"
         InvalidSession -> "InvalidSession"
         Hello -> "Hello"
         HeartbeatACK -> "HeartbeatACK"
@@ -40,7 +47,8 @@ internal object OP {
     }
 
     fun isValid(op: Int): Boolean {
-        return op == Event || op == Heartbeat || op == Identify || op == Resume || op == Reconnect ||
-               op == InvalidSession || op == Hello || op == HeartbeatACK
+        return op == Event || op == Heartbeat || op == Identify || op == StatusUpdate ||
+               op == VoiceStateUpdate || op == Resume || op == Reconnect ||
+               op == RequestGuildMembers || op == InvalidSession || op == Hello || op == HeartbeatACK
     }
 }

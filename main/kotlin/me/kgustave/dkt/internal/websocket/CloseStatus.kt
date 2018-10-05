@@ -15,7 +15,10 @@
  */
 package me.kgustave.dkt.internal.websocket
 
-internal enum class CloseStatus(val code: Short, val mayReconnect: Boolean = true) {
+internal enum class CloseStatus(val code: Int, val mayReconnect: Boolean = true) {
+    GRACEFUL_CLOSE(1000),
+    CLOUD_FLARE_LOAD(1001),
+    INTERNAL_SERVER_ERROR(1006),
     UNKNOWN_ERROR(4000),
     UNKNOWN_OPCODE(4001, false),
     DECODE_ERROR(4002, false),
@@ -29,6 +32,6 @@ internal enum class CloseStatus(val code: Short, val mayReconnect: Boolean = tru
     SHARDING_REQUIRED(4011, false);
 
     companion object {
-        fun of(code: Short) = CloseStatus.values().firstOrNull { it.code == code }
+        fun of(code: Int) = CloseStatus.values().firstOrNull { it.code == code }
     }
 }

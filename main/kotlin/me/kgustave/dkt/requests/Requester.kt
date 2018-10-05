@@ -29,7 +29,6 @@ import me.kgustave.dkt.handle.SessionHandler
 import me.kgustave.dkt.internal.handle.DefaultSessionHandler
 import me.kgustave.dkt.util.createLogger
 import java.io.Closeable
-import java.util.concurrent.TimeUnit
 
 class Requester(
     private val client: HttpClient,
@@ -102,7 +101,7 @@ class Requester(
                 log.debug("Request for ${call.request.method} - ${call.request.url.encodedPath} " +
                                                                        "returned a ${response.status.value}! Retrying... (attempt $run)")
 
-                try { delay(50L * run, TimeUnit.MILLISECONDS) } catch(e: CancellationException) {
+                try { delay(50L * run) } catch(e: CancellationException) {
                     // cancellation, we cannot continue suspending,
                     //we need to start resuming now!
                     break

@@ -32,7 +32,6 @@ import java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.RejectedExecutionException
-import java.util.concurrent.TimeUnit.MILLISECONDS
 import kotlin.math.max
 
 class RateLimiter(private val requester: Requester) {
@@ -108,7 +107,6 @@ class RateLimiter(private val requester: Requester) {
         isShutdown = true
     }
 
-
     private fun bucketFor(route: Route): Bucket {
         synchronized(buckets) {
             return buckets.computeIfAbsent(route.path) { Bucket(route) }
@@ -156,7 +154,6 @@ class RateLimiter(private val requester: Requester) {
 
         // used to update the bucket
         fun update(headers: Headers, retryAfter: Long? = null) {
-
             var count = 0
 
             if(retryAfter != null) {
@@ -215,7 +212,7 @@ class RateLimiter(private val requester: Requester) {
                         if(request.completion.isCancelled) continue
                         rateLimitTime()?.let {
                             log.debug("Delaying next request to $path for $it milliseconds.")
-                            delay(it, MILLISECONDS)
+                            delay(it)
                         }
                         val response = requester.execute(request, false)
                         if(response is RateLimitedDiscordResponse) break else {
@@ -224,10 +221,7 @@ class RateLimiter(private val requester: Requester) {
                         }
                     } catch(e: Exception) {
                         iterator.remove()
-                        when(e) {
-                            is CancellationException -> request.completion.cancel(e)
-                            else -> request.completion.completeExceptionally(e)
-                        }
+                        request.completion.cancel(e)
                     }
                 }
 

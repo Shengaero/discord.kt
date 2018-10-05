@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.requests
+package me.kgustave.dkt.entities
 
-data class DiscordCall(val request: DiscordRequest, val response: DiscordResponse)
+interface Presence {
+    val status: OnlineStatus
+    val afk: Boolean
+    val activity: Activity
+}

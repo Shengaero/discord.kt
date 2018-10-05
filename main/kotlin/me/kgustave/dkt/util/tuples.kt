@@ -13,25 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.requests
+package me.kgustave.dkt.util
 
-import io.ktor.client.utils.EmptyContent
-import io.ktor.http.Headers
-import io.ktor.http.headersOf
-import kotlinx.coroutines.CompletableDeferred
+import java.io.Serializable
 
-class DiscordRequest(
-    val route: Route,
-    val headers: Headers = headersOf(),
-    val body: Any = EmptyContent,
-    val rateLimit: Boolean = true
-) {
-    val completion: CompletableDeferred<DiscordResponse> = CompletableDeferred()
+data class IntPair(val first: Int, val second: Int): Serializable {
+    override fun toString(): String = "($first, $second)"
+}
 
-    constructor(task: RestTask<*>): this(
-        route = task.route,
-        headers = task.headers,
-        body = task.body,
-        rateLimit = task.rateLimit
-    )
+data class LongPair(val first: Long, val second: Long): Serializable {
+    override fun toString(): String = "($first, $second)"
 }
