@@ -21,9 +21,6 @@ import kotlinx.serialization.*
 import kotlinx.serialization.json.*
 import me.kgustave.dkt.util.IntPair
 
-/**
- *
- */
 fun playing(game: String): Activity = BasicActivity(game, Activity.Type.GAME)
 fun streaming(title: String, url: String): Activity = BasicActivity(title, Activity.Type.STREAMING, url)
 fun listeningTo(name: String): Activity = BasicActivity(name, Activity.Type.LISTENING)
@@ -35,10 +32,7 @@ sealed class Activity {
     abstract val url: String?
     abstract val timestamps: Timestamps?
 
-    data class Timestamps internal constructor(
-        val begin: Long? = null,
-        val end: Long? = null
-    ) {
+    data class Timestamps internal constructor(val begin: Long? = null, val end: Long? = null) {
         val beginTime: GMTDate get() = TODO("Not Implemented Yet")
         val endTime: GMTDate get() = TODO("Not Implemented Yet")
     }

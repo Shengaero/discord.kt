@@ -15,34 +15,46 @@
  */
 package me.kgustave.dkt.test
 
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
 import me.kgustave.dkt.*
 import me.kgustave.dkt.entities.*
+import me.kgustave.dkt.events.Event
+import me.kgustave.dkt.events.ShutdownEvent
+import me.kgustave.dkt.handle.EventManager
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import kotlin.test.assertEquals
 
-/**
- * @author Kaidan Gustave
- */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DiscordBotTests: CoroutineTestBase() {
     private val config = loadConfig()
 
     @Test fun `Test Bot Status Updating`() = runTest {
         val withDiscordKt = playing("with Discord.kt")
+        val shutdown = CompletableDeferred<ShutdownEvent>()
 
         val bot = DiscordBot {
             token { config.token }
-            useCompression { true }
+            compression { true }
             activity { withDiscordKt }
             status { OnlineStatus.DND }
+            eventManager {
+                object: EventManager {
+                    override val listeners = emptyList<Any>()
+                    override fun addListener(listener: Any) {}
+                    override fun removeListener(listener: Any) {}
+                    override suspend fun dispatch(event: Event) {
+                        when(event) {
+                            is ShutdownEvent -> shutdown.complete(event)
+                        }
+                    }
+                }
+            }
         }
 
-        withTimeout(5000) {
-            bot.connect()
-        }
+        withTimeout(5000) { bot.connect() }
 
         assertEquals(withDiscordKt, bot.presence.activity)
         assertEquals(OnlineStatus.DND, bot.presence.status)
@@ -62,5 +74,9 @@ class DiscordBotTests: CoroutineTestBase() {
         delay(5 * 1000)
 
         bot.shutdown()
+
+        val event = withTimeout(5000) { shutdown.await() }
+
+        assertEquals(1000, event.code)
     }
 }

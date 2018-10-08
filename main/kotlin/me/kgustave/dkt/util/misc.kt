@@ -18,6 +18,7 @@ package me.kgustave.dkt.util
 
 import io.ktor.util.date.GMTDate
 import io.ktor.util.date.toGMTDate
+import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
@@ -26,6 +27,8 @@ private const val TIMESTAMP_OFFSET = 22
 
 inline val currentTimeMs inline get() = System.currentTimeMillis()
 inline val currentThread: Thread inline get() = Thread.currentThread()
+
+val currentGMTDate: GMTDate get() = Instant.now().toGMTDate()
 
 fun snowflakeTimeOf(id: Long): GMTDate = GMTDate((id ushr TIMESTAMP_OFFSET) + DISCORD_EPOCH)
 

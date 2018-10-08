@@ -18,18 +18,18 @@ package me.kgustave.dkt.handle
 
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.*
-import me.kgustave.dkt.internal.websocket.DiscordWebSocket
 import me.kgustave.dkt.internal.websocket.WebSocketConnection
+import me.kgustave.dkt.util.createLogger
 import me.kgustave.dkt.util.currentTimeMs
 import java.lang.IllegalStateException
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.TimeUnit
 
 open class SessionHandlerAdapter: SessionHandler {
     private companion object {
-        private val ConnectionDelay = TimeUnit.MILLISECONDS.convert(5, TimeUnit.SECONDS)
+        private const val ConnectionDelay = 5 * 1000L
+        private val Log = createLogger(SessionHandler::class)
     }
 
     protected val global = atomic(Long.MIN_VALUE)
@@ -62,7 +62,7 @@ open class SessionHandlerAdapter: SessionHandler {
         }
     }
 
-    private fun createJob() = scope.launch(dispatcher, start = CoroutineStart.LAZY) {
+    private fun createJob(): Job = scope.launch(dispatcher, start = CoroutineStart.LAZY) {
         val delay = currentTimeMs - lastConnectTime
         if(delay < ConnectionDelay) delay(delay)
 
@@ -76,7 +76,7 @@ open class SessionHandlerAdapter: SessionHandler {
                 if(connectionQueue.isEmpty()) break
                 delay(ConnectionDelay)
             } catch(e: IllegalStateException) {
-                DiscordWebSocket.Log.error("Failed to run connection!", e)
+                Log.error("Failed to run connection!", e)
                 queueConnection(connection)
             } catch(e: CancellationException) {
                 // TODO Logging

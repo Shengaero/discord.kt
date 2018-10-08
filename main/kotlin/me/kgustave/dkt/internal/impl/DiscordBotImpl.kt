@@ -41,6 +41,7 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
     override val token = config.token
     override val sessionHandler = config.sessionHandler
     override val shardInfo = config.shardInfo
+    override val eventManager = config.eventManager
     override var presence = PresenceImpl(config.presence)
 
     override var responses = 0L
@@ -53,6 +54,7 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
     override lateinit var self: SelfUser
 
     val entities = EntityHandler(this)
+    val dispatcherProvider = config.dispatcherProvider
 
     //////////////////////
     // HTTP CLIENT INIT //
@@ -74,8 +76,7 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
     val requester: Requester
 
     init {
-        val (dispatcher, shutdownAutomatically) = sessionHandler.dispatcherProvider
-            .provideRateLimitDispatcher(null) // FIXME
+        val (dispatcher, shutdownAutomatically) = dispatcherProvider.provideRateLimitDispatcher(null) // FIXME
 
         this.rateLimitDispatcher = dispatcher
         this.shutdownRateLimitDispatcher = shutdownAutomatically
@@ -96,8 +97,7 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
     val shutdownPromiseDispatcher: Boolean
 
     init {
-        val (dispatcher, shutdownAutomatically) = sessionHandler.dispatcherProvider
-            .providePromiseDispatcher(null) // FIXME
+        val (dispatcher, shutdownAutomatically) = dispatcherProvider.providePromiseDispatcher(null) // FIXME
 
         this.promiseDispatcher = dispatcher
         this.shutdownPromiseDispatcher = shutdownAutomatically

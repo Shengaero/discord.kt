@@ -16,6 +16,41 @@
 @file:Suppress("MemberVisibilityCanBePrivate")
 package me.kgustave.dkt.internal.websocket
 
+/*
+ * ## WebSocket Coroutine LifeCycle Graph ##
+ *
+ * [start] --> main (1)
+ *               |
+ *               + ----> +
+ *               |       |
+ *               |       + --> messager (2) <--- close -- +
+ *               |       |                                |
+ *               |       + --> heartbeat (3) <-- close -- +
+ *               |       |                                |
+ *               |       + --> reader (4) ------ +        |
+ *               |       |                       |        |
+ *               |       |                     close      |
+ *               |       |                       |        |
+ *               |       + ----> await close <-- +        |
+ *               |                  |                     |
+ *               |                  + ------------------- +
+ *               |                  |
+ *               + -- yes -- should reconnect? -- no --> [finish]
+ *
+ * 1) The main job, responsible for the sequential execution of
+ *    the websocket lifecycle. It is the parent to the messager,
+ *    heartbeat, and reader jobs, and thus cancelling it results
+ *    in the cancellation of those jobs.
+ * 2) The messager channel, which acts as a queue for sending
+ *    messages to the websocket. This is kept on a separate
+ *    dispatcher from the main to properly send websocket messages
+ *    in the order they are queued.
+ * 3) The heartbeat job, which sends heartbeats to the websocket
+ *    at the interval provided by HELLO payload.
+ * 4) The reader job, which reads from the websocket during the
+ *    lifecycle until close is needed.
+ */
+
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.features.websocket.ClientWebSocketSession
@@ -31,21 +66,24 @@ import io.ktor.http.cio.websocket.readText
 import io.ktor.util.moveToByteArray
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.serialization.json.JSON
 import me.kgustave.dkt.DiscordBot
 import me.kgustave.dkt.DiscordKt
+import me.kgustave.dkt.events.ReadyEvent
+import me.kgustave.dkt.events.ReconnectEvent
+import me.kgustave.dkt.events.ResumeEvent
+import me.kgustave.dkt.events.ShutdownEvent
 import me.kgustave.dkt.internal.data.events.RawReadyEvent
 import me.kgustave.dkt.internal.data.events.RawResumeEvent
 import me.kgustave.dkt.internal.data.responses.GatewayInfo
 import me.kgustave.dkt.internal.impl.DiscordBotImpl
-import me.kgustave.dkt.util.ZLibCompressor
-import me.kgustave.dkt.util.createLogger
-import me.kgustave.dkt.util.currentTimeMs
-import me.kgustave.dkt.util.reject
+import me.kgustave.dkt.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.RejectedExecutionException
-import java.util.concurrent.TimeUnit.*
+import java.util.concurrent.TimeUnit.MILLISECONDS
+import java.util.concurrent.TimeUnit.SECONDS
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.math.min
 
@@ -55,6 +93,7 @@ class DiscordWebSocket internal constructor(
     private val compression: Boolean = false,
     private var shouldReconnect: Boolean = true
 ) {
+
     // When ktor officially supports WebSockets on OkHttp,
     //we should move to that instead of using CIO. It might
     //also be possible that we drop OkHttp entirely in favor
@@ -62,27 +101,37 @@ class DiscordWebSocket internal constructor(
     //is supported).
     private val client = HttpClient(CIO) { install(WebSockets) }
 
-    // rate-limiting
-    @Volatile private var rateLimitPeriodReset = 0L
+    //////////////////
+    // RateLimiting //
+    //////////////////
+
     @Volatile private var rateLimitPeriodWarningPrinted = false
+    @Volatile private var rateLimitPeriodReset = 0L
     private val rateLimitPeriodUsage = atomic(0)
 
-    // compression
-    private val compressor = ZLibCompressor()
+    ////////////////////////
+    // Session Management //
+    ////////////////////////
 
-    // session management
+    @Volatile private var connection: WebSocketConnection = InitialWebSocketConnection(this)
     @Volatile private var connected = false
     @Volatile private var shutdown = false
     @Volatile private var identifyTime = 0L
+
     private lateinit var session: ClientWebSocketSession
+    private var _trace = emptySet<String>()
     private var reconnectTimeoutDelay = 2 // In seconds
     private var sessionId: String? = null
-    private var seq: Long? = null
+    private var seq: Long? = null // stored as null because heartbeat ack
 
-    internal var authenticated = false
-    private var handleIdentifyRateLimit = false
+    private var authenticated = false
     private var initializing = true
+    private var handleIdentifyRateLimit = false
     private var runningReadyOperations = false
+    private var firstInitialization = true
+
+    private val _cloudflareRays = hashSetOf<String>()
+    private val compressor = ZLibCompressor()
 
     private val incoming get() = session.incoming
     private val outgoing get() = session.outgoing
@@ -91,60 +140,16 @@ class DiscordWebSocket internal constructor(
     internal val messageQueue = ConcurrentLinkedQueue<String>()
     internal val lock = ReentrantLock()
 
-    // heartbeat management
+    ///////////////
+    // Heartbeat //
+    ///////////////
+
     private var lastHeartbeatTime = 0L
     private var lastAcknowledgeTime = 0L
 
-    // misc
-    val traces = hashSetOf<String>()
-    val cloudflareRays = hashSetOf<String>()
-    val bot: DiscordBot get() = _bot
-    val ping get() = lastAcknowledgeTime - lastHeartbeatTime
-    val sequence get() = seq ?: 0L
-    val isConnected get() = connected
-    val isShutdown get() = shutdown
-
-    /*
-     * ## WebSocket Coroutine LifeCycle Graph ##
-     *
-     * [start] --> main (1)
-     *               |
-     *               + ----> +
-     *               |       |
-     *               |       + --> messager (2) <--- close -- +
-     *               |       |                                |
-     *               |       + --> heartbeat (3) <-- close -- +
-     *               |       |                                |
-     *               |       + --> reader (4) ------ +        |
-     *               |       |                       |        |
-     *               |       |                     close      |
-     *               |       |                       |        |
-     *               |       + ----> await close <-- +        |
-     *               |                  |                     |
-     *               |                  + ------------------- +
-     *               |                  |
-     *               + -- yes -- should reconnect? -- no --> [finish]
-     *
-     * 1) The main job, responsible for the sequential execution of
-     *    the websocket lifecycle. It is the parent to the messager,
-     *    heartbeat, and reader jobs, and thus cancelling it results
-     *    in the cancellation of those jobs.
-     * 2) The messager channel, which acts as a queue for sending
-     *    messages to the websocket. This is kept on a separate
-     *    dispatcher from the main to properly send websocket messages
-     *    in the order they are queued.
-     * 3) The heartbeat job, which sends heartbeats to the websocket
-     *    at the interval provided by HELLO payload.
-     * 4) The reader job, which reads from the websocket during the
-     *    lifecycle until close is needed.
-     */
-
-    private val mainDispatcher      = newSingleThreadContext(threadName("Main"))
-    internal val messagerDispatcher = newSingleThreadContext(threadName("Messager"))
-    private val heartbeatDispatcher = newSingleThreadContext(threadName("Heartbeat"))
-    private val readerDispatcher    = newSingleThreadContext(threadName("Reader"))
-
-    internal val mainScope = CoroutineScope(mainDispatcher)
+    //////////////////////////
+    // Dispatchers And Jobs //
+    //////////////////////////
 
     private lateinit var closeReason: CompletableDeferred<CloseOrder>
 
@@ -153,18 +158,44 @@ class DiscordWebSocket internal constructor(
     @Volatile private var _heartbeat: Job? = null
     private var _reader: Job? = null
 
-    @Volatile internal var connection: WebSocketConnection = InitialWebSocketConnection(this)
+    private val mainDispatcher      = newSingleThreadContext(threadName("Main"))
+    private val messagerDispatcher  = newSingleThreadContext(threadName("Messager"))
+    private val heartbeatDispatcher = newSingleThreadContext(threadName("Heartbeat"))
+    private val readerDispatcher    = newSingleThreadContext(threadName("Reader"))
 
-    suspend fun init() {
-        try {
-            bot.sessionHandler.queueConnection(connection)
-            bot.await(DiscordBot.Status.CONNECTED)
-            Log.info("Connected!")
-        } catch(t: Throwable) {
-            Log.error("Encountered an exception while ")
-            throw t
-        }
-    }
+    private val mainScope = CoroutineScope(mainDispatcher)
+
+    ///////////////////////
+    // Public Properties //
+    ///////////////////////
+
+    /** The last `_trace` from any payload received containing one. */
+    val trace get() = _trace
+
+    /** A set of cloudflare rays received during the lifetime of this WebSocket. */
+    val cloudflareRays: Set<String> get() = _cloudflareRays
+
+    /** The [DiscordBot] that listens to this WebSocket. */
+    val bot: DiscordBot get() = _bot
+
+    /** The gateway response time for the last heartbeat. */
+    val ping get() = lastAcknowledgeTime - lastHeartbeatTime
+
+    /** The current event sequence number. */
+    val sequence get() = seq ?: 0L
+
+    /** Whether or not this WebSocket is connected. */
+    val isConnected get() = connected
+
+    /** Whether or not this WebSocket is authenticated. */
+    val isAuthenticated get() = authenticated
+
+    /** Whether or not this WebSocket has shutdown. */
+    val isShutdown get() = shutdown
+
+    //////////////////////
+    // Public Functions //
+    //////////////////////
 
     suspend fun connect() {
         val gateway = checkNotNull(getGatewayBot()) {
@@ -179,9 +210,7 @@ class DiscordWebSocket internal constructor(
 
     suspend fun reconnect() {
         if(shutdown) {
-            _bot.status = DiscordBot.Status.SHUTDOWN
-            // TODO Shutdown Event Hook
-            return
+            return dispatchShutdown(1000)
         }
 
         val gatewayInfo = checkNotNull(getGatewayBot()) { "Could not get gateway url when reconnecting!" }
@@ -198,9 +227,7 @@ class DiscordWebSocket internal constructor(
                 break
             } catch(t: RejectedExecutionException) {
                 // RejectedExecutionException implies the bot has shutdown
-                _bot.status = DiscordBot.Status.SHUTDOWN
-                // TODO Shutdown Event Hook
-                return
+                return dispatchShutdown(1000)
             } catch(e: RuntimeException) {
                 reconnectTimeoutDelay = min(reconnectTimeoutDelay shl 1, _bot.maxReconnectDelay)
                 Log.warn("Failed to reconnect (attempt $attempt)! Will retry in $reconnectTimeoutDelay seconds...")
@@ -211,7 +238,7 @@ class DiscordWebSocket internal constructor(
         // Keep in mind, the entire session is run on a loop/lifecycle, sequentially
         //executing and processing incoming frames in the order that the Discord API
         //documentation explains it should be handled.
-        // This call is the "recursion".
+        // This call is the recursion.
         handleSession()
     }
 
@@ -226,11 +253,35 @@ class DiscordWebSocket internal constructor(
     // Internal Library Operations //
     /////////////////////////////////
 
-    internal fun finishReadyOperations() {
+    internal suspend fun init() {
+        try {
+            bot.sessionHandler.queueConnection(connection)
+            bot.await(DiscordBot.Status.CONNECTED)
+        } catch(t: Throwable) {
+            Log.error("Encountered an exception while initializing the WebSocket!")
+            throw t
+        }
+    }
+
+    internal suspend fun finishReadyOperations() {
         if(initializing) {
             initializing = false
             runningReadyOperations = false
+
+            if(firstInitialization) {
+                firstInitialization = false
+
+                Log.info("Finished Loading!")
+                bot.eventManager.dispatch(ReadyEvent(bot))
+            } else {
+                Log.info("Finished (Re)Loading!")
+                bot.eventManager.dispatch(ReconnectEvent(bot))
+            }
+        } else {
+            Log.info("Finished Resuming Session!")
+            bot.eventManager.dispatch(ResumeEvent(bot))
         }
+
         _bot.status = DiscordBot.Status.CONNECTED
     }
 
@@ -241,6 +292,11 @@ class DiscordWebSocket internal constructor(
         )
 
         queuePayload(payload)
+    }
+
+    internal fun nullifyMessager() {
+        // called after job is completed in messager
+        _messager = null
     }
 
     //////////////////////
@@ -300,7 +356,7 @@ class DiscordWebSocket internal constructor(
         val rays = headers.getAll("cf-ray") // rays3c
         if(rays != null && rays.isNotEmpty()) {
             val ray = rays[0]
-            cloudflareRays += ray
+            _cloudflareRays += ray
             Log.trace("Received cf-ray: $ray")
         }
 
@@ -448,7 +504,7 @@ class DiscordWebSocket internal constructor(
                 Log.error("WebSocket closed and cannot be recovered!")
             }
 
-            // TODO Handle Shutdown Further
+            dispatchShutdown(closeCode)
         } else {
             compressor.reset()
 
@@ -504,6 +560,9 @@ class DiscordWebSocket internal constructor(
                         closeReason.complete(order)
                     }
                     break
+                } catch(e: ClosedReceiveChannelException) {
+                    // closed receive channel, break here
+                    break
                 } catch(t: Throwable) {
                     Log.error("Reader failed due to an unexpected exception!", t)
                 }
@@ -556,6 +615,7 @@ class DiscordWebSocket internal constructor(
                 ),
                 presence = _bot.presence,
                 compress = compression,
+                shard = bot.shardInfo?.toIntPair(),
                 largeThreshold = 250
             )
         )
@@ -583,11 +643,11 @@ class DiscordWebSocket internal constructor(
         _bot.status = DiscordBot.Status.AWAITING_LOGIN_CONFIRMATION
     }
 
-    internal fun queuePayload(payload: Payload) {
+    private fun queuePayload(payload: Payload) {
         queueMessage(JSON.stringify(payload))
     }
 
-    internal fun queueMessage(text: String) {
+    private fun queueMessage(text: String) {
         doWhileLocked { messageQueue.add(text) }
     }
 
@@ -614,7 +674,8 @@ class DiscordWebSocket internal constructor(
         val usage = rateLimitPeriodUsage.value
         when {
             usage < MaxMessageSafeSendLimit || (!queue && usage < MaxMessageSendLimit) -> {
-                sendRateLimitedMessage(text)
+                outgoing.send(Frame.Text(text))
+                rateLimitPeriodUsage.incrementAndGet()
                 return true
             }
 
@@ -626,11 +687,6 @@ class DiscordWebSocket internal constructor(
         }
 
         return false
-    }
-
-    private suspend fun sendRateLimitedMessage(text: String) {
-        outgoing.send(Frame.Text(text))
-        rateLimitPeriodUsage.incrementAndGet()
     }
 
     ///////////////////////
@@ -650,8 +706,9 @@ class DiscordWebSocket internal constructor(
     }
 
     private tailrec suspend fun receiveNextPayload(): Payload {
-        val frame = incoming.receive()
-        val text = receivePayloadContent(frame)
+        // If this receives null we need to throw a normal cancellation,
+        //as we do not know exactly why we are closing the receiving end
+        val text = receivePayloadContent()
         Log.trace("-> $text")
         val payload = JSON.nonstrict.parse<Payload>(text)
 
@@ -694,8 +751,8 @@ class DiscordWebSocket internal constructor(
         return receiveNextPayload()
     }
 
-    private tailrec suspend fun receivePayloadContent(frame: Frame, expectBinary: Boolean = false): String {
-        when(frame) {
+    private tailrec suspend fun receivePayloadContent(expectBinary: Boolean = false): String {
+        when(val frame = incoming.receive()) {
             is Frame.Text -> {
                 // We have received a full text frame when we were expecting to
                 //get the next fragment in a sequence via the recursive call!
@@ -718,22 +775,26 @@ class DiscordWebSocket internal constructor(
                 }
             }
 
-            is Frame.Ping, is Frame.Pong -> { /* Do Nothing */ }
+            // Frame.Ping and Frame.Pong are not handled, and (probably)
+            //not even receivable from the WebSocket. We don't consider
+            //these, but we still take the time to
+            is Frame.Ping, is Frame.Pong -> Log.debug("Received a '${frame.frameType}' type frame!")
             is Frame.Close -> throw CloseCancellationException(frame.readReason() ?: CloseReason(1000, ""))
         }
 
-        val nextFrame = incoming.receive()
-        return receivePayloadContent(nextFrame, expectBinary = true)
+        // Since text and close frames return immediately, and binary frames
+        //return when completed, if we reach this point we should expect the
+        //next frame to be a binary frame.
+        return receivePayloadContent(expectBinary = true)
     }
 
     //////////////////////
     // Helper Functions //
     //////////////////////
 
-    private fun storeTraces(traces: List<String>, type: String, op: Int) {
-        Log.debug("Storing _trace for OP $op ($type): $traces")
-        this.traces.clear()
-        this.traces += traces
+    private fun storeTraces(trace: Set<String>, type: String, op: Int) {
+        Log.debug("Storing _trace for OP $op ($type): $trace")
+        _trace = trace
     }
 
     // TODO See if we can't move this to a better solution?
@@ -749,14 +810,9 @@ class DiscordWebSocket internal constructor(
             _bot.sessionHandler.queueConnection(connection)
         } catch(ex: IllegalStateException) {
             Log.error("Reconnection was rejected! Shutting down...")
-            _bot.status = DiscordBot.Status.SHUTDOWN
+            dispatchShutdown(1006)
             shutdown()
         }
-    }
-
-    internal fun nullifyMessager() {
-        // called after job is completed in messager
-        _messager = null
     }
 
     private fun freeDispatchers() {
@@ -766,11 +822,18 @@ class DiscordWebSocket internal constructor(
         readerDispatcher.close()
     }
 
+    private suspend fun dispatchShutdown(withCode: Int = 1000) {
+        if(bot.status != DiscordBot.Status.SHUTDOWN) {
+            _bot.status = DiscordBot.Status.SHUTDOWN
+        }
+        bot.eventManager.dispatch(ShutdownEvent(bot, currentGMTDate, withCode))
+    }
+
     /////////////////////
     // Close Functions //
     /////////////////////
 
-    private suspend fun close(code: Short, message: String) {
+    internal suspend fun close(code: Short, message: String) {
         close(CloseReason(code, message))
     }
 
@@ -824,11 +887,13 @@ class DiscordWebSocket internal constructor(
     ///////////////
 
     internal companion object {
-        internal const val IdentifyDelay = 5L // seconds
+        private const val IdentifyDelay = 5L // seconds
         private const val MaxMessageSendLimit = 119
         private const val MaxMessageSafeSendLimit = MaxMessageSendLimit - 4
 
         @JvmField internal val Log = createLogger(DiscordWebSocket::class)
+
+        @JvmStatic private fun DiscordBot.ShardInfo.toIntPair() = IntPair(id, total)
 
         @JvmStatic private fun threadName(kind: String) = "DiscordWebSocket $kind Thread"
 

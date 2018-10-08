@@ -18,6 +18,8 @@
 package me.kgustave.dkt
 
 import me.kgustave.dkt.entities.*
+import me.kgustave.dkt.handle.DispatcherProvider
+import me.kgustave.dkt.handle.EventManager
 import me.kgustave.dkt.handle.SessionHandler
 import me.kgustave.dkt.internal.impl.DiscordBotImpl
 
@@ -53,8 +55,8 @@ inline fun DiscordBot.Config.sessionHandler(block: () -> SessionHandler) {
 
 @BotConfigDsl
 @JvmSynthetic
-inline fun DiscordBot.Config.useCompression(block: () -> Boolean) {
-    this.useCompression = block()
+inline fun DiscordBot.Config.compression(block: () -> Boolean) {
+    this.compression = block()
 }
 
 @BotConfigDsl
@@ -74,3 +76,20 @@ inline fun DiscordBot.Config.afk(block: () -> Boolean) {
 inline fun DiscordBot.Config.status(block: () -> OnlineStatus) {
     this.status = block()
 }
+
+@BotConfigDsl
+@JvmSynthetic
+inline fun DiscordBot.Config.eventManager(block: () -> EventManager) {
+    this.eventManager = block()
+}
+
+@BotConfigDsl
+@JvmSynthetic
+inline fun DiscordBot.Config.dispatcherProvider(block: () -> DispatcherProvider) {
+    this.dispatcherProvider = block()
+}
+
+@BotConfigDsl
+@JvmSynthetic
+@Deprecated("renamed to compression", replaceWith = ReplaceWith("compression(block)", imports = ["me.kgustave.dkt.compression"]))
+inline fun DiscordBot.Config.useCompression(block: () -> Boolean) = compression(block)

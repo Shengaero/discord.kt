@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.internal.data.events
+package me.kgustave.dkt.events
 
-import kotlinx.serialization.Optional
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import io.ktor.util.date.GMTDate
+import me.kgustave.dkt.DiscordBot
 
-@Serializable
-data class RawResumeEvent(
-    @Optional @SerialName("_trace") val trace: Set<String>? = null
-)
+class ReadyEvent internal constructor(override val bot: DiscordBot): Event
+
+class ShutdownEvent internal constructor(override val bot: DiscordBot, val time: GMTDate, val code: Int): Event
+
+class ReconnectEvent internal constructor(override val bot: DiscordBot): Event
+
+class ResumeEvent internal constructor(override val bot: DiscordBot): Event

@@ -28,5 +28,5 @@ internal data class RawReadyEvent(
     @SerialName("private_channels") val privateChannels: List<String>,
     val guilds: List<RawUnavailableGuild>,
     @SerialName("session_id") val sessionId: String,
-    @Optional @SerialName("_trace") val trace: List<String>? = null
+    @Optional @SerialName("_trace") val trace: Set<String>? = null
 )

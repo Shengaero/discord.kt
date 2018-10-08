@@ -37,7 +37,7 @@ internal data class Payload(
     @Serializable
     data class Hello(
         @SerialName("heartbeat_interval") val heartbeatInterval: Long,
-        @SerialName("_trace") val trace: List<String>
+        @SerialName("_trace") val trace: Set<String>
     )
 
     @Serializable
@@ -90,7 +90,7 @@ internal data class Payload(
     )
 
     @Serializer(forClass = Payload::class)
-    internal companion object {
+    companion object {
         override fun deserialize(input: Decoder): Payload {
             check(input is JSON.JsonInput) { "Decoder must be CompositeDecoder!" }
             val json = input.readAsTree().jsonObject

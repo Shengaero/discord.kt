@@ -16,6 +16,7 @@
 package me.kgustave.dkt.internal.websocket
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.selects.whileSelect
 import kotlin.coroutines.CoroutineContext
 
 internal class WebSocketMessager(
@@ -23,9 +24,20 @@ internal class WebSocketMessager(
     private val webSocket: DiscordWebSocket,
     private val context: CoroutineContext
 ): AutoCloseable {
-    //private val bot = webSocket.bot
+
+    // TODO
+    // I believe this could be changed to a set of coroutine channels
+    //as opposed to queues.
+    // Right now I'm sticking to queues because
+    //they contain size info and have functions that allow peeking into
+    //the head of the queue, stuff that coroutine channels currently
+    //don't have.
+    // It MAY be worth investigating into creating our own channel
+    //implementation that uses queues in the background as a buffer,
+    //although I'll leave that bridge until we cross it.
     private val guildMembersChunkQueue = webSocket.guildMembersChunkQueue
     private val messageQueue = webSocket.messageQueue
+
     private val lock = webSocket.lock
 
     private var needRateLimit = false
@@ -45,18 +57,20 @@ internal class WebSocketMessager(
         job?.cancel()
     }
 
-    private tailrec suspend fun CoroutineScope.run() {
-        if(!isActive || shutdown) return
+    private tailrec suspend fun run() {
+        if(shutdown) return
 
         try {
             // wait until we're authenticated to
             //send any messages
-            while(!webSocket.authenticated) delay(500)
+            awaitAuthentication()
 
             attemptedToSend = false
             needRateLimit = false
             lock.lockInterruptibly()
 
+            // The messaging priority is:
+            // Chunk Sync Message > Normal Message
             if(!sendNextGuildMemberChunkMessage()) {
                 sendNextMessage()
             }
@@ -83,20 +97,24 @@ internal class WebSocketMessager(
         run()
     }
 
+    private suspend fun awaitAuthentication() {
+        if(webSocket.isAuthenticated) return
+        whileSelect { onTimeout(500) { !webSocket.isAuthenticated } }
+    }
+
     private suspend fun sendNextGuildMemberChunkMessage(): Boolean {
         val text = guildMembersChunkQueue.peek() ?: return false
-        Log.debug("Sending message to websocket: $text")
         if(send(text)) guildMembersChunkQueue.remove()
         return true
     }
 
     private suspend fun sendNextMessage() {
         val text = messageQueue.peek() ?: return
-        Log.debug("Sending message to websocket: $text")
         if(send(text)) messageQueue.remove()
     }
 
     private suspend fun send(text: String): Boolean {
+        Log.debug("Sending message to websocket: $text")
         needRateLimit = !webSocket.sendMessage(text, queue = true)
         attemptedToSend = true
         return !needRateLimit

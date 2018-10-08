@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("DeprecatedCallableAddReplaceWith", "unused")
 package me.kgustave.dkt.handle
 
 import me.kgustave.dkt.internal.websocket.WebSocketConnection
@@ -20,10 +21,15 @@ import me.kgustave.dkt.internal.websocket.WebSocketConnection
 interface SessionHandler {
     var globalRateLimit: Long
 
-    val dispatcherProvider: DispatcherProvider get() = DispatcherProvider.Default
-
     fun queueConnection(connection: WebSocketConnection)
     fun dequeueConnection(connection: WebSocketConnection)
 
     fun shutdown() {}
+
+    @Deprecated(
+        message = "No replacement. Configure in DiscordBot.Config",
+        level = DeprecationLevel.ERROR
+    )
+    val dispatcherProvider: DispatcherProvider
+        get() = throw UnsupportedOperationException("Configure in DiscordBot.Config!")
 }

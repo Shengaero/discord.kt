@@ -13,34 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("unused")
 package me.kgustave.dkt.internal.websocket
 
 import me.kgustave.dkt.DiscordBot
+import java.lang.IllegalStateException
 
-sealed class WebSocketConnection {
-    abstract val reconnect: Boolean
-    abstract val bot: DiscordBot
-    open val shardInfo: DiscordBot.ShardInfo? get() = bot.shardInfo
+sealed class WebSocketConnection(val webSocket: DiscordWebSocket, val reconnect: Boolean) {
+    val bot get() = webSocket.bot
 
-    abstract suspend fun run(last: Boolean)
+    abstract suspend fun connect()
+
+    internal suspend fun run(last: Boolean) {
+        if(webSocket.isShutdown) return
+        connect()
+        if(last) return
+        try {
+            bot.await(DiscordBot.Status.AWAITING_LOGIN_CONFIRMATION)
+        } catch(e: IllegalStateException) {
+            webSocket.close(1000, "")
+            DiscordWebSocket.Log.debug("Shutdown while trying to make connection!")
+        }
+    }
 }
 
 class InitialWebSocketConnection
-internal constructor(private val webSocket: DiscordWebSocket): WebSocketConnection() {
-    override val bot: DiscordBot get() = webSocket.bot
-    override val reconnect: Boolean get() = false
-    override suspend fun run(last: Boolean) {
-        if(webSocket.isShutdown) return
-        webSocket.connect()
-    }
+internal constructor(webSocket: DiscordWebSocket): WebSocketConnection(webSocket, false) {
+    override suspend fun connect() = webSocket.connect()
 }
 
 class ReconnectWebSocketConnection
-internal constructor(private val webSocket: DiscordWebSocket): WebSocketConnection() {
-    override val reconnect: Boolean get() = true
-    override val bot: DiscordBot get() = webSocket.bot
-    override suspend fun run(last: Boolean) {
-        if(webSocket.isShutdown) return
-        webSocket.reconnect()
-    }
+internal constructor(webSocket: DiscordWebSocket): WebSocketConnection(webSocket, true) {
+    override suspend fun connect() = webSocket.reconnect()
 }

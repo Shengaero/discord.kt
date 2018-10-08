@@ -13,13 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.internal.data.events
+package me.kgustave.dkt.internal.handle
 
-import kotlinx.serialization.Optional
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import me.kgustave.dkt.events.Event
+import me.kgustave.dkt.handle.EventManager
 
-@Serializable
-data class RawResumeEvent(
-    @Optional @SerialName("_trace") val trace: Set<String>? = null
-)
+// TODO Standard EventManager Implementation
+internal class EventManagerImpl: EventManager {
+    override val listeners = mutableListOf<Any>()
+
+    override suspend fun dispatch(event: Event) {
+        // TODO
+    }
+
+    override fun addListener(listener: Any) {
+        // TODO
+    }
+
+    override fun removeListener(listener: Any) {
+        // TODO
+    }
+}

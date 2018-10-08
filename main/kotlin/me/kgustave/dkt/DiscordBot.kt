@@ -17,15 +17,13 @@
 package me.kgustave.dkt
 
 import me.kgustave.dkt.entities.*
-import me.kgustave.dkt.entities.cache.NamedSnowflakeCache
-import me.kgustave.dkt.entities.cache.SnowflakeCache
+import me.kgustave.dkt.handle.DispatcherProvider
+import me.kgustave.dkt.handle.EventManager
 import me.kgustave.dkt.handle.SessionHandler
 import me.kgustave.dkt.handle.SessionHandlerAdapter
+import me.kgustave.dkt.internal.handle.EventManagerImpl
 import me.kgustave.dkt.requests.RestTask
 
-/**
- * @author Kaidan Gustave
- */
 interface DiscordBot {
     val token: String
     val responses: Long
@@ -34,12 +32,7 @@ interface DiscordBot {
     val shardInfo: ShardInfo?
     val status: DiscordBot.Status
     val presence: Presence
-
-    val guildCache: NamedSnowflakeCache<Guild> get() = TODO()
-    val userCache: NamedSnowflakeCache<User> get() = TODO()
-    val textChannelCache: NamedSnowflakeCache<TextChannel> get() = TODO()
-    val voiceChannelCache: NamedSnowflakeCache<VoiceChannel> get() = TODO()
-    val privateChannelCache: SnowflakeCache<PrivateChannel> get() = TODO()
+    val eventManager: EventManager
 
     suspend fun connect(): DiscordBot
 
@@ -78,9 +71,11 @@ interface DiscordBot {
 
         var autoLaunchTasks: Boolean = false
         var cacheEntities: Boolean = true
+        var eventManager: EventManager = EventManagerImpl()
         var sessionHandler: SessionHandler = SessionHandlerAdapter()
+        var dispatcherProvider: DispatcherProvider = DispatcherProvider.Default
         var shardInfo: ShardInfo? = null
-        var useCompression: Boolean = false
+        var compression: Boolean = false
         var activity: Activity?
             get() = presence.activity
             set(value) { presence.activity = value }
@@ -96,5 +91,10 @@ interface DiscordBot {
         internal fun requireToken() {
             require(::token.isInitialized) { "Token not specified!" }
         }
+
+        @Deprecated("renamed to compression", replaceWith = ReplaceWith("compression"))
+        var useCompression: Boolean
+            get() = compression
+            set(value) { compression = value }
     }
 }
