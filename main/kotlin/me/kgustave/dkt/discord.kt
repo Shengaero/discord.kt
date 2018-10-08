@@ -37,6 +37,12 @@ inline fun DiscordBot(configure: DiscordBot.Config.() -> Unit) = DiscordBot(Disc
 
 @BotConfigDsl
 @JvmSynthetic
+inline fun DiscordBot.Config.startAutomatically(block: () -> Boolean) {
+    this.startAutomatically = block()
+}
+
+@BotConfigDsl
+@JvmSynthetic
 inline fun DiscordBot.Config.token(block: () -> String) {
     this.token = block()
 }

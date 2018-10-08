@@ -34,9 +34,11 @@ interface DiscordBot {
     val presence: Presence
     val eventManager: EventManager
 
-    suspend fun connect(): DiscordBot
+    fun connect(): DiscordBot
 
     suspend fun await(status: DiscordBot.Status): DiscordBot
+
+    suspend fun awaitReady(): DiscordBot = await(DiscordBot.Status.CONNECTED)
 
     fun updatePresence(block: Presence.Builder.() -> Unit)
 
@@ -69,6 +71,7 @@ interface DiscordBot {
 
         internal val presence = Presence.Builder()
 
+        var startAutomatically: Boolean = true
         var autoLaunchTasks: Boolean = false
         var cacheEntities: Boolean = true
         var eventManager: EventManager = EventManagerImpl()

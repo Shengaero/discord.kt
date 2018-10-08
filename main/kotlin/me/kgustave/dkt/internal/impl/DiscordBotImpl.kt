@@ -108,9 +108,15 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
     ///////////////
 
     val maxReconnectDelay = 900 // FIXME Make configurable
-    val websocket = DiscordWebSocket(this, config.useCompression)
+    val websocket = DiscordWebSocket(this, config.compression)
 
-    override suspend fun connect(): DiscordBot {
+    init {
+        if(config.startAutomatically) {
+            connect()
+        }
+    }
+
+    override fun connect(): DiscordBot {
         val shutdownThread = thread(
             start = false,
             name = "Discord.kt Shutdown",

@@ -54,7 +54,7 @@ class DiscordBotTests: CoroutineTestBase() {
             }
         }
 
-        withTimeout(5000) { bot.connect() }
+        bot.awaitReady()
 
         assertEquals(withDiscordKt, bot.presence.activity)
         assertEquals(OnlineStatus.DND, bot.presence.status)

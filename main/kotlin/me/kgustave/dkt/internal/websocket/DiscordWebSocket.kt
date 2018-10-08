@@ -253,10 +253,9 @@ class DiscordWebSocket internal constructor(
     // Internal Library Operations //
     /////////////////////////////////
 
-    internal suspend fun init() {
+    internal fun init() {
         try {
             bot.sessionHandler.queueConnection(connection)
-            bot.await(DiscordBot.Status.CONNECTED)
         } catch(t: Throwable) {
             Log.error("Encountered an exception while initializing the WebSocket!")
             throw t
