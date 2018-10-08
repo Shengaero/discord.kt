@@ -17,23 +17,21 @@
 @file:Suppress("MemberVisibilityCanBePrivate", "unused", "FunctionName")
 package me.kgustave.dkt
 
+import me.kgustave.dkt.entities.*
 import me.kgustave.dkt.handle.SessionHandler
 import me.kgustave.dkt.internal.impl.DiscordBotImpl
 
 @DslMarker
 annotation class BotConfigDsl
 
-@JvmName("bot")
-fun DiscordBot(config: DiscordBot.Config): DiscordBot {
+@JvmName("bot") fun DiscordBot(config: DiscordBot.Config): DiscordBot {
     config.requireToken()
     return DiscordBotImpl(config)
 }
 
 @BotConfigDsl
 @JvmSynthetic
-@JvmName("bot")
-inline fun DiscordBot(configure: DiscordBot.Config.() -> Unit) =
-    DiscordBot(DiscordBot.Config().apply(configure))
+inline fun DiscordBot(configure: DiscordBot.Config.() -> Unit) = DiscordBot(DiscordBot.Config().apply(configure))
 
 @BotConfigDsl
 @JvmSynthetic
@@ -53,9 +51,26 @@ inline fun DiscordBot.Config.sessionHandler(block: () -> SessionHandler) {
     this.sessionHandler = block()
 }
 
-
 @BotConfigDsl
 @JvmSynthetic
 inline fun DiscordBot.Config.useCompression(block: () -> Boolean) {
     this.useCompression = block()
+}
+
+@BotConfigDsl
+@JvmSynthetic
+inline fun DiscordBot.Config.activity(block: () -> Activity?) {
+    this.activity = block()
+}
+
+@BotConfigDsl
+@JvmSynthetic
+inline fun DiscordBot.Config.afk(block: () -> Boolean) {
+    this.afk = block()
+}
+
+@BotConfigDsl
+@JvmSynthetic
+inline fun DiscordBot.Config.status(block: () -> OnlineStatus) {
+    this.status = block()
 }

@@ -35,7 +35,10 @@ interface DispatcherProvider {
 
     data class DispatcherInfo(val dispatcher: CoroutineDispatcher, val shutdownAutomatically: Boolean = true)
 
-    private class DiscordBotIdentifiableThreadFactory(private val identity: String, private val shardId: Int?): ThreadFactory {
+    private class DiscordBotIdentifiableThreadFactory(
+        private val identity: String,
+        private val shardId: Int?
+    ): ThreadFactory {
         private val threadId = atomic(0)
 
         override fun newThread(r: Runnable): Thread {

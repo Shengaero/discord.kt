@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.internal.websocket
+package me.kgustave.dkt.util
 
 import kotlinx.io.IOException
 import kotlinx.io.core.BytePacketBuilder
@@ -31,7 +31,7 @@ import java.util.zip.InflaterOutputStream
  *
  * @author Kaidan Gustave
  */
-internal class ZLibCompressor {
+class ZLibCompressor {
     // Stored as a soft reference to allow for GC to clean up when appropriate.
     private var decompressBuffer = null as SoftReference<ByteArrayOutputStream>?
     private var readBuffer = null as BytePacketBuilder?

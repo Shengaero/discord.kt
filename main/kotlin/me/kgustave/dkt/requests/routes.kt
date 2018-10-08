@@ -38,6 +38,8 @@ sealed class Route {
     companion object {
         val GetGatewayBot = route(Get, "/gateway/bot")
 
+        val GetSelf = route(Get, "/users/@me")
+
         val GetUser = route(Get, "/users/{user.id}", listOf("user.id"))
 
         val GetGuild = route(Get, "/guilds/{guild.id}", listOf("guild.id"))

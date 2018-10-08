@@ -26,7 +26,6 @@ import io.ktor.http.*
 import kotlinx.coroutines.*
 import me.kgustave.dkt.DiscordKt
 import me.kgustave.dkt.handle.SessionHandler
-import me.kgustave.dkt.internal.handle.DefaultSessionHandler
 import me.kgustave.dkt.util.createLogger
 import java.io.Closeable
 
@@ -35,7 +34,7 @@ class Requester(
     private val token: String,
     val rateLimitDispatcher: CoroutineDispatcher,
     val shutdownDispatcher: Boolean,
-    val sessionHandler: SessionHandler = DefaultSessionHandler
+    val sessionHandler: SessionHandler
 ) {
     val rateLimiter = RateLimiter(this)
 

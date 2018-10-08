@@ -18,9 +18,12 @@ package me.kgustave.dkt.internal.websocket
 import kotlinx.serialization.*
 import kotlinx.serialization.internal.makeNullable
 import kotlinx.serialization.json.*
-import me.kgustave.dkt.entities.OnlineStatus
 import me.kgustave.dkt.internal.data.events.RawReadyEvent
+import me.kgustave.dkt.internal.data.events.RawResumeEvent
 import me.kgustave.dkt.internal.data.serializers.IntPairArraySerializer
+import me.kgustave.dkt.internal.impl.PresenceImpl
+import me.kgustave.dkt.internal.websocket.EventType.READY
+import me.kgustave.dkt.internal.websocket.EventType.RESUMED
 import me.kgustave.dkt.util.IntPair
 import me.kgustave.dkt.util.stringify
 
@@ -29,7 +32,7 @@ internal data class Payload(
     val op: Int,
     @Optional val d: Any? = null,
     @Optional val s: Long? = null,
-    @Optional val t: String? = null
+    @Optional val t: EventType? = null
 ) {
     @Serializable
     data class Hello(
@@ -41,7 +44,7 @@ internal data class Payload(
     data class Identify(
         val token: String,
         val properties: Properties,
-        val presence: Presence,
+        val presence: PresenceImpl,
         @Optional val compress: Boolean = false,
         @Optional @SerialName("large_threshold") val largeThreshold: Int = 50,
         @Optional val shard: IntPair? = null
@@ -53,18 +56,12 @@ internal data class Payload(
             @SerialName("\$device") val device: String
         )
 
-        @Serializable
-        data class Presence(
-            val status: OnlineStatus,
-            val afk: Boolean,
-            @Optional val game: Activity? = null
-        ) {
-            @Serializable
-            data class Activity(val name: String, val type: Int)
-        }
-
         @Serializer(forClass = Identify::class)
         companion object {
+            override fun deserialize(input: Decoder): Identify {
+                throw UnsupportedOperationException("Deserialization of Identify is not supported!")
+            }
+
             override fun serialize(output: Encoder, obj: Identify) {
                 @Suppress("NAME_SHADOWING")
                 val output = output.beginStructure(descriptor)
@@ -73,7 +70,7 @@ internal data class Payload(
                 output.encodeSerializableElement(descriptor, descriptor.getElementIndex("properties"),
                     Properties.serializer(), properties)
                 output.encodeSerializableElement(descriptor, descriptor.getElementIndex("presence"),
-                    Presence.serializer(), presence)
+                    PresenceImpl.serializer(), presence)
                 output.encodeBooleanElement(descriptor, descriptor.getElementIndex("compress"), compress)
                 output.encodeIntElement(descriptor, descriptor.getElementIndex("large_threshold"), largeThreshold)
                 if(shard != null) {
@@ -101,7 +98,7 @@ internal data class Payload(
             val d: Any? = when(op) {
                 OP.Event -> {
                     val s = json["s"].long
-                    val t = json["t"].content
+                    val t = EventType.of(json["t"].content)
                     val d = deserializeEventData(t, json["d"])
                     return Payload(op, d, s, t)
                 }
@@ -128,8 +125,9 @@ internal data class Payload(
             val output = output.beginStructure(descriptor)
             val opIndex = descriptor.getElementIndex("op")
             val dIndex = descriptor.getElementIndex("d")
-            output.encodeIntElement(descriptor, opIndex, obj.op)
-            when(obj.op) {
+            val op = obj.op
+            output.encodeIntElement(descriptor, opIndex, op)
+            when(op) {
                 OP.Heartbeat -> {
                     val d = obj.d
                     if(d is Long) {
@@ -153,15 +151,22 @@ internal data class Payload(
                     output.encodeSerializableElement(descriptor, dIndex, Resume.serializer(), resume)
                 }
 
-                else -> throw UnsupportedOperationException("Serialization OP ${obj.op} is not supported!")
+                OP.StatusUpdate -> {
+                    val presence = obj.d
+                    require(presence is PresenceImpl) { "Expected PresenceImpl data!" }
+                    output.encodeSerializableElement(descriptor, dIndex, PresenceImpl.serializer(), presence)
+                }
+
+                else -> throw UnsupportedOperationException("Serialization OP $op is not supported!")
             }
 
             output.endStructure(descriptor)
         }
 
-        @JvmStatic private fun deserializeEventData(type: String, data: JsonElement): Any? {
+        @JvmStatic private fun deserializeEventData(type: EventType, data: JsonElement): Any? {
             return when(type) {
-                "READY" -> JSON.nonstrict.parse<RawReadyEvent>(data.stringify())
+                READY -> JSON.nonstrict.parse<RawReadyEvent>(data.stringify())
+                RESUMED -> JSON.nonstrict.parse<RawResumeEvent>(data.stringify())
                 else -> data
             }
         }

@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("MemberVisibilityCanBePrivate")
-
 package me.kgustave.dkt.requests
 
 import io.ktor.client.response.HttpResponse
@@ -27,16 +25,16 @@ import me.kgustave.dkt.internal.data.errors.RateLimitedResponse
 import me.kgustave.dkt.util.readHttpResponseBody
 import me.kgustave.dkt.util.createLogger
 import me.kgustave.dkt.util.currentTimeMs
+import me.kgustave.dkt.util.reject
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.RejectedExecutionException
 import kotlin.math.max
 
 class RateLimiter(private val requester: Requester) {
     private companion object {
-        private val log = createLogger(RateLimiter::class)
+        private val Log = createLogger(RateLimiter::class)
 
         private const val XRateLimitGlobal = "X-RateLimit-Global"
         private const val XRateLimitReset = "X-RateLimit-Reset"
@@ -57,9 +55,7 @@ class RateLimiter(private val requester: Requester) {
     private val sessionHandler get() = requester.sessionHandler
 
     fun submit(request: DiscordRequest) {
-        if(isShutdown) {
-            throw RejectedExecutionException("Cannot queue requests while RateLimiter is closing or shutdown!")
-        }
+        reject(isShutdown) { "Cannot queue requests while RateLimiter is closing or shutdown!" }
 
         bucketFor(request.route).queue(request)
     }
@@ -79,7 +75,7 @@ class RateLimiter(private val requester: Requester) {
             if(offset == -1L) headers[HttpHeaders.Date]?.let { date ->
                 val dateTime = OffsetDateTime.parse(date, RFC_1123_DATE_TIME)
                 offset = dateTime.toInstant().toEpochMilli() - now
-                log.debug("Set RateLimiter time offset to $offset ms")
+                Log.debug("Set RateLimiter time offset to $offset ms")
             }
 
             if(status.value == 429) {
@@ -87,7 +83,7 @@ class RateLimiter(private val requester: Requester) {
                 val text = readHttpResponseBody(response)
                 val body = JSON.parse<RateLimitedResponse>(text)
                 val retryAfter = headers[HttpHeaders.RetryAfter]?.toLongOrNull() ?: body.retryAfter
-                log.debug("RateLimit received: $body")
+                Log.debug("RateLimit received: $body")
 
                 if(global?.toBoolean() == true) {
                     this.sessionHandler.globalRateLimit = this.now + retryAfter
@@ -185,7 +181,7 @@ class RateLimiter(private val requester: Requester) {
                         "$header: $value"
                     }
                 }
-                log.debug("Bucket was updated improperly for {}\n{}", path, headerString)
+                Log.debug("Bucket was updated improperly for {}\n{}", path, headerString)
             }
         }
 
@@ -206,12 +202,12 @@ class RateLimiter(private val requester: Requester) {
             try {
                 val iterator = queue.iterator()
                 while(iterator.hasNext()) {
-                    log.debug("Processing request for Bucket: ${this@Bucket}")
+                    Log.debug("Processing request for Bucket: ${this@Bucket}")
                     val request = iterator.next()
                     try {
                         if(request.completion.isCancelled) continue
                         rateLimitTime()?.let {
-                            log.debug("Delaying next request to $path for $it milliseconds.")
+                            Log.debug("Delaying next request to $path for $it milliseconds.")
                             delay(it)
                         }
                         val response = requester.execute(request, false)

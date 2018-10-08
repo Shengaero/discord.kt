@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.internal.handle
+package me.kgustave.dkt.internal.data.events
 
-import me.kgustave.dkt.handle.SessionHandler
+import kotlinx.serialization.Optional
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-internal object DefaultSessionHandler: SessionHandler {
-    @Volatile private var global = Long.MIN_VALUE
-
-    override var globalRateLimit: Long
-        get() = global
-        set(value) { global = value }
-}
+@Serializable
+data class RawResumeEvent(
+    @Optional @SerialName("_trace") val trace: List<String>? = null
+)

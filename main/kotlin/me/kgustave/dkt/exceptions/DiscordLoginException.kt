@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.entities
+package me.kgustave.dkt.exceptions
 
-interface Presence {
-    val status: OnlineStatus
-    val afk: Boolean
-    val activity: Activity
-}
+class DiscordLoginException: Exception()

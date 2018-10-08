@@ -21,5 +21,5 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import kotlin.reflect.KClass
 
-inline fun createLogger(name: String): Logger = LoggerFactory.getLogger(name)
-inline fun createLogger(clazz: KClass<*>): Logger = LoggerFactory.getLogger(clazz.java)
+@JvmSynthetic inline fun createLogger(name: String): Logger = LoggerFactory.getLogger(name)
+@JvmSynthetic inline fun createLogger(clazz: KClass<*>): Logger = LoggerFactory.getLogger(clazz.java)

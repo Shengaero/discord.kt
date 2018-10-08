@@ -13,37 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.entities
+package me.kgustave.dkt.internal.websocket
 
 import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 
-enum class OnlineStatus {
-    ONLINE,
-    IDLE,
-    DND,
-    INVISIBLE,
-    OFFLINE,
+enum class EventType {
+    READY,
+    RESUMED,
     UNKNOWN;
 
-    @Serializer(forClass = OnlineStatus::class)
+    @Serializer(forClass = EventType::class)
     companion object {
-        fun serializer(): KSerializer<OnlineStatus> = this
+        fun serializer(): KSerializer<EventType> = this
 
-        @JvmStatic fun of(name: String) = values().firstOrNull { it.name == name.toUpperCase() } ?: UNKNOWN
+        @JvmStatic fun of(value: String) = values().firstOrNull { it.name == value } ?: UNKNOWN
 
-        override fun deserialize(input: Decoder): OnlineStatus {
-            val value = input.decodeString()
-
-            return of(value)
+        override fun deserialize(input: Decoder): EventType {
+            return of(input.decodeString())
         }
 
-        override fun serialize(output: Encoder, obj: OnlineStatus) {
-            require(obj != UNKNOWN) { "Cannot serialize OnlineStatus 'UNKNOWN'!" }
-
-            output.encodeString(obj.name.toLowerCase())
+        override fun serialize(output: Encoder, obj: EventType) {
+            output.encodeString(obj.name)
         }
     }
 }

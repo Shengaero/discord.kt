@@ -16,8 +16,7 @@
 @file:Suppress("unused", "MemberVisibilityCanBePrivate")
 package me.kgustave.dkt.internal.websocket
 
-// TODO Convert to Enum?
-internal object OP {
+object OP {
     const val Event = 0
     const val Heartbeat = 1
     const val Identify = 2
@@ -29,6 +28,13 @@ internal object OP {
     const val InvalidSession = 9
     const val Hello = 10
     const val HeartbeatACK = 11
+
+    val All = setOf(
+        Event, Heartbeat, Identify,
+        StatusUpdate, VoiceStateUpdate,
+        Resume, Reconnect, RequestGuildMembers,
+        InvalidSession, Hello, HeartbeatACK
+    )
 
     fun name(op: Int): String = when(op) {
         Event -> "Event"
@@ -46,9 +52,5 @@ internal object OP {
         else -> "Unknown"
     }
 
-    fun isValid(op: Int): Boolean {
-        return op == Event || op == Heartbeat || op == Identify || op == StatusUpdate ||
-               op == VoiceStateUpdate || op == Resume || op == Reconnect ||
-               op == RequestGuildMembers || op == InvalidSession || op == Hello || op == HeartbeatACK
-    }
+    fun isValid(op: Int): Boolean = op in All
 }

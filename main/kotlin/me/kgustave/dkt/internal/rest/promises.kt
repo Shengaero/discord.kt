@@ -28,18 +28,16 @@ internal inline fun <reified T> DiscordBotImpl.restPromise(
     route: Route,
     body: Any? = null,
     headers: Headers = headersOf(),
-    crossinline handle: suspend DiscordCall.() -> T
+    crossinline handle: suspend (call: DiscordCall) -> T
 ): RestPromise<T> = object: RestPromise<T>(this, route) {
     override val headers: Headers get() = headers
     override val body: Any get() = body ?: super.body
-    override suspend fun handle(call: DiscordCall): T = call.handle()
+    override suspend fun handle(call: DiscordCall): T = handle(call)
 }
 
 internal fun <T> DiscordBotImpl.emptyPromise(value: T): RestPromise<T> = PreCompletedRestTask(this, value)
 
-private class PreCompletedRestTask<T>(bot: DiscordBotImpl, val value: T): RestPromise<T>(bot,
-    FakeRoute
-) {
+private class PreCompletedRestTask<T>(bot: DiscordBotImpl, val value: T): RestPromise<T>(bot, FakeRoute) {
     override suspend fun await(): T = value
 
     override suspend fun handle(call: DiscordCall): T {

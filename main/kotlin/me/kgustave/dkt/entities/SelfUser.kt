@@ -15,4 +15,12 @@
  */
 package me.kgustave.dkt.entities
 
-interface SelfUser: User
+import me.kgustave.dkt.requests.RestPromise
+
+interface SelfUser: User {
+
+    /**
+     * This is unsupported for [SelfUser]!
+     */
+    override fun openPrivateChannel(): RestPromise<PrivateChannel>
+}

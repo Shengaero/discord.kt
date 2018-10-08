@@ -17,28 +17,42 @@
 package me.kgustave.dkt.internal.impl
 
 import io.ktor.client.HttpClient
+import io.ktor.client.call.receive
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.websocket.WebSockets
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.selects.whileSelect
 import me.kgustave.dkt.DiscordBot
+import me.kgustave.dkt.entities.Presence
 import me.kgustave.dkt.entities.SelfUser
 import me.kgustave.dkt.entities.User
-import me.kgustave.dkt.requests.serialization.DiscordSerializer
+import me.kgustave.dkt.internal.data.responses.GatewayInfo
+import me.kgustave.dkt.internal.rest.restPromise
 import me.kgustave.dkt.internal.websocket.DiscordWebSocket
-import me.kgustave.dkt.requests.RestTask
 import me.kgustave.dkt.requests.Requester
+import me.kgustave.dkt.requests.RestTask
+import me.kgustave.dkt.requests.Route
+import me.kgustave.dkt.requests.serialization.DiscordSerializer
 import kotlin.concurrent.thread
 
 internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
     override val token = config.token
-    override var responses = 0L
     override val sessionHandler = config.sessionHandler
     override val shardInfo = config.shardInfo
+    override var presence = PresenceImpl(config.presence)
+
+    override var responses = 0L
+    override var status = DiscordBot.Status.INITIALIZING
+        internal set(value) = synchronized(field) {
+            //val old = field
+            field = value
+        }
 
     override lateinit var self: SelfUser
-    lateinit var gatewayUrl: String
+
+    val entities = EntityHandler(this)
 
     //////////////////////
     // HTTP CLIENT INIT //
@@ -89,21 +103,39 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
         this.shutdownPromiseDispatcher = shutdownAutomatically
     }
 
-    val entities = EntityHandler(this)
-    val websocket = DiscordWebSocket(token, requester, config.useCompression)
+    ///////////////
+    // WEBSOCKET //
+    ///////////////
 
-    // property checkers
-    fun gatewayUrlIsInit(): Boolean = ::gatewayUrl.isInitialized
-    fun selfIsInit(): Boolean = ::self.isInitialized
+    val maxReconnectDelay = 900 // FIXME Make configurable
+    val websocket = DiscordWebSocket(this, config.useCompression)
 
-    override suspend fun connect() {
-        websocket.connect()
-        Runtime.getRuntime().addShutdownHook(thread(
+    override suspend fun connect(): DiscordBot {
+        val shutdownThread = thread(
             start = false,
             name = "Discord.kt Shutdown",
             isDaemon = true,
             block = this::shutdown
-        ))
+        )
+        Runtime.getRuntime().addShutdownHook(shutdownThread)
+        websocket.init()
+        return this
+    }
+
+    override suspend fun await(status: DiscordBot.Status): DiscordBot {
+        require(status.isInit) { "Cannot await non-init status: $status" }
+        whileSelect { onTimeout(50) { this@DiscordBotImpl.status < status } }
+        return this
+    }
+
+    override fun updatePresence(block: Presence.Builder.() -> Unit) {
+        val builder = Presence.Builder(presence).apply(block)
+        this.presence = presence.copy(
+            status = builder.status,
+            afk = builder.afk,
+            activity = builder.activity
+        )
+        this.websocket.updatePresence()
     }
 
     override fun lookupUserById(id: Long): RestTask<User> {
@@ -111,10 +143,20 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
     }
 
     override fun shutdown() {
+        if(status == DiscordBot.Status.SHUTTING_DOWN || status == DiscordBot.Status.SHUTDOWN) return
+
+        status = DiscordBot.Status.SHUTTING_DOWN
+
         httpClient.close()
+
         // TODO Find a better way to handle this
         runBlocking {
             websocket.shutdown()
         }
+    }
+
+    internal suspend fun getGatewayInfo(): GatewayInfo {
+        val promise = restPromise(Route.GetGatewayBot) { call -> call.response.receive<GatewayInfo>() }
+        return promise.await()
     }
 }

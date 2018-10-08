@@ -17,6 +17,7 @@ package me.kgustave.dkt.test
 
 import io.ktor.client.call.receive
 import kotlinx.coroutines.newFixedThreadPoolContext
+import me.kgustave.dkt.handle.SessionHandlerAdapter
 import me.kgustave.dkt.internal.data.responses.GatewayInfo
 import me.kgustave.dkt.requests.BasicDiscordResponse
 import me.kgustave.dkt.requests.DiscordRequest
@@ -36,7 +37,7 @@ class RequesterTests: CoroutineTestBase() {
     private val config = loadConfig()
     private val rateLimitDispatcher = newFixedThreadPoolContext(3, "Requester Tests RateLimit Context")
     private val requester =
-        Requester(httpClient, config.token, rateLimitDispatcher, false)
+        Requester(httpClient, config.token, rateLimitDispatcher, false, SessionHandlerAdapter())
 
     @Test fun `Test Get Gateway`() = runTest {
         val response = requester.request(DiscordRequest(Route.GetGatewayBot))

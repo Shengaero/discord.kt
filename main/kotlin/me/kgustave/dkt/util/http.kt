@@ -22,9 +22,7 @@ import kotlinx.coroutines.io.jvm.javaio.toInputStream
 import java.nio.charset.Charset
 import java.util.zip.GZIPInputStream
 
-fun HttpResponse.isGzip(): Boolean {
-    return headers[HttpHeaders.ContentEncoding] == "gzip"
-}
+fun HttpResponse.isGzip(): Boolean = headers[HttpHeaders.ContentEncoding] == "gzip"
 
 // utility for reading the body of an HttpResponse without suspending coroutine body.
 fun readHttpResponseBody(response: HttpResponse, isGzip: Boolean = response.isGzip()): String {

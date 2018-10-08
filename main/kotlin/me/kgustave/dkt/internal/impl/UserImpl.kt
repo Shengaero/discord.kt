@@ -33,17 +33,23 @@ internal open class UserImpl(override val bot: DiscordBotImpl, raw: RawUser): Us
     override var avatarHash: String? = raw.avatar
     override val defaultAvatarHash: String get() = DefaultAvatars[discriminator % 5]
     override val avatarUrl: String get() {
-        avatarHash?.let {
-            if(it.startsWith("a_"))
-                return "$AvatarBaseUrl/$id/$it.gif"
-            return "$AvatarBaseUrl/$id/$it.png"
+        avatarHash?.let { avatarHash ->
+            if(avatarHash.startsWith("a_"))
+                return "$AvatarBaseUrl/$id/$avatarHash.gif"
+            return "$AvatarBaseUrl/$id/$avatarHash.png"
         }
         return "$DefaultAvatarBaseUrl/$defaultAvatarHash.png"
     }
 
     private var privateChannel: PrivateChannel? = null
 
+    /**
+     * Patches the [UserImpl] with the data contained by the
+     * provided [raw] user instance.
+     */
     internal fun patch(raw: RawUser) {
+        require(id == raw.id) { "User ID mismatch! Expected $id, Actual: ${raw.id}" }
+
         this.name = raw.username
         this.discriminator = raw.discriminator.toInt()
         this.avatarHash = raw.avatar
@@ -51,9 +57,8 @@ internal open class UserImpl(override val bot: DiscordBotImpl, raw: RawUser): Us
 
     override fun openPrivateChannel(): RestPromise<PrivateChannel> {
         privateChannel?.let { return bot.emptyPromise(it) }
-
         val body = json { "recipient_id" to id }
-        return bot.restPromise<PrivateChannel>(Route.CreateDM, body = body) {
+        return bot.restPromise(Route.CreateDM, body = body) {
             TODO()
         }
     }

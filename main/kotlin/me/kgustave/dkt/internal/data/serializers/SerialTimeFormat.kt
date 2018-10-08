@@ -15,10 +15,12 @@
  */
 package me.kgustave.dkt.internal.data.serializers
 
-import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeFormatter as DTF // I'm DTF ;3
 
 annotation class SerialTimeFormat(val kind: SerialTimeFormat.Kind) {
-    enum class Kind(val formatter: DateTimeFormatter) {
-        ISO_OFFSET_DATE_TIME(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+    enum class Kind(val formatter: DTF) {
+        ISO_OFFSET_DATE_TIME(DTF.ISO_OFFSET_DATE_TIME),
+        RFC_1123_DATE_TIME(DTF.RFC_1123_DATE_TIME),
+        BASIC_ISO_DATE(DTF.BASIC_ISO_DATE)
     }
 }

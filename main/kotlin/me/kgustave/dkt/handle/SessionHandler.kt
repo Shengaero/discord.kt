@@ -15,8 +15,15 @@
  */
 package me.kgustave.dkt.handle
 
+import me.kgustave.dkt.internal.websocket.WebSocketConnection
+
 interface SessionHandler {
     var globalRateLimit: Long
 
     val dispatcherProvider: DispatcherProvider get() = DispatcherProvider.Default
+
+    fun queueConnection(connection: WebSocketConnection)
+    fun dequeueConnection(connection: WebSocketConnection)
+
+    fun shutdown() {}
 }
