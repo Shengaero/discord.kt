@@ -37,7 +37,7 @@ when offering contributions.
     use this framework before it's initial release.
 
 ### Other Things
-- Discord Support Guild
+- ~~Discord Support Guild~~ (Will be appended to the README.md when available)
 - Design Documentation
 - Proof of concept coroutine based bot
 
