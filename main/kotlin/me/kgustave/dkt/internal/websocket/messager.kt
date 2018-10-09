@@ -23,7 +23,7 @@ internal class WebSocketMessager(
     private val scope: CoroutineScope,
     private val webSocket: DiscordWebSocket,
     private val context: CoroutineContext
-): AutoCloseable {
+) {
 
     // TODO
     // I believe this could be changed to a set of coroutine channels
@@ -52,9 +52,9 @@ internal class WebSocketMessager(
         }
     }
 
-    override fun close() {
+    suspend fun close() {
         shutdown = true
-        job?.cancel()
+        job?.cancelAndJoin()
     }
 
     private tailrec suspend fun run() {

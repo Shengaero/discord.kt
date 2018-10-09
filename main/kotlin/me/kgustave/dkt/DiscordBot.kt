@@ -22,6 +22,7 @@ import me.kgustave.dkt.handle.EventManager
 import me.kgustave.dkt.handle.SessionHandler
 import me.kgustave.dkt.handle.SessionHandlerAdapter
 import me.kgustave.dkt.internal.handle.EventManagerImpl
+import me.kgustave.dkt.requests.RestPromise
 import me.kgustave.dkt.requests.RestTask
 
 interface DiscordBot {
@@ -44,7 +45,7 @@ interface DiscordBot {
 
     fun shutdown()
 
-    fun lookupUserById(id: Long): RestTask<User>
+    fun lookupUserById(id: Long): RestPromise<User>
 
     data class ShardInfo internal constructor(val id: Int, val total: Int)
 

@@ -45,11 +45,13 @@ sealed class Route {
         val GetGuild = route(Get, "/guilds/{guild.id}", listOf("guild.id"))
 
         val CreateDM = route(Post, "/users/@me/channels")
+
+        val CreateMessage = route(Post, "/channels/{channel.id}/messages", listOf("channel.id"))
     }
 }
 
 // TODO add more params when necessary, once complete, extract from internals
-internal fun route(method: HttpMethod, path: String, parameters: List<String> = emptyList()): Route {
+internal fun route(method: HttpMethod, path: String, parameters: List<String> = emptyList()): BasicRoute {
     return BasicRoute(method, path, parameters)
 }
 

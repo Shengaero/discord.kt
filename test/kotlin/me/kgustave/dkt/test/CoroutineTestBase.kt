@@ -27,6 +27,8 @@ abstract class CoroutineTestBase {
     private lateinit var runContext: ExecutorCoroutineDispatcher
     private var testNumber = 0
 
+    private val scope get() = CoroutineScope(runContext)
+
     @BeforeEach
     fun initNewContext() {
         testNumber++
@@ -34,13 +36,13 @@ abstract class CoroutineTestBase {
     }
 
     protected fun runTest(block: suspend CoroutineScope.() -> Unit) {
-        val job = GlobalScope.launch(runContext, start = LAZY, block = block)
+        val job = scope.launch(runContext, start = LAZY, block = block)
 
         runBlocking { job.join() }
     }
 
     protected fun runTestWithTimeout(time: Long, unit: TimeUnit, block: suspend CoroutineScope.() -> Unit) {
-        val job = GlobalScope.launch(runContext, start = LAZY) {
+        val job = scope.launch(runContext, start = LAZY) {
             withTimeoutOrNull(unit.toMillis(time), block) ?: fail {
                 "Test timed out!"
             }

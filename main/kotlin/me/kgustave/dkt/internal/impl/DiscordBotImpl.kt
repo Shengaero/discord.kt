@@ -28,11 +28,12 @@ import me.kgustave.dkt.DiscordBot
 import me.kgustave.dkt.entities.Presence
 import me.kgustave.dkt.entities.SelfUser
 import me.kgustave.dkt.entities.User
+import me.kgustave.dkt.internal.data.RawUser
 import me.kgustave.dkt.internal.data.responses.GatewayInfo
 import me.kgustave.dkt.internal.rest.restPromise
 import me.kgustave.dkt.internal.websocket.DiscordWebSocket
 import me.kgustave.dkt.requests.Requester
-import me.kgustave.dkt.requests.RestTask
+import me.kgustave.dkt.requests.RestPromise
 import me.kgustave.dkt.requests.Route
 import me.kgustave.dkt.requests.serialization.DiscordSerializer
 import kotlin.concurrent.thread
@@ -52,6 +53,8 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
         }
 
     override lateinit var self: SelfUser
+
+    private lateinit var shutdownHook: Thread
 
     val entities = EntityHandler(this)
     val dispatcherProvider = config.dispatcherProvider
@@ -111,19 +114,18 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
     val websocket = DiscordWebSocket(this, config.compression)
 
     init {
-        if(config.startAutomatically) {
-            connect()
-        }
+        if(config.startAutomatically) connect()
     }
 
     override fun connect(): DiscordBot {
-        val shutdownThread = thread(
+        val shutdownHook = thread(
             start = false,
             name = "Discord.kt Shutdown",
             isDaemon = true,
             block = this::shutdown
         )
-        Runtime.getRuntime().addShutdownHook(shutdownThread)
+        this.shutdownHook = shutdownHook
+        Runtime.getRuntime().addShutdownHook(shutdownHook)
         websocket.init()
         return this
     }
@@ -144,8 +146,12 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
         this.websocket.updatePresence()
     }
 
-    override fun lookupUserById(id: Long): RestTask<User> {
-        TODO("lookupUserById impl")
+    override fun lookupUserById(id: Long): RestPromise<User> {
+        // FIXME This is too basic to survive, we need more handling
+        return restPromise(Route.GetUser.format(id)) { call ->
+            val user = call.response.receive<RawUser>()
+            return@restPromise UserImpl(this, user)
+        }
     }
 
     override fun shutdown() {
@@ -158,6 +164,20 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
         // TODO Find a better way to handle this
         runBlocking {
             websocket.shutdown()
+        }
+
+        shutdownInternally()
+    }
+
+    internal fun shutdownInternally() {
+        websocket.freeDispatchers()
+        requester.shutdown()
+        if(shutdownPromiseDispatcher && promiseDispatcher is AutoCloseable) {
+            promiseDispatcher.close()
+        }
+
+        if(::shutdownHook.isInitialized) {
+            Runtime.getRuntime().removeShutdownHook(shutdownHook)
         }
     }
 
