@@ -18,10 +18,12 @@ package me.kgustave.dkt.test
 import kotlinx.coroutines.delay
 import me.kgustave.dkt.DiscordBot
 import me.kgustave.dkt.compression
+import me.kgustave.dkt.test.extensions.EnabledIfResourcePresent
 import me.kgustave.dkt.token
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
+@EnabledIfResourcePresent("/test-config.json")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DiscordBotTests: CoroutineTestBase() {
     private val config = loadConfig()
@@ -35,6 +37,6 @@ class DiscordBotTests: CoroutineTestBase() {
         bot.awaitReady()
         delay(10 * 1000)
         bot.shutdown()
-        delay(5*1000)
+        delay(5 * 1000)
     }
 }

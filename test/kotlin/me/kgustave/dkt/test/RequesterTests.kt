@@ -23,6 +23,7 @@ import me.kgustave.dkt.requests.BasicDiscordResponse
 import me.kgustave.dkt.requests.DiscordRequest
 import me.kgustave.dkt.requests.Requester
 import me.kgustave.dkt.requests.Route
+import me.kgustave.dkt.test.extensions.EnabledIfResourcePresent
 import me.kgustave.dkt.test.tags.UsesAPI
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Test
@@ -31,6 +32,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 @UsesAPI
+@EnabledIfResourcePresent("/test-config.json")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RequesterTests: CoroutineTestBase() {
     private val httpClient = defaultHttpClient()
