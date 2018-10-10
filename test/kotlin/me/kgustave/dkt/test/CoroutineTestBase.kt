@@ -29,30 +29,28 @@ abstract class CoroutineTestBase {
 
     private val scope get() = CoroutineScope(runContext)
 
-    @BeforeEach
-    fun initNewContext() {
+    @BeforeEach fun initNewContext() {
         testNumber++
         runContext = newSingleThreadContext("Test Context Thread ($testNumber)")
     }
 
     protected fun runTest(block: suspend CoroutineScope.() -> Unit) {
-        val job = scope.launch(runContext, start = LAZY, block = block)
+        val job = scope.async(runContext, start = LAZY, block = block)
 
-        runBlocking { job.join() }
+        runBlocking { job.await() }
     }
 
     protected fun runTestWithTimeout(time: Long, unit: TimeUnit, block: suspend CoroutineScope.() -> Unit) {
-        val job = scope.launch(runContext, start = LAZY) {
+        val job = scope.async(runContext, start = LAZY) {
             withTimeoutOrNull(unit.toMillis(time), block) ?: fail {
                 "Test timed out!"
             }
         }
 
-        runBlocking { job.join() }
+        runBlocking { job.await() }
     }
 
-    @AfterEach
-    fun destroyOldContext() {
+    @AfterEach fun destroyOldContext() {
         runContext.close()
     }
 }

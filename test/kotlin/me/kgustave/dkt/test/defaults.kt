@@ -16,8 +16,8 @@
 package me.kgustave.dkt.test
 
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.features.json.JsonFeature
+import me.kgustave.dkt.http.engine.OkHttp
 import me.kgustave.dkt.requests.serialization.DiscordSerializer
 
 fun defaultHttpClient() = HttpClient(OkHttp) {

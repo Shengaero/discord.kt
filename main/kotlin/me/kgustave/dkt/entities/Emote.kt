@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.internal.data
+package me.kgustave.dkt.entities
 
-import kotlinx.serialization.Serializable
-import me.kgustave.dkt.internal.data.serializers.SnowflakeSerializer
+import me.kgustave.dkt.DiscordBot
 
-@Serializable
-internal data class RawRole(
-    @Serializable(SnowflakeSerializer::class)
-    val id: Long,
-    val name: String,
-    val color: Int,
-    val hoist: Boolean,
-    val position: Int,
-    val permissions: Int,
-    val managed: Boolean,
-    val mentionable: Boolean
-)
+interface Emote: Snowflake, Mentionable {
+    val bot: DiscordBot
+    val name: String
+    val guild: Guild?
+    val isAnimated: Boolean
+    val isManaged: Boolean
+    val imageUrl: String
+    val roles: List<Role>?
+}

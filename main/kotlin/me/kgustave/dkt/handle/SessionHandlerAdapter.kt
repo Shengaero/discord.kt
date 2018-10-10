@@ -70,7 +70,7 @@ open class SessionHandlerAdapter: SessionHandler {
         while(connectionQueue.isNotEmpty()) {
             val connection = connectionQueue.poll() ?: break
             try {
-                connection.run(multiple)
+                connection.run(multiple && connectionQueue.isEmpty())
                 multiple = true
                 lastConnectTime = currentTimeMs
                 if(connectionQueue.isEmpty()) break

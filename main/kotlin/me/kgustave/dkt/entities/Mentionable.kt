@@ -15,6 +15,6 @@
  */
 package me.kgustave.dkt.entities
 
-interface Mentionable: Snowflake {
+interface Mentionable {
     val mention: String
 }

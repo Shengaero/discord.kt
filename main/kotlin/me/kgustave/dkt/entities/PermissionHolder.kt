@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("unused")
-package me.kgustave.dkt.internal.cache
+package me.kgustave.dkt.entities
 
-import me.kgustave.dkt.entities.Snowflake
-import me.kgustave.dkt.entities.cache.OrderedSnowflakeCache
-
-open class OrderedSnowflakeCacheImpl<S>: SnowflakeCacheImpl<S>(), OrderedSnowflakeCache<S>
-    where S: Snowflake, S: Comparable<S>
+interface PermissionHolder

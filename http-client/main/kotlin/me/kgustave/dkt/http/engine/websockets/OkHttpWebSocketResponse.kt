@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.internal.data
+package me.kgustave.dkt.http.engine.websockets
 
-import kotlinx.serialization.Serializable
-import me.kgustave.dkt.internal.data.serializers.SnowflakeSerializer
+import io.ktor.client.call.HttpClientCall
+import io.ktor.client.response.HttpResponse
+import me.kgustave.dkt.http.engine.OkHttpResponse
 
-@Serializable
-internal data class RawRole(
-    @Serializable(SnowflakeSerializer::class)
-    val id: Long,
-    val name: String,
-    val color: Int,
-    val hoist: Boolean,
-    val position: Int,
-    val permissions: Int,
-    val managed: Boolean,
-    val mentionable: Boolean
-)
+internal class OkHttpWebSocketResponse(
+    override val call: HttpClientCall,
+    private val okResponse: OkHttpResponse,
+    val session: OkHttpWebSocketSession
+): HttpResponse by okResponse {
+    override fun close() {
+        okResponse.close()
+        session.terminate()
+    }
+}

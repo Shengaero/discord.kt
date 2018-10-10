@@ -24,6 +24,6 @@ pluginManagement {
 
 rootProject.name = 'discord.kt'
 
-// TODO The core rest client needs to be
-//extracted for future features.
+// TODO The core rest client needs to be extracted for future features.
 //include ':rest'
+include ':http-client'

@@ -17,10 +17,17 @@ package me.kgustave.dkt.internal.impl
 
 import me.kgustave.dkt.entities.PrivateChannel
 import me.kgustave.dkt.entities.SelfUser
-import me.kgustave.dkt.internal.data.RawUser
+import me.kgustave.dkt.internal.data.RawSelfUser
 import me.kgustave.dkt.requests.RestPromise
 
-internal class SelfUserImpl(discord: DiscordBotImpl, raw: RawUser): SelfUser, UserImpl(discord, raw) {
+internal class SelfUserImpl(bot: DiscordBotImpl, raw: RawSelfUser): SelfUser, UserImpl(bot, raw.rawUserData()) {
+    internal fun patch(raw: RawSelfUser) {
+        check(bot.selfIsInit()) { "Cannot patch SelfUserImpl without bot.self being initialized first!" }
+        patch(raw.rawUserData())
+
+        // TODO Patch in SelfUser specific data
+    }
+
     override fun openPrivateChannel(): RestPromise<PrivateChannel> {
         throw UnsupportedOperationException("Cannot open a Private Channel with SelfUser!")
     }

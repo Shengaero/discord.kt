@@ -18,6 +18,7 @@ package me.kgustave.dkt.util
 
 import io.ktor.client.response.HttpResponse
 import io.ktor.http.HttpHeaders
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.io.jvm.javaio.toInputStream
 import java.nio.charset.Charset
 import java.util.zip.GZIPInputStream
@@ -26,7 +27,7 @@ fun HttpResponse.isGzip(): Boolean = headers[HttpHeaders.ContentEncoding] == "gz
 
 // utility for reading the body of an HttpResponse without suspending coroutine body.
 fun readHttpResponseBody(response: HttpResponse, isGzip: Boolean = response.isGzip()): String {
-    return response.content.toInputStream(response.executionContext).use { input ->
+    return response.content.toInputStream(response.coroutineContext[Job]).use { input ->
         (if(isGzip) GZIPInputStream(input) else input).use {
             it.reader(Charsets.UTF_8).use { reader -> reader.readText() }
         }

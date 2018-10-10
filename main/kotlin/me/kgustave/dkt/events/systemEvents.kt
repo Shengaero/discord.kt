@@ -15,12 +15,12 @@
  */
 package me.kgustave.dkt.events
 
-import io.ktor.util.date.GMTDate
 import me.kgustave.dkt.DiscordBot
+import java.time.OffsetDateTime
 
 class ReadyEvent internal constructor(override val bot: DiscordBot): Event
 
-class ShutdownEvent internal constructor(override val bot: DiscordBot, val time: GMTDate, val code: Int): Event
+class ShutdownEvent internal constructor(override val bot: DiscordBot, val time: OffsetDateTime, val code: Int): Event
 
 class ReconnectEvent internal constructor(override val bot: DiscordBot): Event
 

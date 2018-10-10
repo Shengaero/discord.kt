@@ -16,27 +16,85 @@
 package me.kgustave.dkt.test
 
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import me.kgustave.dkt.DiscordBot
+import me.kgustave.dkt.DiscordBot.Status.SHUTDOWN
+import me.kgustave.dkt.DiscordBot.Status.SHUTTING_DOWN
+import me.kgustave.dkt.activity
 import me.kgustave.dkt.compression
+import me.kgustave.dkt.entities.*
 import me.kgustave.dkt.test.extensions.EnabledIfResourcePresent
+import me.kgustave.dkt.test.tags.Slow
+import me.kgustave.dkt.test.tags.UsesAPI
 import me.kgustave.dkt.token
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
+@Slow
+@UsesAPI
 @EnabledIfResourcePresent("/test-config.json")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DiscordBotTests: CoroutineTestBase() {
+    private lateinit var bot: DiscordBot
     private val config = loadConfig()
 
     @Test fun `Test Bot Connection And Shutdown`() = runTest {
-        val bot = DiscordBot {
+        bot = DiscordBot {
             token { config.token }
             compression { true }
         }
 
         bot.awaitReady()
-        delay(10 * 1000)
+
+        delay(2000)
+
         bot.shutdown()
-        delay(5 * 1000)
+    }
+
+    @Test fun `Test Bot Update Status`() = runTest {
+        bot = DiscordBot {
+            token { config.token }
+            compression { true }
+            activity { playing("with discord.kt") }
+        }
+
+        bot.awaitReady()
+
+        var presence = bot.presence
+        var activity = presence.activity
+
+        assertNotNull(activity)
+        assertEquals(OnlineStatus.ONLINE, presence.status)
+        assertEquals("with discord.kt", activity.name)
+        assertEquals(Activity.Type.GAME, activity.type)
+
+        delay(2000)
+
+        bot.updatePresence {
+            status { OnlineStatus.DND }
+            activity { listeningTo("the Gateway") }
+        }
+
+        presence = bot.presence
+        activity = presence.activity
+
+        assertNotNull(activity)
+        assertEquals(OnlineStatus.DND, presence.status)
+        assertEquals("the Gateway", activity.name)
+        assertEquals(Activity.Type.LISTENING, activity.type)
+    }
+
+    @AfterEach fun `Backoff Between Tests And Shutdown Bot If Necessary`() = runBlocking {
+        if(!::bot.isInitialized) {
+            if(bot.status != SHUTTING_DOWN && bot.status != SHUTDOWN) {
+                bot.shutdown()
+            }
+        }
+
+        // Do a 5 second backoff inbetween all tests
+        delay(5000)
     }
 }

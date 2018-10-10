@@ -15,6 +15,25 @@
  */
 package me.kgustave.dkt.entities
 
-interface VoiceChannel: GuildChannel {
-    override val type get() = Channel.Type.VOICE
+import me.kgustave.dkt.DiscordBot
+
+interface GuildVoiceState {
+    // NOTE:
+    //
+    // We name this GuildVoiceState as opposed to VoiceState
+    // for compatibility if BOT accounts are ever allowed in
+    // group calls one day, in which case we will extend this
+    // as a subtype of VoiceState.
+
+    val bot: DiscordBot
+    val guild: Guild
+    val channel: VoiceChannel
+    val user: User
+    val member: Member
+    val sessionId: String
+    val deaf: Boolean
+    val mute: Boolean
+    val selfDeaf: Boolean
+    val selfMute: Boolean
+    val suppress: Boolean
 }

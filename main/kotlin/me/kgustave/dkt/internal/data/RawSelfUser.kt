@@ -15,18 +15,17 @@
  */
 package me.kgustave.dkt.internal.data
 
+import kotlinx.serialization.Optional
 import kotlinx.serialization.Serializable
 import me.kgustave.dkt.internal.data.serializers.SnowflakeSerializer
 
 @Serializable
-internal data class RawRole(
-    @Serializable(SnowflakeSerializer::class)
-    val id: Long,
-    val name: String,
-    val color: Int,
-    val hoist: Boolean,
-    val position: Int,
-    val permissions: Int,
-    val managed: Boolean,
-    val mentionable: Boolean
-)
+internal data class RawSelfUser(
+    @Serializable(SnowflakeSerializer::class) val id: Long,
+    val username: String,
+    val discriminator: String,
+    val avatar: String?,
+    @Optional val bot: Boolean = false
+) {
+    fun rawUserData() = RawUser(id, username, discriminator, avatar, bot)
+}

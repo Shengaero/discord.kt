@@ -15,13 +15,82 @@
  */
 package me.kgustave.dkt.entities
 
-import io.ktor.util.date.GMTDate
-import me.kgustave.dkt.DiscordBot
 import me.kgustave.dkt.util.snowflakeTimeOf
+import java.time.OffsetDateTime
 
+/**
+ * A common trait among a majority of Discord entities, this interface represents this most raw and
+ * basic commonality.
+ *
+ * Discord uses [Twitter's snowflake format](https://github.com/twitter/snowflake/tree/snowflake-2010)
+ * to guarantee unique 64-bit integer IDs for all entities on Discord (except some very rare and unique
+ * scenarios in which child objects share their parent's ID).
+ *
+ * An example of snowflake nature is how two [User] instances will **never** have the same [ID][User.id].
+ *
+ * @author Kaidan Gustave
+ */
 interface Snowflake {
-    /** The [DiscordBot] that this [Snowflake] belongs to. */
-    val bot: DiscordBot
+    /**
+     * A unique 64-bit integer [Long] ID for a Discord entity.
+     *
+     * Generally speaking, most things on Discord (such as [Users][User],
+     * [Guilds][Guild], etc) possess a Snowflake ID.
+     */
     val id: Long
-    val creationTime: GMTDate get() = snowflakeTimeOf(id)
+
+    /**
+     * The creation time of this Snowflake entity.
+     *
+     * The value of a Snowflake [ID][id] is actually comprised of
+     * a couple key factors, one being the time that it is generated.
+     *
+     * This uses a "reverse snowflake" algorithm to determine the
+     * Greenwich Mean Time (GMT) instance this Snowflake entity was
+     * created. Specification is more detailed in the actual algorithm
+     * implementation [here][me.kgustave.dkt.util.snowflakeTimeOf].
+     */
+    val creationTime: OffsetDateTime get() = snowflakeTimeOf(id)
+
+    /**
+     * Companion for the [Snowflake] interface.
+     *
+     * Contains utilities related to snowflake implementations.
+     */
+    companion object {
+
+        /**
+         * Checks whether two [Snowflakes][Snowflake] are equal, first based
+         * on referential equality, and then (if not already `true`) based on
+         * the equality of both [IDs][Snowflake.id].
+         *
+         * Usage of this is typically seen in internal implementations of
+         * the Snowflake interface, generally when overriding [equals][Any.equals].
+         *
+         * @param S The type of [Snowflake] to check equality for.
+         *
+         * @param s1 The first [Snowflake].
+         * @param s2 The second [Snowflake].
+         *
+         * @return `true` if [s1] and [s2] are *referentially* equal, or if the
+         *         two have equivalent [IDs][Snowflake.id].
+         */
+        fun <S: Snowflake> equals(s1: S, s2: S): Boolean = s1 === s2 || s1.id == s2.id
+
+        /**
+         * Converts the provided [Snowflake] to a string using the provided
+         * [identifier], in the following format:
+         * ```
+         * <identifier>:<snowflake.id>
+         * ```
+         * This is commonly used when overriding the [toString][Any.toString]
+         * method of many Snowflake implementations.
+         *
+         * @param identifier The identifier.
+         * @param snowflake The [Snowflake].
+         *
+         * @return A formatted string.
+         */
+        fun toString(identifier: String, snowflake: Snowflake): String = "$identifier:${snowflake.id}"
+    }
 }

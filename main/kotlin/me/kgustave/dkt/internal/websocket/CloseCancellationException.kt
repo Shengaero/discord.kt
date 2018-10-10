@@ -19,7 +19,9 @@ package me.kgustave.dkt.internal.websocket
 import io.ktor.http.cio.websocket.CloseReason
 import kotlinx.coroutines.CancellationException
 
-internal class CloseCancellationException(val reason: CloseReason): CancellationException() {
+internal class CloseCancellationException(val reason: CloseReason, val isClient: Boolean): CancellationException() {
     override val message: String get() = reason.message
     val code get() = reason.code
+
+    fun toCloseOrder() = CloseOrder(reason, isClient)
 }

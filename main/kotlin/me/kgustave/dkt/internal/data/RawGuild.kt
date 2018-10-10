@@ -16,16 +16,16 @@
 @file:Suppress("unused")
 package me.kgustave.dkt.internal.data
 
-import io.ktor.util.date.GMTDate
 import kotlinx.serialization.Optional
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import me.kgustave.dkt.internal.data.serializers.SerialTimeFormat
 import me.kgustave.dkt.internal.data.serializers.SnowflakeSerializer
 import me.kgustave.dkt.internal.data.serializers.TimestampSerializer
+import java.time.OffsetDateTime
 
 @Serializable
-internal class RawGuild(
+internal data class RawGuild(
     @Serializable(SnowflakeSerializer::class)
     val id: Long,
 
@@ -107,5 +107,5 @@ internal class RawGuild(
     @SerialName("joined_at")
     @Serializable(TimestampSerializer::class)
     @SerialTimeFormat(SerialTimeFormat.Kind.ISO_OFFSET_DATE_TIME)
-    val joinedAt: GMTDate? = null
+    val joinedAt: OffsetDateTime? = null
 )

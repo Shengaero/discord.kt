@@ -15,4 +15,6 @@
  */
 package me.kgustave.dkt.entities
 
-interface TextChannel: Mentionable, MessageChannel
+interface TextChannel: Mentionable, MessageChannel, GuildChannel {
+    override val type get() = Channel.Type.TEXT
+}

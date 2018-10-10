@@ -16,9 +16,12 @@
 @file:Suppress("unused")
 package me.kgustave.dkt.entities
 
+import me.kgustave.dkt.DiscordBot
+import me.kgustave.dkt.requests.Requester
 import me.kgustave.dkt.requests.RestPromise
 
-interface User: Mentionable {
+interface User: Snowflake, Mentionable {
+    val bot: DiscordBot
     val name: String
     val discriminator: Int
     val avatarHash: String?
@@ -29,4 +32,22 @@ interface User: Mentionable {
     override val mention: String get() = "<@$id>"
 
     fun openPrivateChannel(): RestPromise<PrivateChannel>
+
+    companion object {
+        const val AvatarBaseUrl = "${Requester.CDNBaseUrl}/avatars"
+        const val DefaultAvatarBaseUrl = "${Requester.CDNBaseUrl}/embed/avatars"
+        val DefaultAvatarHashes = arrayOf(
+            "6debd47ed13483642cf09e832ed0bc1b", // blurple
+            "322c936a8c8be1b803cd94861bdfa868", // gray
+            "dd4dbc0016779df1378e7812eabaa04d", // green
+            "0e291f67c9274a1abdddeb3fd919cbaa", // orange
+            "1cbd08c76f8af6dddce02c5138971129"  // red
+        )
+
+        @Deprecated(
+            message = "Renamed to be more clear on values stored.",
+            replaceWith = ReplaceWith("User.DefaultAvatarHashes")
+        )
+        val DefaultAvatars = DefaultAvatarHashes
+    }
 }

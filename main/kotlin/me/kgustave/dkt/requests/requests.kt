@@ -24,8 +24,8 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.util.date.GMTDate
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.io.ByteReadChannel
+import kotlin.coroutines.CoroutineContext
 
 // Calls
 
@@ -65,24 +65,16 @@ internal data class BasicDiscordResponse(
 internal sealed class FailedDiscordResponse: DiscordResponse() {
     override val call: HttpClientCall get() = base?.call ?: cannotGet("call")
     override val status: HttpStatusCode get() = base?.status ?: cannotGet("status")
-    override val content: ByteReadChannel
-        get() = base?.content ?: cannotGet(
-            "content"
-        )
-    override val executionContext: Job
-        get() = base?.executionContext ?: cannotGet(
-            "executionContext"
-        )
     override val headers: Headers get() = base?.headers ?: cannotGet("headers")
-    override val requestTime: GMTDate
-        get() = base?.requestTime ?: cannotGet(
-            "requestTime"
-        )
-    override val responseTime: GMTDate
-        get() = base?.responseTime ?: cannotGet(
-            "responseTime"
-        )
     override val version: HttpProtocolVersion get() = base?.version ?: cannotGet("version")
+    override val content: ByteReadChannel
+        get() = base?.content ?: cannotGet("content")
+    override val coroutineContext: CoroutineContext
+        get() = base?.coroutineContext ?: cannotGet("coroutineContext")
+    override val requestTime: GMTDate
+        get() = base?.requestTime ?: cannotGet("requestTime")
+    override val responseTime: GMTDate
+        get() = base?.responseTime ?: cannotGet("responseTime")
 
     override fun close() { base?.close() }
 }

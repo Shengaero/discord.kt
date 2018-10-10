@@ -15,4 +15,4 @@
  */
 package me.kgustave.dkt.entities
 
-interface MessageChannel: Snowflake
+interface MessageChannel: Channel

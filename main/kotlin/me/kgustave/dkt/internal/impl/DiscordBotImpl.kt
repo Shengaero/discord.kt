@@ -18,16 +18,16 @@ package me.kgustave.dkt.internal.impl
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.receive
-import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.features.json.JsonFeature
-import io.ktor.client.features.websocket.WebSockets
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.selects.whileSelect
 import me.kgustave.dkt.DiscordBot
 import me.kgustave.dkt.entities.Presence
-import me.kgustave.dkt.entities.SelfUser
 import me.kgustave.dkt.entities.User
+import me.kgustave.dkt.http.engine.OkHttp
+import me.kgustave.dkt.http.engine.websockets.WebSockets
+import me.kgustave.dkt.internal.cache.SnowflakeCacheImpl
 import me.kgustave.dkt.internal.data.RawUser
 import me.kgustave.dkt.internal.data.responses.GatewayInfo
 import me.kgustave.dkt.internal.rest.restPromise
@@ -43,8 +43,9 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
     override val sessionHandler = config.sessionHandler
     override val shardInfo = config.shardInfo
     override val eventManager = config.eventManager
-    override var presence = PresenceImpl(config.presence)
 
+    override lateinit var self: SelfUserImpl
+    override var presence = PresenceImpl(config.presence)
     override var responses = 0L
     override var status = DiscordBot.Status.INITIALIZING
         internal set(value) = synchronized(field) {
@@ -52,7 +53,7 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
             field = value
         }
 
-    override lateinit var self: SelfUser
+    override val userCache = SnowflakeCacheImpl(UserImpl::name)
 
     private lateinit var shutdownHook: Thread
 
@@ -67,6 +68,12 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
         install(WebSockets)
         install(JsonFeature) {
             serializer = DiscordSerializer()
+        }
+
+        engine {
+            threadsCount = 5
+            pipelining = true
+            response.defaultCharset = Charsets.UTF_8
         }
     }
 
@@ -122,7 +129,7 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
             start = false,
             name = "Discord.kt Shutdown",
             isDaemon = true,
-            block = this::shutdown
+            block = { runBlocking { shutdown() } }
         )
         this.shutdownHook = shutdownHook
         Runtime.getRuntime().addShutdownHook(shutdownHook)
@@ -154,35 +161,37 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
         }
     }
 
-    override fun shutdown() {
-        if(status == DiscordBot.Status.SHUTTING_DOWN || status == DiscordBot.Status.SHUTDOWN) return
+    override suspend fun shutdown() {
+        if(status == DiscordBot.Status.SHUTTING_DOWN ||
+           status == DiscordBot.Status.SHUTDOWN) return
 
         status = DiscordBot.Status.SHUTTING_DOWN
 
         httpClient.close()
-
-        // TODO Find a better way to handle this
-        runBlocking {
-            websocket.shutdown()
-        }
-
+        websocket.shutdown()
         shutdownInternally()
+        websocket.freeDispatchers()
     }
 
+    internal fun selfIsInit() = ::self.isInitialized
+
     internal fun shutdownInternally() {
-        websocket.freeDispatchers()
+        if(status == DiscordBot.Status.SHUTDOWN) return
         requester.shutdown()
         if(shutdownPromiseDispatcher && promiseDispatcher is AutoCloseable) {
             promiseDispatcher.close()
         }
 
-        if(::shutdownHook.isInitialized) {
+        if(::shutdownHook.isInitialized) runCatching {
             Runtime.getRuntime().removeShutdownHook(shutdownHook)
         }
+
+        status = DiscordBot.Status.SHUTDOWN
     }
 
     internal suspend fun getGatewayInfo(): GatewayInfo {
         val promise = restPromise(Route.GetGatewayBot) { call -> call.response.receive<GatewayInfo>() }
+
         return promise.await()
     }
 }

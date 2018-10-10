@@ -13,19 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("MemberVisibilityCanBePrivate", "FoldInitializerAndIfToElvis")
 package me.kgustave.dkt.internal.impl
 
-import me.kgustave.dkt.entities.User
+import me.kgustave.dkt.internal.data.RawSelfUser
 import me.kgustave.dkt.internal.data.RawUser
 
-internal class EntityHandler(private val discord: DiscordBotImpl) {
-    fun handleUser(raw: RawUser): UserImpl {
-        return UserImpl(discord, raw)
+internal class EntityHandler(private val bot: DiscordBotImpl) {
+    fun handleSelfUser(raw: RawSelfUser): SelfUserImpl {
+        return when {
+            // already initialized self user
+            bot.selfIsInit() -> bot.self.also {
+                // patch in new data
+                it.patch(raw)
+            }
+
+            // need to create and cache self user
+            else -> SelfUserImpl(bot, raw).also {
+                // initialize self
+                bot.self = it
+                // cache
+                bot.userCache[it.id] = it
+            }
+        }
     }
 
-    fun handleSelfUser(raw: RawUser): User {
-        val self = SelfUserImpl(discord, raw)
-        discord.self = self
-        return self
+    fun handleUser(raw: RawUser, modifyCache: Boolean = true): UserImpl {
+        var impl = bot.userCache[raw.id]
+
+        if(impl != null) impl.patch(raw) else {
+            impl = UserImpl(bot, raw)
+            if(modifyCache) {
+                bot.userCache[impl.id] = impl
+            }
+        }
+
+        return impl
     }
 }

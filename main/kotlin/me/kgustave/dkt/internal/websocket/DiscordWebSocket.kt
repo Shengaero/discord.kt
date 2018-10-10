@@ -51,21 +51,18 @@ package me.kgustave.dkt.internal.websocket
  *    lifecycle until close is needed.
  */
 
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.features.websocket.ClientWebSocketSession
-import io.ktor.client.features.websocket.WebSockets
-import io.ktor.client.features.websocket.webSocketRawSession
+import io.ktor.client.request.get
 import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpMethod.Companion.Get
-import io.ktor.http.URLProtocol
-import io.ktor.http.cio.websocket.*
+import io.ktor.http.cio.websocket.CloseReason
+import io.ktor.http.cio.websocket.Frame
+import io.ktor.http.cio.websocket.readReason
+import io.ktor.http.cio.websocket.readText
 import io.ktor.util.moveToByteArray
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.ClosedSendChannelException
-import kotlinx.coroutines.selects.whileSelect
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.serialization.json.JSON
 import me.kgustave.dkt.DiscordBot
 import me.kgustave.dkt.DiscordKt
@@ -73,6 +70,7 @@ import me.kgustave.dkt.events.ReadyEvent
 import me.kgustave.dkt.events.ReconnectEvent
 import me.kgustave.dkt.events.ResumeEvent
 import me.kgustave.dkt.events.ShutdownEvent
+import me.kgustave.dkt.http.engine.websockets.ClientWebSocketSession
 import me.kgustave.dkt.internal.data.events.RawReadyEvent
 import me.kgustave.dkt.internal.data.events.RawResumeEvent
 import me.kgustave.dkt.internal.data.responses.GatewayInfo
@@ -90,13 +88,7 @@ class DiscordWebSocket internal constructor(
     private val compression: Boolean = false,
     private var shouldReconnect: Boolean = true
 ) {
-
-    // When ktor officially supports WebSockets on OkHttp,
-    //we should move to that instead of using CIO. It might
-    //also be possible that we drop OkHttp entirely in favor
-    //or CIO once it supports http 2.x (currently only 1.x
-    //is supported).
-    private val client = HttpClient(CIO) { install(WebSockets) }
+    private val client = _bot.httpClient
 
     //////////////////
     // RateLimiting //
@@ -148,12 +140,10 @@ class DiscordWebSocket internal constructor(
     // Dispatchers And Jobs //
     //////////////////////////
 
-    private lateinit var closeReason: CompletableDeferred<CloseOrder>
-
     @Volatile private lateinit var _main: Job
     private var _messager: WebSocketMessager? = null
     @Volatile private var _heartbeat: Job? = null
-    private var _reader: Job? = null
+    private lateinit var _reader: Deferred<CloseOrder>
 
     private val mainDispatcher      = newSingleThreadContext(threadName("Main"))
     private val messagerDispatcher  = newSingleThreadContext(threadName("Messager"))
@@ -242,6 +232,7 @@ class DiscordWebSocket internal constructor(
     suspend fun shutdown() {
         shutdown = true
         shouldReconnect = false
+        bot.sessionHandler.dequeueConnection(connection)
         close(1000, "")
     }
 
@@ -325,16 +316,21 @@ class DiscordWebSocket internal constructor(
         //regardless of context, by simply cancelling the 'main'
         //parent job.
         _main = mainScope.launch(mainDispatcher) { handleSession(false) }
+
+        _main.invokeOnCompletion {
+            if(it is CancellationException) {
+                Log.debug("$mainDispatcher received a cancellation!")
+            } else if(it !== null) {
+                Log.error("$mainDispatcher encountered an unexpected exception!", it)
+            }
+        }
     }
 
     private suspend fun createNewSession(gatewayUrl: String) {
         // wait on session to start
-        session = client.webSocketRawSession {
-            method = Get
+        this.session = client.get(gatewayUrl) {
             headers[HttpHeaders.AcceptEncoding] = "gzip"
             url {
-                protocol = URLProtocol.WSS
-                host = gatewayUrl.removePrefix("wss://").removeSuffix("/")
                 parameters["v"] = "${DiscordKt.GatewayVersion}"
                 parameters["encoding"] = "json"
                 if(compression) {
@@ -360,8 +356,8 @@ class DiscordWebSocket internal constructor(
         }
 
         session.masking = true
-        closeReason = CompletableDeferred()
         connected = true
+
         rateLimitPeriodReset = currentTimeMs + 60000 // currentTimeMs + 60 seconds
     }
 
@@ -387,7 +383,8 @@ class DiscordWebSocket internal constructor(
         setupReader()
 
         // Wait on close
-        val (closeReason, isClient) = closeReason.await()
+        val (closeReason, isClient) = _reader.await()
+
         Log.debug("CloseOrder fulfilled!")
 
         // Passed this point we should not in any way attempt to interact with the session,
@@ -398,21 +395,19 @@ class DiscordWebSocket internal constructor(
         connected = false
 
         _heartbeat?.cancel() // this will invoke the completion handler and set _heartbeat to null
-        _reader?.cancel() // this will invoke the completion handler and set _reader to null
-
-        Log.debug("Encountered close reason: ${closeReason.code}")
 
         val closeCode = closeReason.code.toInt()
         val closeMessage = closeReason.message
         val closeStatus = CloseStatus.of(closeCode)
+
+        Log.debug("Encountered close reason: ${closeReason.code}")
 
         val closeStatusMayReconnect = closeStatus?.mayReconnect ?: true
         val isInvalidate = isClient && closeCode == 1000 && closeMessage == "INVALIDATE_SESSION"
         val heartbeatDispatcherClosed = (heartbeatDispatcher.executor as ExecutorService).isShutdown
 
         if(!shouldReconnect || !closeStatusMayReconnect || heartbeatDispatcherClosed) {
-            // this will invoke the completion handler and set _messager to null
-            _messager?.close()
+            _messager?.close() // this will invoke the completion handler and set _messager to null
 
             if(!closeStatusMayReconnect) {
                 Log.error("WebSocket closed and cannot be recovered!")
@@ -424,10 +419,12 @@ class DiscordWebSocket internal constructor(
                 readerDispatcher.close()
             }
 
-            return dispatchShutdown(closeCode)
+            dispatchShutdown(closeCode)
+            return Log.debug("WebSocket has shutdown completely!")
         }
 
         compressor.reset()
+        Log.debug("Compressor reset...")
 
         if(isInvalidate) invalidate()
 
@@ -442,7 +439,7 @@ class DiscordWebSocket internal constructor(
 
     private suspend fun handleHello() {
         // Read the payload contents
-        val payload = receiveNextPayload()
+        val payload = incoming.receiveNextPayload()
 
         // Make sure this is OP 10. This is effectively
         //making sure our cast will succeed.
@@ -456,7 +453,7 @@ class DiscordWebSocket internal constructor(
     }
 
     private suspend fun handleReady() {
-        val payload = receiveNextPayload()
+        val payload = incoming.receiveNextPayload()
 
         check(payload.op == OP.Event) { "Expected OP ${OP.Event} but received OP ${payload.op}!" }
         checkEventType(EventType.READY, payload)
@@ -469,8 +466,6 @@ class DiscordWebSocket internal constructor(
         handleIdentifyRateLimit = false
         sessionId = ready.sessionId
         ready.trace?.let { storeTraces(it, "READY", OP.Event) }
-
-        Log.debug("Started with session ID: '$sessionId'")
 
         finishReadyOperations()
         // TODO handle ready event further (store self-user, settings, etc)
@@ -541,29 +536,24 @@ class DiscordWebSocket internal constructor(
     }
 
     private fun setupReader() {
-        _reader = mainScope.launch(readerDispatcher) {
-            while(connected && !shutdown) {
+        _reader = mainScope.async(readerDispatcher) {
+            while(connected) {
                 try {
-                    val payload = receiveNextPayload()
+                    val payload = incoming.receiveNextPayload()
                     handlePayload(payload)
                 } catch(e: CancellationException) {
-                    if(e is CloseCancellationException && !closeReason.isCompleted) {
-                        val order = CloseOrder(e.reason, isClient = false) // only thrown when server sends close
-                        closeReason.complete(order)
+                    if(e is CloseCancellationException) { // only thrown when server sends close
+                        return@async e.toCloseOrder()
                     }
-                    return@launch
+                    break
                 } catch(e: ClosedReceiveChannelException) {
-                    // closed receive channel, break here, but make sure
-                    //we complete the closing correctly!
-                    Log.error("Channel closed unexpectedly!?")
-                    return@launch
+                    break
                 } catch(t: Throwable) {
                     Log.error("Reader encountered an unexpected exception!", t)
                 }
             }
+            return@async CloseOrder(CloseReason(1000, ""), isClient = true)
         }
-
-        _reader?.invokeOnCompletion { _reader = null }
     }
 
     private fun setupHeartbeat(interval: Long) {
@@ -571,13 +561,9 @@ class DiscordWebSocket internal constructor(
             while(connected) {
                 try {
                     sendHeartbeat()
-                    whileSelect {
-                        closeReason.onAwait { false }
-                        onTimeout(interval) { false }
-                    }
-                    if(closeReason.isCompleted) break
+                    delay(interval)
                 } catch(e: CancellationException) {
-                    // cancellation means the session has closed
+                    // cancellation -> session has closed
                     break
                 } catch(e: ClosedSendChannelException) {
                     // closed send channel -> session has closed
@@ -706,10 +692,11 @@ class DiscordWebSocket internal constructor(
         doWhileLocked(guildMembersChunkQueue::clear)
     }
 
-    private tailrec suspend fun receiveNextPayload(): Payload {
+    private tailrec suspend fun ReceiveChannel<Frame>.receiveNextPayload(): Payload {
         // If this receives null we need to throw a normal cancellation,
         //as we do not know exactly why we are closing the receiving end
-        val text = receivePayloadContent()
+        val frame = receive()
+        val text = receivePayloadContent(frame)
         Log.trace("-> $text")
         val payload = JSON.nonstrict.parse<Payload>(text)
 
@@ -752,8 +739,8 @@ class DiscordWebSocket internal constructor(
         return receiveNextPayload()
     }
 
-    private tailrec suspend fun receivePayloadContent(expectBinary: Boolean = false): String {
-        when(val frame = incoming.receiveOrNull() ?: throw CancellationException()) {
+    private tailrec suspend fun ReceiveChannel<Frame>.receivePayloadContent(frame: Frame, expectBinary: Boolean = false): String {
+        when(frame) {
             is Frame.Text -> {
                 // We have received a full text frame when we were expecting to
                 //get the next fragment in a sequence via the recursive call!
@@ -778,15 +765,20 @@ class DiscordWebSocket internal constructor(
 
             // Frame.Ping and Frame.Pong are not handled, and (probably)
             //not even receivable from the WebSocket. We don't consider
-            //these, but we still take the time to
+            //these, but we still take the time to log if we get them.
             is Frame.Ping, is Frame.Pong -> Log.debug("Received a '${frame.frameType}' type frame!")
-            is Frame.Close -> throw CloseCancellationException(frame.readReason() ?: CloseReason(1000, ""))
+            is Frame.Close -> {
+                val reason = frame.readReason() ?: CloseReason(1000, "")
+                throw CloseCancellationException(reason, isClient = false)
+            }
         }
+
+        val next = receive()
 
         // Since text and close frames return immediately, and binary frames
         //return when completed, if we reach this point we should expect the
         //next frame to be a binary frame.
-        return receivePayloadContent(expectBinary = true)
+        return receivePayloadContent(next, expectBinary = true)
     }
 
     //////////////////////
@@ -820,16 +812,14 @@ class DiscordWebSocket internal constructor(
         if(bot.status != DiscordBot.Status.SHUTDOWN) {
             _bot.status = DiscordBot.Status.SHUTDOWN
         }
-        bot.eventManager.dispatch(ShutdownEvent(bot, currentGMTDate, withCode))
+        bot.eventManager.dispatch(ShutdownEvent(bot, currentOffsetDateTime, withCode))
     }
 
     /////////////////////
     // Close Functions //
     /////////////////////
 
-    internal suspend fun close(code: Short, message: String) {
-        close(CloseReason(code, message))
-    }
+    internal suspend fun close(code: Short, message: String) = close(CloseReason(code, message))
 
     private suspend fun close(reason: CloseReason) {
         if(!::session.isInitialized) return
@@ -841,15 +831,7 @@ class DiscordWebSocket internal constructor(
         //don't try to act upon a closed main somehow.
         if(!::_main.isInitialized || !_main.isActive) return
 
-        Log.debug("Sending close frame: $reason")
-
-        if(!outgoing.isClosedForSend) {
-            outgoing.send(Frame.Close(reason))
-            session.flush()
-            session.terminate()
-        }
-
-        closeReason.complete(CloseOrder(reason, isClient = true))
+        outgoing.send(Frame.Close(reason))
 
         if(shutdown) {
             // we join so that the job fully completes before returning

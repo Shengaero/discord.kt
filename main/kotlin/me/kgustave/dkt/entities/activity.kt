@@ -16,10 +16,10 @@
 @file:Suppress("FoldInitializerAndIfToElvis", "RemoveEmptyPrimaryConstructor", "unused")
 package me.kgustave.dkt.entities
 
-import io.ktor.util.date.GMTDate
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
 import me.kgustave.dkt.util.IntPair
+import java.time.OffsetDateTime
 
 fun playing(game: String): Activity = BasicActivity(game, Activity.Type.GAME)
 fun streaming(title: String, url: String): Activity = BasicActivity(title, Activity.Type.STREAMING, url)
@@ -33,8 +33,8 @@ sealed class Activity {
     abstract val timestamps: Timestamps?
 
     data class Timestamps internal constructor(val begin: Long? = null, val end: Long? = null) {
-        val beginTime: GMTDate get() = TODO("Not Implemented Yet")
-        val endTime: GMTDate get() = TODO("Not Implemented Yet")
+        val beginTime: OffsetDateTime get() = TODO("Not Implemented Yet")
+        val endTime: OffsetDateTime get() = TODO("Not Implemented Yet")
     }
 
     enum class Type {

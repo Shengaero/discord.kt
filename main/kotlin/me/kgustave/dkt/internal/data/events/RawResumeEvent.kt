@@ -20,6 +20,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class RawResumeEvent(
+internal data class RawResumeEvent(
     @Optional @SerialName("_trace") val trace: Set<String>? = null
 )

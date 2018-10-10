@@ -15,4 +15,6 @@
  */
 package me.kgustave.dkt.entities
 
-interface PrivateChannel: MessageChannel
+interface PrivateChannel: MessageChannel {
+    override val type get() = Channel.Type.PRIVATE
+}

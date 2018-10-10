@@ -19,11 +19,10 @@ import kotlinx.serialization.json.json
 import me.kgustave.dkt.entities.PrivateChannel
 import me.kgustave.dkt.entities.User
 import me.kgustave.dkt.internal.data.RawUser
-import me.kgustave.dkt.requests.RestPromise
 import me.kgustave.dkt.internal.rest.emptyPromise
-import me.kgustave.dkt.requests.Requester
-import me.kgustave.dkt.requests.Route
 import me.kgustave.dkt.internal.rest.restPromise
+import me.kgustave.dkt.requests.RestPromise
+import me.kgustave.dkt.requests.Route
 
 internal open class UserImpl(override val bot: DiscordBotImpl, raw: RawUser): User {
     override val id: Long = raw.id
@@ -31,17 +30,24 @@ internal open class UserImpl(override val bot: DiscordBotImpl, raw: RawUser): Us
     override var name: String = raw.username
     override var discriminator: Int = raw.discriminator.toInt()
     override var avatarHash: String? = raw.avatar
-    override val defaultAvatarHash: String get() = DefaultAvatars[discriminator % 5]
+    override val defaultAvatarHash: String get() = User.DefaultAvatarHashes[discriminator % 5]
     override val avatarUrl: String get() {
         avatarHash?.let { avatarHash ->
-            if(avatarHash.startsWith("a_"))
-                return "$AvatarBaseUrl/$id/$avatarHash.gif"
-            return "$AvatarBaseUrl/$id/$avatarHash.png"
+            val suffix = if(avatarHash.startsWith("a_")) "gif" else "png"
+            return "${User.AvatarBaseUrl}/$id/$avatarHash.$suffix"
         }
-        return "$DefaultAvatarBaseUrl/$defaultAvatarHash.png"
+        return "${User.DefaultAvatarBaseUrl}/$defaultAvatarHash.png"
     }
 
     private var privateChannel: PrivateChannel? = null
+
+    override fun openPrivateChannel(): RestPromise<PrivateChannel> {
+        privateChannel?.let { return bot.emptyPromise(it) }
+        val body = json { "recipient_id" to id }
+        return bot.restPromise(Route.CreateDM, body = body) {
+            TODO()
+        }
+    }
 
     /**
      * Patches the [UserImpl] with the data contained by the
@@ -53,25 +59,5 @@ internal open class UserImpl(override val bot: DiscordBotImpl, raw: RawUser): Us
         this.name = raw.username
         this.discriminator = raw.discriminator.toInt()
         this.avatarHash = raw.avatar
-    }
-
-    override fun openPrivateChannel(): RestPromise<PrivateChannel> {
-        privateChannel?.let { return bot.emptyPromise(it) }
-        val body = json { "recipient_id" to id }
-        return bot.restPromise(Route.CreateDM, body = body) {
-            TODO()
-        }
-    }
-
-    companion object {
-        const val AvatarBaseUrl = "${Requester.CDNBaseUrl}/avatars"
-        const val DefaultAvatarBaseUrl = "${Requester.CDNBaseUrl}/embed/avatars"
-        val DefaultAvatars = arrayOf(
-            "6debd47ed13483642cf09e832ed0bc1b", // blurple
-            "322c936a8c8be1b803cd94861bdfa868", // gray
-            "dd4dbc0016779df1378e7812eabaa04d", // green
-            "0e291f67c9274a1abdddeb3fd919cbaa", // orange
-            "1cbd08c76f8af6dddce02c5138971129"  // red
-        )
     }
 }

@@ -17,6 +17,7 @@
 package me.kgustave.dkt
 
 import me.kgustave.dkt.entities.*
+import me.kgustave.dkt.entities.cache.NamedSnowflakeCache
 import me.kgustave.dkt.handle.DispatcherProvider
 import me.kgustave.dkt.handle.EventManager
 import me.kgustave.dkt.handle.SessionHandler
@@ -24,6 +25,7 @@ import me.kgustave.dkt.handle.SessionHandlerAdapter
 import me.kgustave.dkt.internal.handle.EventManagerImpl
 import me.kgustave.dkt.requests.RestPromise
 import me.kgustave.dkt.requests.RestTask
+import okhttp3.OkHttpClient
 
 interface DiscordBot {
     val token: String
@@ -35,6 +37,9 @@ interface DiscordBot {
     val presence: Presence
     val eventManager: EventManager
 
+    val userCache: NamedSnowflakeCache<out User>
+    val guildCache: NamedSnowflakeCache<out Guild> get() = TODO("Implement guildCache")
+
     fun connect(): DiscordBot
 
     suspend fun await(status: DiscordBot.Status): DiscordBot
@@ -43,7 +48,7 @@ interface DiscordBot {
 
     fun updatePresence(block: Presence.Builder.() -> Unit)
 
-    fun shutdown()
+    suspend fun shutdown()
 
     fun lookupUserById(id: Long): RestPromise<User>
 
@@ -89,8 +94,13 @@ interface DiscordBot {
         var afk: Boolean
             get() = presence.afk
             set(value) { presence.afk = value }
+        private var okHttp: OkHttpClient.Builder.() -> Unit = {}
 
         @BotConfigDsl infix fun Int.of(total: Int): ShardInfo = ShardInfo(this, total)
+
+        @BotConfigDsl fun okHttp(okHttp: OkHttpClient.Builder.() -> Unit) {
+            this.okHttp = okHttp
+        }
 
         internal fun requireToken() {
             require(::token.isInitialized) { "Token not specified!" }
