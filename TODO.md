@@ -6,9 +6,9 @@ Please make sure that you open branches and use proper git-etiquette
 when offering contributions.
 
 ### High Priority
-- Move from using `GMTDate` to `OffsetDateTime`
-  - I wanted to use it, but `GMTDate` isn't something we can count on
-    to be backwards compatible in future versions of ktor
+- ~~Move from using `GMTDate` to `OffsetDateTime`~~
+  - ~~I wanted to use it, but `GMTDate` isn't something we can count on
+    to be backwards compatible in future versions of ktor~~
 - Extracting websocket package contents from `me.kgustave.dkt.internal.websocket`
   to `me.kgustave.dkt.websocket`.
   - This is because not everything is going to end up as internal.
