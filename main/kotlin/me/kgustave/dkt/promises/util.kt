@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.internal.rest
+@file:JvmName("RestPromiseUtil")
+package me.kgustave.dkt.promises
 
 import io.ktor.http.Headers
 import io.ktor.http.headersOf
 import me.kgustave.dkt.internal.impl.DiscordBotImpl
-import me.kgustave.dkt.requests.RestPromise
 import me.kgustave.dkt.requests.DiscordCall
 import me.kgustave.dkt.requests.FakeRoute
 import me.kgustave.dkt.requests.Route
@@ -35,7 +35,8 @@ internal inline fun <reified T> DiscordBotImpl.restPromise(
     override suspend fun handle(call: DiscordCall): T = handle(call)
 }
 
-internal fun <T> DiscordBotImpl.emptyPromise(value: T): RestPromise<T> = PreCompletedRestTask(this, value)
+internal fun <T> DiscordBotImpl.emptyPromise(value: T): RestPromise<T> =
+    PreCompletedRestTask(this, value)
 
 private class PreCompletedRestTask<T>(bot: DiscordBotImpl, val value: T): RestPromise<T>(bot, FakeRoute) {
     override suspend fun await(): T = value

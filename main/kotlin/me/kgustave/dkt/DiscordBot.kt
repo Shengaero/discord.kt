@@ -17,14 +17,13 @@
 package me.kgustave.dkt
 
 import me.kgustave.dkt.entities.*
-import me.kgustave.dkt.entities.cache.NamedSnowflakeCache
+import me.kgustave.dkt.entities.cache.SnowflakeCache
 import me.kgustave.dkt.handle.DispatcherProvider
 import me.kgustave.dkt.handle.EventManager
 import me.kgustave.dkt.handle.SessionHandler
 import me.kgustave.dkt.handle.SessionHandlerAdapter
 import me.kgustave.dkt.internal.handle.EventManagerImpl
-import me.kgustave.dkt.requests.RestPromise
-import me.kgustave.dkt.requests.RestTask
+import me.kgustave.dkt.promises.RestPromise
 import okhttp3.OkHttpClient
 
 interface DiscordBot {
@@ -37,8 +36,11 @@ interface DiscordBot {
     val presence: Presence
     val eventManager: EventManager
 
-    val userCache: NamedSnowflakeCache<out User>
-    val guildCache: NamedSnowflakeCache<out Guild> get() = TODO("Implement guildCache")
+    val userCache: SnowflakeCache<out User>
+    val guildCache: SnowflakeCache<out Guild>
+    val textChannelCache: SnowflakeCache<out TextChannel>
+    val voiceChannelCache: SnowflakeCache<out VoiceChannel>
+    val categoryCache: SnowflakeCache<out Category>
 
     fun connect(): DiscordBot
 

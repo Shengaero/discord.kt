@@ -22,9 +22,9 @@ import me.kgustave.dkt.internal.websocket.WebSocketConnection
 import me.kgustave.dkt.util.createLogger
 import me.kgustave.dkt.util.currentTimeMs
 import java.lang.IllegalStateException
-import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.RejectedExecutionException
 
 open class SessionHandlerAdapter: SessionHandler {
     private companion object {
@@ -37,13 +37,12 @@ open class SessionHandlerAdapter: SessionHandler {
         get() = global.value
         set(value) { global.value = value }
 
-    protected val connectionQueue: Queue<WebSocketConnection> = ConcurrentLinkedQueue()
+    protected val connectionQueue = ConcurrentLinkedQueue<WebSocketConnection>()
     protected val lock = Any()
 
     private var job: Job? = null
     private var lastConnectTime = 0L
     private val dispatcher = newSingleThreadContext("SessionHandler Queue Dispatcher")
-    private val scope = CoroutineScope(dispatcher)
 
     override fun queueConnection(connection: WebSocketConnection) {
         connectionQueue += connection
@@ -62,7 +61,7 @@ open class SessionHandlerAdapter: SessionHandler {
         }
     }
 
-    private fun createJob(): Job = scope.launch(dispatcher, start = CoroutineStart.LAZY) {
+    private fun createJob(): Job = GlobalScope.launch(dispatcher, start = CoroutineStart.LAZY) {
         val delay = currentTimeMs - lastConnectTime
         if(delay < ConnectionDelay) delay(delay)
 
@@ -81,6 +80,8 @@ open class SessionHandlerAdapter: SessionHandler {
             } catch(e: CancellationException) {
                 // TODO Logging
                 queueConnection(connection)
+                break
+            } catch(e: RejectedExecutionException) {
                 break
             }
         }

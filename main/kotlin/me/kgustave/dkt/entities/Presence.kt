@@ -13,6 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.internal.data
+package me.kgustave.dkt.entities
 
-// TODO data class RawPrivateChannel(val )
+interface Presence {
+    val status: OnlineStatus
+    val afk: Boolean
+    val activity: Activity?
+
+    class Builder internal constructor(base: Presence = Default) {
+        var status = base.status
+        var afk = base.afk
+        var activity = base.activity
+    }
+
+    companion object Default: Presence {
+        override val status = OnlineStatus.ONLINE
+        override val afk = false
+        override val activity = null as Activity?
+    }
+}

@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 dependencies {
+    // okhttp
     compile "com.squareup.okhttp3:okhttp:$ok_http_version"
     
+    // ktor
     compile "io.ktor:ktor-client-core-jvm:$ktor_version"
+    compile "io.ktor:ktor-http-cio:$ktor_version"
 }

@@ -17,7 +17,7 @@ package me.kgustave.dkt.internal.impl
 
 import kotlinx.serialization.*
 import me.kgustave.dkt.entities.Activity
-import me.kgustave.dkt.entities.ActivitySerializer
+import me.kgustave.dkt.internal.data.serializers.ActivitySerializer
 import me.kgustave.dkt.entities.OnlineStatus
 import me.kgustave.dkt.entities.Presence
 import me.kgustave.dkt.util.currentTimeMs
@@ -29,21 +29,16 @@ internal data class PresenceImpl(
     @Optional @SerialName("game") override val activity: Activity? = null,
     @Optional @SerialName("since") val afkSince: Long? = null
 ): Presence {
-    constructor(builder: Presence.Builder): this(
-        status = builder.status,
-        afk = builder.afk,
-        activity = builder.activity
-    )
+    constructor(builder: Presence.Builder): this(builder.status, builder.afk, builder.activity)
 
     @Serializer(forClass = PresenceImpl::class)
     companion object {
         override fun serialize(output: Encoder, obj: PresenceImpl) {
             val out = output.beginStructure(descriptor)
-            out.encodeSerializableElement(descriptor, descriptor.getElementIndex("status"), OnlineStatus, obj.status)
+            out.encodeStringElement(descriptor, descriptor.getElementIndex("status"), obj.status.statusName.toLowerCase())
             out.encodeBooleanElement(descriptor, descriptor.getElementIndex("afk"), obj.afk)
             obj.activity?.let { activity ->
-                out.encodeSerializableElement(descriptor, descriptor.getElementIndex("game"),
-                    ActivitySerializer, activity)
+                out.encodeSerializableElement(descriptor, descriptor.getElementIndex("game"), ActivitySerializer, activity)
             }
             out.encodeLongElement(descriptor, descriptor.getElementIndex("since"), obj.afkSince ?: currentTimeMs)
             out.endStructure(descriptor)

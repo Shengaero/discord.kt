@@ -17,11 +17,15 @@ package me.kgustave.dkt.entities
 
 import me.kgustave.dkt.DiscordBot
 
-interface Member: Mentionable, PermissionHolder, Comparable<Member> {
+interface Member: Mentionable, PermissionHolder {
     val bot: DiscordBot
+    val guild: Guild
     val user: User
     val nickname: String?
     val roles: List<Role>
+    val voiceState: GuildVoiceState
 
     val name: String get() = nickname ?: user.name
+    val isOwner: Boolean get() = this == guild.owner
+    override val mention: String get() = if(nickname != null) "<@!${user.id}>" else user.mention
 }

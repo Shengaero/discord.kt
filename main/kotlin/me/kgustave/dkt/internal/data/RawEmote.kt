@@ -24,10 +24,22 @@ import me.kgustave.dkt.internal.data.serializers.SnowflakeSerializer
 internal data class RawEmote(
     @Serializable(SnowflakeSerializer::class)
     val id: Long?,
+
     val name: String,
-    @Optional val roles: List<RawRole> = emptyList(),
-    @Optional val user: RawUser? = null,
-    @Optional @SerialName("require_colons") val requireColons: Boolean = true,
-    @Optional val managed: Boolean = true,
-    @Optional val animated: Boolean = true
+
+    @Optional
+    val roles: List<RawRole> = emptyList(),
+
+    @Optional
+    val user: RawUser? = null,
+
+    @Optional
+    @SerialName("require_colons")
+    val requireColons: Boolean = true,
+
+    @Optional
+    val managed: Boolean = true,
+
+    @Optional
+    val animated: Boolean = true
 )

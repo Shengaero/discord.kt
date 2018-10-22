@@ -13,21 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("unused")
 package me.kgustave.dkt.internal.data
 
 import kotlinx.serialization.Optional
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import me.kgustave.dkt.internal.data.serializers.SerialTimeFormat
+import me.kgustave.dkt.internal.data.serializers.ISO8601Serializer
 import me.kgustave.dkt.internal.data.serializers.SnowflakeSerializer
-import me.kgustave.dkt.internal.data.serializers.TimestampSerializer
 import java.time.OffsetDateTime
+
+sealed class RawGuildData {
+    @Serializable(SnowflakeSerializer::class) abstract val id: Long
+    @Optional abstract val unavailable: Boolean
+}
+
+@Serializable
+internal data class RawUnavailableGuild(
+    @Serializable(SnowflakeSerializer::class) override val id: Long,
+    @Optional override val unavailable: Boolean = true
+): RawGuildData()
 
 @Serializable
 internal data class RawGuild(
     @Serializable(SnowflakeSerializer::class)
-    val id: Long,
+    override val id: Long,
 
     val name: String,
 
@@ -97,15 +106,34 @@ internal data class RawGuild(
     @Serializable(SnowflakeSerializer::class)
     val systemChannelId: Long? = null,
 
-    @Optional val unavailable: Boolean = true,
+    // All the properties below this point are sent only with GUILD_CREATE
+
+    @Optional
+    @SerialName("joined_at")
+    @Serializable(ISO8601Serializer::class)
+    val joinedAt: OffsetDateTime? = null,
+
+    @Optional
+    val large: Boolean? = null,
+
+    @Optional
+    override val unavailable: Boolean = true,
 
     @Optional
     @SerialName("member_count")
     val memberCount: Int? = null,
 
     @Optional
-    @SerialName("joined_at")
-    @Serializable(TimestampSerializer::class)
-    @SerialTimeFormat(SerialTimeFormat.Kind.ISO_OFFSET_DATE_TIME)
-    val joinedAt: OffsetDateTime? = null
-)
+    @SerialName("voice_states")
+    val voiceStates: List<RawVoiceState> = emptyList(),
+
+    @Optional
+    val members: List<RawMember> = emptyList(),
+
+    @Optional
+    val channels: List<RawChannel> = emptyList(),
+
+    @Optional
+    val presences: List<RawPresenceUpdate> = emptyList()
+): RawGuildData()
+

@@ -16,17 +16,20 @@
 package me.kgustave.dkt.internal.cache
 
 import me.kgustave.dkt.entities.Snowflake
-import me.kgustave.dkt.entities.cache.NamedSnowflakeCache
+import me.kgustave.dkt.entities.cache.Cache
+import me.kgustave.dkt.entities.cache.SnowflakeCache
 
-internal open class SnowflakeCacheImpl<S: Snowflake>(
-    private val map: MutableMap<Long, S>,
-    private val byName: ((entity: S) -> String)? = null
-): NamedSnowflakeCache<S>, MutableMap<Long, S> by map {
-    constructor(byName: ((entity: S) -> String)? = null): this(hashMapOf(), byName)
+private typealias ByNameFunction<T> = (entity: T) -> String
 
-    override fun getByName(name: String, ignoreCase: Boolean): List<S> {
+internal abstract class AbstractCacheImpl<T>(
+    private val map: MutableMap<Long, T>,
+    private val byName: ByNameFunction<T>? = null
+): Cache<T>, MutableMap<Long, T> by map {
+    constructor(byName: ByNameFunction<T>? = null): this(hashMapOf(), byName)
+
+    override fun getByName(name: String, ignoreCase: Boolean): List<T> {
         if(byName == null) throw UnsupportedOperationException("Getting entities by name is not supported!")
-        val returns = arrayListOf<S>()
+        val returns = arrayListOf<T>()
         for(entity in this) {
             if(name.equals(byName.invoke(entity), ignoreCase)) {
                 returns += entity
@@ -35,3 +38,6 @@ internal open class SnowflakeCacheImpl<S: Snowflake>(
         return returns
     }
 }
+
+internal open class SnowflakeCacheImpl<S: Snowflake>
+constructor(byName: ByNameFunction<S>? = null): SnowflakeCache<S>, AbstractCacheImpl<S>(byName)

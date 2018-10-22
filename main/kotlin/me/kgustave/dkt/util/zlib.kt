@@ -33,10 +33,11 @@ import java.util.zip.InflaterOutputStream
  */
 class ZLibCompressor {
     // Stored as a soft reference to allow for GC to clean up when appropriate.
-    private var decompressBuffer = null as SoftReference<ByteArrayOutputStream>?
-    private var readBuffer = null as BytePacketBuilder?
-    private var context = Inflater()
-    private val readLock = Any()
+    private var decompressBuffer: SoftReference<ByteArrayOutputStream>? = null
+
+    private var readBuffer: BytePacketBuilder? = null
+
+    private var inflater = Inflater()
 
     /**
      * Initializes the decompression buffer of this compressor ahead
@@ -62,33 +63,38 @@ class ZLibCompressor {
      *
      * @return `true` if the binary content represents the end of the
      * current payload. `false` otherwise.
-     *
-     * @throws java.lang.IllegalMonitorStateException if this violates
-     * synchronization constraints.
      */
-    fun isMessageCompletedByFrame(ba: ByteArray): Boolean = synchronized(readLock) {
+    @Synchronized fun isMessageCompletedByFrame(ba: ByteArray): Boolean {
         // Get the packet builder or create a new one
         // This is null if the packet size is small enough
         //that we can read it in one run!
-        val readBuffer = readBuffer ?: when {
-            ba.size < 4 -> null
-            else -> BytePacketBuilder().also { readBuffer = it }
-        }
+        val readBuffer = readBuffer ?: BytePacketBuilder().also { readBuffer = it }
 
         // Always try to write the content!
         // If this is null, that means our payload is
         //small enough to process without creating a buffer!
-        readBuffer?.writeFully(ba)
+        readBuffer.writeFully(ba)
 
         // The remaining content has not arrived yet!
         // We should return false so we can wait for
         //more binary frames to complete the packet!
-        if(ba.size < 4 || suffixInt(ba) != ZLibSuffix) return false
-
-        // If we reach this point, the packet has been completed,
+        // If this returns true, the packet has been completed,
         //we can now read and return the text value of the packet
         //to be processed!
-        return true
+        return ba.size >= 4 && suffixInt(ba) == ZLibSuffix
+    }
+
+    /**
+     * Resets the compressor.
+     *
+     * This should be done when the compressor is safely
+     * inactive, and not when calls to [isMessageCompletedByFrame]
+     * are being made!
+     */
+    @Synchronized fun reset() {
+        inflater = Inflater()
+        decompressBuffer?.clear()
+        readBuffer = null
     }
 
     /**
@@ -102,8 +108,8 @@ class ZLibCompressor {
      */
     fun inflatePayload(ba: ByteArray): String {
         val decompressBuffer = getDecompressBuffer()
-        val decompressor = InflaterOutputStream(decompressBuffer, context)
-        val readBuffer = readBuffer
+        val decompressor = InflaterOutputStream(decompressBuffer, inflater)
+        val readBuffer = this.readBuffer
         try {
             when(readBuffer) {
                 // if this is null, we never created a readBuffer
@@ -115,37 +121,19 @@ class ZLibCompressor {
                 //two or more packets into the readBuffer. Now
                 //we are now writing the full content of the
                 //readBuffer to the decompressor at once.
-                else -> readBuffer.build().use { decompressor.writePacket(it) }
+                else -> readBuffer.build().use(decompressor::writePacket)
             }
         } catch(e: IOException) {
             // make sure to clear the buffer first.
             decompressBuffer.reset()
             throw e
         } finally {
-            readBuffer?.let {
-                readBuffer.close()
-                this.readBuffer = null
-            }
+            readBuffer?.close()
+            this.readBuffer = null
         }
         val text = decompressBuffer.toString("UTF-8")
         decompressBuffer.reset()
         return text
-    }
-
-    /**
-     * Resets the compressor.
-     *
-     * This should be done when the compressor is safely
-     * inactive, and not when calls to [isMessageCompletedByFrame]
-     * are being made!
-     *
-     * @throws java.lang.IllegalMonitorStateException if this violates
-     * synchronization constraints.
-     */
-    fun reset() = synchronized(readLock) {
-        context = Inflater()
-        decompressBuffer?.clear()
-        readBuffer = null
     }
 
     /////////////////////////////
@@ -168,14 +156,23 @@ class ZLibCompressor {
 
     private companion object {
         private const val ZLibSuffix = 0x0000FFFF
-        private const val COSSize = 1024
 
-        private fun compressionOutputStream() = ByteArrayOutputStream(COSSize)
+        /**
+         * Creates a [ByteArrayOutputStream] with a size of `1024`.
+         */
+        @JvmStatic private fun compressionOutputStream() = ByteArrayOutputStream(1024)
 
-        private fun suffixInt(ba: ByteArray, offset: Int = ba.size - 4): Int = (
-            (ba[offset + 3].toInt() and 0xFF) or
+        /**
+         * Reads and calculates an int to compare with the [ZLibSuffix]
+         * from the last 4 bytes of [ba].
+         */
+        @JvmStatic private fun suffixInt(ba: ByteArray): Int {
+            val offset = ba.size - 4
+
+            return (ba[offset + 3].toInt() and 0xFF) or
                 (ba[offset + 2].toInt() and 0xFF shl 8) or
                 (ba[offset + 1].toInt() and 0xFF shl 16) or
-                (ba[offset].toInt() and 0xFF shl 24))
+                (ba[offset    ].toInt() and 0xFF shl 24)
+        }
     }
 }

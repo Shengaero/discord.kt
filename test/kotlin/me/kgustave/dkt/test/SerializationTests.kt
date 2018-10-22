@@ -15,14 +15,14 @@
  */
 package me.kgustave.dkt.test
 
-import kotlinx.serialization.json.JSON
 import me.kgustave.dkt.internal.data.responses.GatewayInfo
+import me.kgustave.dkt.util.JsonParser
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 class SerializationTests {
     @Test fun `Test Deserialize GatewayInfo`() {
-        val gateway = JSON.parse<GatewayInfo>("""
+        val gateway = JsonParser.parse<GatewayInfo>("""
             {
                 "url": "wss://gateway.discord.gg/",
                 "shards": 9,

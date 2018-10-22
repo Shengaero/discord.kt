@@ -23,17 +23,27 @@ import kotlinx.coroutines.io.jvm.javaio.toInputStream
 import java.nio.charset.Charset
 import java.util.zip.GZIPInputStream
 
-fun HttpResponse.isGzip(): Boolean = headers[HttpHeaders.ContentEncoding] == "gzip"
+/**
+ * Returns `true` if this response uses gzip
+ */
+fun HttpResponse.isGzip(): Boolean = headers[HttpHeaders.ContentEncoding]?.toLowerCase() == "gzip"
 
-// utility for reading the body of an HttpResponse without suspending coroutine body.
-fun readHttpResponseBody(response: HttpResponse, isGzip: Boolean = response.isGzip()): String {
-    return response.content.toInputStream(response.coroutineContext[Job]).use { input ->
-        (if(isGzip) GZIPInputStream(input) else input).use {
-            it.reader(Charsets.UTF_8).use { reader -> reader.readText() }
-        }
+/**
+ * Reads the response body content of the [HttpResponse], returning it as a string.
+ */
+fun HttpResponse.readBody(isGzip: Boolean = isGzip(), charset: Charset = Charsets.UTF_8): String {
+    content.toInputStream(coroutineContext[Job]).use {
+        val input = if(isGzip) GZIPInputStream(it) else it
+        return input.use { input.reader(charset).use { reader -> reader.readText() } }
     }
 }
 
+@Deprecated("replaced with extension",
+    ReplaceWith("response.readBody(isGzip)", imports = ["me.kgustave.dkt.util"]))
+fun readHttpResponseBody(response: HttpResponse, isGzip: Boolean = response.isGzip()): String =
+    response.readBody(isGzip)
+
+@Deprecated("unused, scheduled for removal without replacement", level = DeprecationLevel.ERROR)
 fun readGzipText(text: String, charset: Charset = Charsets.UTF_8): String {
     return text.byteInputStream(charset).use {
         GZIPInputStream(it).use { gzip ->

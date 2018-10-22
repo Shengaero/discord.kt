@@ -77,6 +77,8 @@ interface Snowflake {
          */
         fun <S: Snowflake> equals(s1: S, s2: S): Boolean = s1 === s2 || s1.id == s2.id
 
+        fun hashcode(snowflake: Snowflake): Long = snowflake.id
+
         /**
          * Converts the provided [Snowflake] to a string using the provided
          * [identifier], in the following format:

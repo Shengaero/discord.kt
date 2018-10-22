@@ -27,13 +27,15 @@ import me.kgustave.dkt.entities.Presence
 import me.kgustave.dkt.entities.User
 import me.kgustave.dkt.http.engine.OkHttp
 import me.kgustave.dkt.http.engine.websockets.WebSockets
+import me.kgustave.dkt.internal.cache.EventCache
 import me.kgustave.dkt.internal.cache.SnowflakeCacheImpl
 import me.kgustave.dkt.internal.data.RawUser
 import me.kgustave.dkt.internal.data.responses.GatewayInfo
-import me.kgustave.dkt.internal.rest.restPromise
 import me.kgustave.dkt.internal.websocket.DiscordWebSocket
+import me.kgustave.dkt.internal.websocket.guild.GuildSetupManager
+import me.kgustave.dkt.promises.RestPromise
+import me.kgustave.dkt.promises.restPromise
 import me.kgustave.dkt.requests.Requester
-import me.kgustave.dkt.requests.RestPromise
 import me.kgustave.dkt.requests.Route
 import me.kgustave.dkt.requests.serialization.DiscordSerializer
 import kotlin.concurrent.thread
@@ -54,6 +56,10 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
         }
 
     override val userCache = SnowflakeCacheImpl(UserImpl::name)
+    override val guildCache = SnowflakeCacheImpl(GuildImpl::name)
+    override val textChannelCache = SnowflakeCacheImpl(TextChannelImpl::name)
+    override val voiceChannelCache = SnowflakeCacheImpl(VoiceChannelImpl::name)
+    override val categoryCache = SnowflakeCacheImpl(CategoryImpl::name)
 
     private lateinit var shutdownHook: Thread
 
@@ -71,7 +77,6 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
         }
 
         engine {
-            threadsCount = 5
             pipelining = true
             response.defaultCharset = Charsets.UTF_8
         }
@@ -118,6 +123,8 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
     ///////////////
 
     val maxReconnectDelay = 900 // FIXME Make configurable
+    val eventCache = EventCache()
+    val guildSetupManager = GuildSetupManager(this)
     val websocket = DiscordWebSocket(this, config.compression)
 
     init {
@@ -139,7 +146,8 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
 
     override suspend fun await(status: DiscordBot.Status): DiscordBot {
         require(status.isInit) { "Cannot await non-init status: $status" }
-        whileSelect { onTimeout(50) { this@DiscordBotImpl.status < status } }
+        if(this.status.ordinal >= status.ordinal) return this
+        whileSelect { onTimeout(50) { this@DiscordBotImpl.status.ordinal < status.ordinal } }
         return this
     }
 

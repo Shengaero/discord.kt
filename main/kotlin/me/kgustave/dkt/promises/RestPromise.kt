@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 @file:Suppress("MemberVisibilityCanBePrivate")
-package me.kgustave.dkt.requests
+package me.kgustave.dkt.promises
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import me.kgustave.dkt.internal.impl.DiscordBotImpl
+import me.kgustave.dkt.requests.RestTask
+import me.kgustave.dkt.requests.Route
 import kotlin.coroutines.suspendCoroutine
 
 abstract class RestPromise<T>

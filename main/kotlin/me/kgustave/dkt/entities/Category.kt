@@ -16,5 +16,6 @@
 package me.kgustave.dkt.entities
 
 interface Category: GuildChannel, ChannelHolder {
+    override val parent: Category? get() = null
     override val type get() = Channel.Type.CATEGORY
 }

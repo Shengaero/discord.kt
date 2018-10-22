@@ -20,13 +20,8 @@ import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.serialization.json.JSON
 import me.kgustave.dkt.internal.data.errors.RateLimitedResponse
-import me.kgustave.dkt.util.readHttpResponseBody
-import me.kgustave.dkt.util.createLogger
-import me.kgustave.dkt.util.currentTimeMs
-import me.kgustave.dkt.util.reject
-import java.time.OffsetDateTime
+import me.kgustave.dkt.util.*
 import java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -73,15 +68,15 @@ class RateLimiter(private val requester: Requester) {
             val status = response.status
 
             if(offset == -1L) headers[HttpHeaders.Date]?.let { date ->
-                val dateTime = OffsetDateTime.parse(date, RFC_1123_DATE_TIME)
+                val dateTime = parseOffsetDateTime(date, RFC_1123_DATE_TIME)
                 offset = dateTime.toInstant().toEpochMilli() - now
                 Log.debug("Set RateLimiter time offset to $offset ms")
             }
 
             if(status.value == 429) {
                 val global = headers[XRateLimitGlobal]
-                val text = readHttpResponseBody(response)
-                val body = JSON.parse<RateLimitedResponse>(text)
+                val text = response.readBody(response.isGzip())
+                val body = JsonParser.parse<RateLimitedResponse>(text)
                 val retryAfter = headers[HttpHeaders.RetryAfter]?.toLongOrNull() ?: body.retryAfter
                 Log.debug("RateLimit received: $body")
 

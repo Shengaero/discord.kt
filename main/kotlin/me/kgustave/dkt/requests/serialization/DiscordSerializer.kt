@@ -19,10 +19,10 @@ package me.kgustave.dkt.requests.serialization
 
 import io.ktor.client.call.TypeInfo
 import io.ktor.client.features.json.JsonSerializer
+import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.response.HttpResponse
 import io.ktor.client.response.readText
 import io.ktor.client.utils.EmptyContent
-import io.ktor.http.HttpHeaders
 import io.ktor.http.charset
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.content.TextContent
@@ -31,8 +31,7 @@ import kotlinx.serialization.json.*
 import kotlinx.serialization.serializer
 import me.kgustave.dkt.exceptions.RequestException
 import me.kgustave.dkt.requests.Requester
-import me.kgustave.dkt.util.readHttpResponseBody
-import kotlin.reflect.full.isSubclassOf
+import me.kgustave.dkt.util.*
 
 /**
  * Serializer for Discord.kt requests
@@ -45,28 +44,29 @@ import kotlin.reflect.full.isSubclassOf
  */
 class DiscordSerializer: JsonSerializer {
     override suspend fun read(type: TypeInfo, response: HttpResponse): Any {
-        val encoding = response.headers[HttpHeaders.ContentEncoding]
-        // Gzip is slightly more complicated to parse using
-        //ktor client at the moment (see utility function
-        //in me/kgustave/dkt/util/http.kt).
-        val text = if(encoding == "gzip") readHttpResponseBody(response, true) else {
-            // If this isn't gzip we should go for
-            //the more optimized response read.
+        // Gzip is slightly more complicated to parse using ktor client at the moment
+        val text = if(response.isGzip()) response.readBody(true) else {
+            // If this isn't gzip we should go for the more optimized response read.
             response.readText(response.charset() ?: Charsets.UTF_8)
         }
+
+        val kotlinType = type.type
+        val javaType = kotlinType.java
 
         // If we are being asked to parse the text into
         //a raw JsonElement we want to cover this.
         // There are several cases where this is useful.
-        if(type.type.isSubclassOf(JsonElement::class)) return JsonTreeParser(text).readFully()
+        if(JsonElement::class.java.isAssignableFrom(javaType)) return JsonTreeParser(text).readFully()
 
-        // 429 should be handled separately!
-        if(response.status.value !in 200 until 400 && response.status.value != 429) {
-            throw JSON.nonstrict.parse<RequestException>(text)
+        val statusCode = response.status.value
+
+        // This is a failed request with a response error. Note: 429 should be handled separately!
+        if(RequestException::class.java.isAssignableFrom(javaType) || (statusCode >= 400 && statusCode != 429)) {
+            throw JsonParser.parse<RequestException>(text)
         }
 
         // Deserialize using kotlinx.serialization
-        return JSON.nonstrict.parse(type.type.serializer(), text)
+        return JsonParser.parse(kotlinType.serializer(), text)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -74,6 +74,10 @@ class DiscordSerializer: JsonSerializer {
         val text = when(data) {
             // Empty content returns itself
             is EmptyContent -> return data
+
+            // FormDataContent is used in for sending messages
+            //with file attachments, and it should be handled.
+            is FormDataContent -> return data
 
             // Strings should just be sent as is.
             // Note that this option is used only in rare cases
@@ -83,9 +87,8 @@ class DiscordSerializer: JsonSerializer {
 
             // Like the read function, we can stringify
             //and write certain JsonElement types
-            is JsonObject,
-            is JsonArray -> data.toString()
-            else -> JSON.stringify(data::class.serializer() as KSerializer<Any>, data)
+            is JsonObject, is JsonArray -> (data as JsonElement).stringify()
+            else -> JsonParser.stringify(data::class.serializer() as KSerializer<Any>, data)
         }
 
         // The text is packaged into content with the requester JSON content-type.

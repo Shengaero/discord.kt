@@ -18,15 +18,15 @@ package me.kgustave.dkt.internal.data.events
 import kotlinx.serialization.Optional
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import me.kgustave.dkt.internal.data.RawSelfUser
 import me.kgustave.dkt.internal.data.RawUnavailableGuild
-import me.kgustave.dkt.internal.data.RawUser
 
 @Serializable
 internal data class RawReadyEvent(
     val v: Int,
-    val user: RawUser,
-    @SerialName("private_channels") val privateChannels: List<String>,
+    val user: RawSelfUser,
     val guilds: List<RawUnavailableGuild>,
+    @SerialName("private_channels") val privateChannels: List<String>,
     @SerialName("session_id") val sessionId: String,
     @Optional @SerialName("_trace") val trace: Set<String>? = null
 )

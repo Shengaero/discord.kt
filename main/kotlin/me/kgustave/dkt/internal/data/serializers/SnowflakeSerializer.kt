@@ -15,17 +15,30 @@
  */
 package me.kgustave.dkt.internal.data.serializers
 
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
-import kotlinx.serialization.Serializer
+import kotlinx.serialization.*
+import kotlinx.serialization.json.JSON
+import kotlinx.serialization.json.JsonPrimitive
 
-@Serializer(forClass = Long::class)
-object SnowflakeSerializer {
+object SnowflakeSerializer: KSerializer<Long> by Long.serializer() {
     override fun deserialize(input: Decoder): Long {
+        check(input is JSON.JsonInput)
         return input.decodeString().toLong()
     }
 
     override fun serialize(output: Encoder, obj: Long) {
-        output.encodeString(obj.toString())
+        val primitive = JsonPrimitive("$obj")
+        println(primitive)
+        val json = output as JSON.JsonOutput
+        json.writeTree(primitive)
+    }
+}
+
+object SnowflakeArraySerializer: KSerializer<List<Long>> by Long.serializer().list {
+    private val outputSerializer = String.serializer().list
+
+    override fun serialize(output: Encoder, obj: List<Long>) {
+        val out = output.beginCollection(outputSerializer.descriptor, obj.size)
+        for((i, e) in obj.withIndex()) out.encodeStringElement(outputSerializer.descriptor, i, e.toString())
+        out.endStructure(outputSerializer.descriptor)
     }
 }

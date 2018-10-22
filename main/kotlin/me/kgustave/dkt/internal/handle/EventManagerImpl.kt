@@ -22,7 +22,7 @@ import me.kgustave.dkt.handle.EventManager
 internal class EventManagerImpl: EventManager {
     override val listeners = mutableListOf<Any>()
 
-    override suspend fun dispatch(event: Event) {
+    override fun dispatch(event: Event) {
         // TODO
     }
 

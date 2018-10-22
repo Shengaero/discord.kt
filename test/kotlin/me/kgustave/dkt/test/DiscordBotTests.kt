@@ -74,15 +74,15 @@ class DiscordBotTests: CoroutineTestBase() {
         delay(2000)
 
         bot.updatePresence {
-            status { OnlineStatus.DND }
-            activity { listeningTo("the Gateway") }
+            this.status = OnlineStatus.DO_NOT_DISTURB
+            this.activity = listeningTo("the Gateway")
         }
 
         presence = bot.presence
         activity = presence.activity
 
         assertNotNull(activity)
-        assertEquals(OnlineStatus.DND, presence.status)
+        assertEquals(OnlineStatus.DO_NOT_DISTURB, presence.status)
         assertEquals("the Gateway", activity.name)
         assertEquals(Activity.Type.LISTENING, activity.type)
     }

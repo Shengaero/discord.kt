@@ -15,14 +15,14 @@
  */
 package me.kgustave.dkt.util
 
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.*
 
 // More efficient stringify functions for JsonObject and JsonArray
 // Normally the toString methods create a new StringBuilder ever
 //time they call toString on an inner object or array. These methods
 //use only the top level buffer.
+
+internal val JsonParser = JSON(strictMode = false)
 
 fun JsonElement.stringify() = when(this) {
     is JsonObject -> stringify()

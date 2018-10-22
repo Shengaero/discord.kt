@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.internal.data
+package me.kgustave.dkt.internal.impl
 
-import kotlinx.serialization.Serializable
-import me.kgustave.dkt.internal.data.serializers.SnowflakeSerializer
+import me.kgustave.dkt.entities.TextChannel
 
-@Serializable
-internal data class RawUnavailableGuild(
-    @Serializable(SnowflakeSerializer::class)
-    val id: Long
-)
+internal class TextChannelImpl(
+    id: Long,
+    guild: GuildImpl
+): TextChannel, AbstractGuildChannelImpl(id, guild) {
+    internal var parentId: Long? = null
+
+    override val parent: CategoryImpl? get() = parentId?.let { guild.categoryCache[it] }
+}

@@ -20,7 +20,7 @@ import me.kgustave.dkt.events.Event
 interface EventManager {
     val listeners: Collection<Any>
 
-    suspend fun dispatch(event: Event)
+    fun dispatch(event: Event)
     fun addListener(listener: Any)
     fun removeListener(listener: Any)
     fun shutdown() {}

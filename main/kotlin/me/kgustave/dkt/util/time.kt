@@ -16,49 +16,37 @@
 @file:JvmName("TimeUtil")
 package me.kgustave.dkt.util
 
-import io.ktor.util.date.GMTDate
-import io.ktor.util.date.toGMTDate
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
-import java.util.Calendar.getInstance as calendarInstanceOf
-import java.util.TimeZone.getTimeZone as timeZoneOf
+import java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME
 
-private const val DISCORD_EPOCH = 1420070400000L
-private const val TIMESTAMP_OFFSET = 22
+/** The current [system][System] time in milliseconds. */
+inline val currentTimeMs: Long
+    @JvmSynthetic inline get() = System.currentTimeMillis()
 
-inline val currentTimeMs inline get() = System.currentTimeMillis()
+/** The current [OffsetDateTime]. */
+inline val currentOffsetDateTime: OffsetDateTime
+    // Interestingly enough, this is the most efficient form.
+    //I personally would have thought the not-null assertion (IE: !!)
+    //would "weight less" bytecode wise, but according to kotlinc,
+    //allowing intrinsics to check it like this is just a tad smaller.
+    @JvmSynthetic inline get() = OffsetDateTime.now()
 
-val currentOffsetDateTime: OffsetDateTime get() = OffsetDateTime.now()
-
-fun snowflakeTimeOf(id: Long): OffsetDateTime {
-    val timestamp = (id ushr TIMESTAMP_OFFSET) + DISCORD_EPOCH
-    val gmt = calendarInstanceOf(timeZoneOf("GMT"))
-    gmt.timeInMillis = timestamp
-    return OffsetDateTime.ofInstant(gmt.toInstant(), gmt.timeZone.toZoneId())
-}
-
-fun parseOffsetDateTime(time: String, format: DateTimeFormatter): OffsetDateTime {
-    return OffsetDateTime.parse(time, format)
-}
-
-@Deprecated(
-    message = "Discord.kt no longer supports usage of GMTDate! " +
-              "Use OffsetDateTime and currentOffsetDateTime instead!",
-    replaceWith = ReplaceWith(
-        expression = "currentOffsetDateTime",
-        imports = ["me.kgustave.dkt.util.currentOffsetDateTime"]
-    )
-)
-val currentGMTDate: GMTDate get() = currentOffsetDateTime.toInstant().toGMTDate()
-
-@Deprecated(
-    message = "Discord.kt no longer supports usage of GMTDate! " +
-              "Use OffsetDateTime and parseOffsetDateTime instead!",
-    replaceWith = ReplaceWith(
-        expression = "parseOffsetDateTime(time, format)",
-        imports = ["me.kgustave.dkt.util.parseOffsetDateTime"]
-    )
-)
-fun parseGMTDate(time: String, format: DateTimeFormatter): GMTDate {
-    return parseOffsetDateTime(time, format).toInstant().toGMTDate()
-}
+/**
+ * Parses the provided [time] string using the provided [formatter], returning
+ * a resulting [OffsetDateTime].
+ *
+ * If no [formatter] is provided, this will default to using [ISO_OFFSET_DATE_TIME].
+ *
+ * This uses [OffsetDateTime.parse], more details on the exact functionality
+ * of this function can be found there.
+ *
+ * @param time The time string to parse.
+ * @param formatter The formatter to parse the time string with, default [ISO_OFFSET_DATE_TIME].
+ *
+ * @return An [OffsetDateTime] parsed from the [time] with the given [formatter].
+ *
+ * @see OffsetDateTime.parse
+ */
+fun parseOffsetDateTime(time: String, formatter: DateTimeFormatter = ISO_OFFSET_DATE_TIME): OffsetDateTime =
+    OffsetDateTime.parse(time, formatter)

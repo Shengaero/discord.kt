@@ -16,8 +16,6 @@
 @file:Suppress("FoldInitializerAndIfToElvis", "RemoveEmptyPrimaryConstructor", "unused")
 package me.kgustave.dkt.entities
 
-import kotlinx.serialization.*
-import kotlinx.serialization.json.*
 import me.kgustave.dkt.util.IntPair
 import java.time.OffsetDateTime
 
@@ -48,7 +46,7 @@ sealed class Activity {
     }
 }
 
-class BasicActivity(
+class BasicActivity internal constructor(
     override val name: String,
     override val type: Activity.Type,
     override val url: String? = null,
@@ -69,36 +67,4 @@ class RichPresenceActivity internal constructor(
         val id: String? = null,
         val size: IntPair? = null
     )
-}
-
-@Serializer(forClass = Activity::class)
-internal object ActivitySerializer {
-    override fun deserialize(input: Decoder): Activity {
-        check(input is JSON.JsonInput) { "Decoder was not a JsonInput!" }
-        val json = input.readAsTree().jsonObject
-
-        val name = json["name"].content
-        val type = Activity.Type.of(json["type"].int)
-        val url = json["url"].contentOrNull
-        val timestamps = json.getObjectOrNull("timestamps")?.let {
-            Activity.Timestamps(it["begin"].longOrNull, it["end"].longOrNull)
-        }
-
-        val applicationId = json["application_id"].contentOrNull?.toLongOrNull()
-
-        if(applicationId == null) return BasicActivity(name, type, url, timestamps)
-
-        return RichPresenceActivity(name, type, url, timestamps, applicationId)
-    }
-
-    override fun serialize(output: Encoder, obj: Activity) {
-        check(output is JSON.JsonOutput) { "Encoder must be JsonOutput!" }
-        check(obj !is RichPresenceActivity) { "Cannot serialize RichPresenceActivity!" }
-        val json = json {
-            "name" to obj.name
-            "type" to obj.type.ordinal
-            obj.url?.let { url -> "url" to url }
-        }
-        output.writeTree(json)
-    }
 }

@@ -20,6 +20,7 @@ import io.ktor.client.call.UnsupportedContentTypeException
 import io.ktor.client.engine.mergeHeaders
 import io.ktor.client.request.DefaultHttpRequest
 import io.ktor.http.content.OutgoingContent
+import io.ktor.util.InternalAPI
 import kotlinx.coroutines.*
 import kotlinx.coroutines.io.ByteReadChannel
 import kotlinx.coroutines.io.jvm.javaio.toInputStream
@@ -30,8 +31,14 @@ import okio.Okio
 import java.io.IOException
 import kotlin.coroutines.*
 
-private class CompletableCallback(parent: Job?): Callback {
+private class CompletableCallback(call: Call, parent: Job?): Callback {
     private val completion = CompletableDeferred<Response>(parent = parent)
+
+    init {
+        completion.invokeOnCompletion {
+            if(it is CancellationException) call.cancel()
+        }
+    }
 
     suspend fun await() = completion.await()
 
@@ -55,9 +62,9 @@ private class StreamRequestBody(
 }
 
 internal suspend fun Call.await(): Response {
-    val completion = CompletableCallback(coroutineContext[Job])
-    enqueue(completion)
-    return completion.await()
+    val callback = CompletableCallback(this, coroutineContext[Job])
+    enqueue(callback)
+    return callback.await()
 }
 
 internal fun CoroutineScope.convertToOkHttpBody(content: OutgoingContent): RequestBody? = when(content) {
@@ -71,6 +78,7 @@ internal fun CoroutineScope.convertToOkHttpBody(content: OutgoingContent): Reque
     else -> throw UnsupportedContentTypeException(content)
 }
 
+@UseExperimental(InternalAPI::class)
 internal fun DefaultHttpRequest.toOkRequest(): Request = Request.Builder().apply {
     url(url.toString())
     mergeHeaders(headers, content) { key, value -> addHeader(key, value) }

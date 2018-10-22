@@ -27,10 +27,10 @@ interface GuildVoiceState {
 
     val bot: DiscordBot
     val guild: Guild
-    val channel: VoiceChannel
+    val channel: VoiceChannel?
     val user: User
     val member: Member
-    val sessionId: String
+    val sessionId: String?
     val deaf: Boolean
     val mute: Boolean
     val selfDeaf: Boolean

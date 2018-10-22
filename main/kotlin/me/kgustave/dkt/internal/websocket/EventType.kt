@@ -15,29 +15,14 @@
  */
 package me.kgustave.dkt.internal.websocket
 
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.Serializer
-
 enum class EventType {
     READY,
     RESUMED,
+    GUILD_CREATE,
+    GUILD_MEMBERS_CHUNK,
     UNKNOWN;
 
-    @Serializer(forClass = EventType::class)
     companion object {
-        fun serializer(): KSerializer<EventType> = this
-
         @JvmStatic fun of(value: String) = values().firstOrNull { it.name == value } ?: UNKNOWN
-
-        override fun deserialize(input: Decoder): EventType {
-            return of(input.decodeString())
-        }
-
-        override fun serialize(output: Encoder, obj: EventType) {
-            output.encodeString(obj.name)
-        }
     }
 }

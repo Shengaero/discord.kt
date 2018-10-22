@@ -18,7 +18,7 @@ package me.kgustave.dkt.entities
 
 import me.kgustave.dkt.DiscordBot
 import me.kgustave.dkt.requests.Requester
-import me.kgustave.dkt.requests.RestPromise
+import me.kgustave.dkt.promises.RestPromise
 
 interface User: Snowflake, Mentionable {
     val bot: DiscordBot

@@ -15,4 +15,12 @@
  */
 package me.kgustave.dkt.entities
 
-interface PermissionHolder
+import me.kgustave.dkt.Permission
+
+interface PermissionHolder {
+    val permissions: List<Permission>
+    val rawPermissions: Long
+
+    fun canInteractWith(member: Member): Boolean
+    fun canInteractWith(role: Role): Boolean
+}

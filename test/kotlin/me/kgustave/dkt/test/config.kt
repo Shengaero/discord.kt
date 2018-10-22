@@ -16,13 +16,13 @@
 package me.kgustave.dkt.test
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JSON
+import me.kgustave.dkt.util.JsonParser
 
 @Serializable data class TestConfig(val token: String)
 
 private val instance by lazy {
     val resource = TestConfig::class.java.getResource("/test-config.json")
-    return@lazy JSON.parse<TestConfig>(resource.readText())
+    return@lazy JsonParser.parse<TestConfig>(resource.readText())
 }
 
 fun loadConfig(): TestConfig = instance

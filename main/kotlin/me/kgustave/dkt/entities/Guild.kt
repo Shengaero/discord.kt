@@ -18,20 +18,27 @@ package me.kgustave.dkt.entities
 import me.kgustave.dkt.DiscordBot
 import me.kgustave.dkt.entities.cache.MemberCache
 import me.kgustave.dkt.entities.cache.SnowflakeCache
-import me.kgustave.dkt.requests.RestPromise
+import me.kgustave.dkt.promises.RestPromise
 
 interface Guild: Snowflake, ChannelHolder {
     val bot: DiscordBot
     val name: String
-    val iconId: String?
+    val iconHash: String?
     val iconUrl: String?
-    val splashId: String?
+    val splashHash: String?
     val splashUrl: String?
     val owner: Member
-    val everyoneRole: Role
+    val publicRole: Role
+
+    @Deprecated(
+        message = "renamed to publicRole for API consistency",
+        replaceWith = ReplaceWith("publicRole")
+    )
+    val everyoneRole: Role get() = publicRole
+
     val systemChannel: TextChannel?
     val afkChannel: VoiceChannel?
-    val features: Set<String>
+    val features: List<String>
     val unavailable: Boolean
     val hasWidget: Boolean
     val hasElevatedMFALevel: Boolean
@@ -40,12 +47,12 @@ interface Guild: Snowflake, ChannelHolder {
     val defaultNotificationLevel: NotificationLevel
     val explicitContentFilter: ExplicitContentFilter
 
-    val roleCache: SnowflakeCache<Role>
-    val emoteCache: SnowflakeCache<GuildEmote>
+    val roleCache: SnowflakeCache<out Role>
+    val emoteCache: SnowflakeCache<out GuildEmote>
     val memberCache: MemberCache
-    val categoryCache: SnowflakeCache<Category>
-    val textChannelCache: SnowflakeCache<TextChannel>
-    val voiceChannelCache: SnowflakeCache<VoiceChannel>
+    val categoryCache: SnowflakeCache<out Category>
+    val textChannelCache: SnowflakeCache<out TextChannel>
+    val voiceChannelCache: SnowflakeCache<out VoiceChannel>
 
     val roles: List<Role>
     val emotes: List<GuildEmote>
@@ -84,11 +91,11 @@ interface Guild: Snowflake, ChannelHolder {
         TWO_FACTOR_AUTHENTICATION,
         UNKNOWN;
         companion object {
-            fun typeOf(ordinal: Int): MFALevel {
-                if(ordinal >= UNKNOWN.ordinal)
+            fun of(type: Int): MFALevel {
+                if(type >= UNKNOWN.ordinal)
                     return UNKNOWN
 
-                return values().firstOrNull { ordinal == it.ordinal } ?: UNKNOWN
+                return values().firstOrNull { type == it.ordinal } ?: UNKNOWN
             }
         }
     }
@@ -100,12 +107,13 @@ interface Guild: Snowflake, ChannelHolder {
         HIGH,
         VERY_HIGH,
         UNKNOWN;
+
         companion object {
-            fun typeOf(ordinal: Int): VerificationLevel {
-                if(ordinal >= UNKNOWN.ordinal)
+            fun of(type: Int): VerificationLevel {
+                if(type >= UNKNOWN.ordinal)
                     return UNKNOWN
 
-                return values().firstOrNull { ordinal == it.ordinal } ?: UNKNOWN
+                return values().firstOrNull { type == it.ordinal } ?: UNKNOWN
             }
         }
     }
@@ -115,11 +123,11 @@ interface Guild: Snowflake, ChannelHolder {
         ONLY_MENTIONS,
         UNKNOWN;
         companion object {
-            fun typeOf(ordinal: Int): NotificationLevel {
-                if(ordinal >= UNKNOWN.ordinal)
+            fun of(type: Int): NotificationLevel {
+                if(type >= UNKNOWN.ordinal)
                     return UNKNOWN
 
-                return values().firstOrNull { ordinal == it.ordinal } ?: UNKNOWN
+                return values().firstOrNull { type == it.ordinal } ?: UNKNOWN
             }
         }
     }
@@ -130,11 +138,11 @@ interface Guild: Snowflake, ChannelHolder {
         ALL_MEMBERS("Scan messages sent by all members."),
         UNKNOWN("Unknown contentBuilder filter!");
         companion object {
-            fun typeOf(ordinal: Int): ExplicitContentFilter {
-                if(ordinal >= UNKNOWN.ordinal)
+            fun of(type: Int): ExplicitContentFilter {
+                if(type >= UNKNOWN.ordinal)
                     return UNKNOWN
 
-                return values().firstOrNull { ordinal == it.ordinal } ?: UNKNOWN
+                return values().firstOrNull { type == it.ordinal } ?: UNKNOWN
             }
         }
     }

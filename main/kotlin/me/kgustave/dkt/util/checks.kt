@@ -19,6 +19,34 @@ package me.kgustave.dkt.util
 import java.util.concurrent.RejectedExecutionException
 import kotlin.contracts.contract
 
+// IllegalArgumentException
+
+/**
+ * Checks if a string is longer than the specified length,
+ * outputting a helpful error if it is.
+ *
+ * If the string is `null` this does nothing.
+ */
+fun requireNotLonger(string: String?, length: Int, name: String) {
+    string ?: return
+    require(string.length <= length) { "$name cannot be longer than $length characters" }
+}
+
+/**
+ * Throws an exception if the provided string is blank.
+ *
+ * This is not the same as the string being empty, as this checks
+ * for whitespace as well.
+ *
+ * If the string is `null` this does nothing.
+ */
+fun requireNotBlank(string: String?, name: String) {
+    string ?: return
+    require(string.isNotBlank()) { "$name cannot be blank" }
+}
+
+// RejectedExecutionException
+
 /**
  * Throws a [RejectedExecutionException] if [condition] is `true`.
  */
@@ -34,6 +62,8 @@ inline fun reject(condition: Boolean, msg: () -> String) {
     contract { returns() implies (!condition) }
     if(condition) throw RejectedExecutionException(msg())
 }
+
+// UnsupportedOperationException
 
 /**
  * Throws a [UnsupportedOperationException].

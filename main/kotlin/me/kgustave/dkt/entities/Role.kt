@@ -13,10 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("MemberVisibilityCanBePrivate", "unused")
 package me.kgustave.dkt.entities
 
 import me.kgustave.dkt.DiscordBot
+import java.awt.Color
 
 interface Role: Snowflake, Mentionable, PermissionHolder, Comparable<Role> {
     val bot: DiscordBot
+    val guild: Guild
+    val name: String
+    val color: Color
+    val colorInt: Int
+    val position: Int
+    val rawPosition: Int
+
+    val isPublicRole: Boolean get() = this == guild.publicRole
+    override val mention: String get() = "<@&$id>"
+
+    companion object {
+        const val DefaultColorInt = 0x1FFFFFFF
+
+        val DefaultColor get() = Color(DefaultColorInt)
+    }
 }

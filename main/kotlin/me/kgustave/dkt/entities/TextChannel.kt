@@ -17,4 +17,5 @@ package me.kgustave.dkt.entities
 
 interface TextChannel: Mentionable, MessageChannel, GuildChannel {
     override val type get() = Channel.Type.TEXT
+    override val mention get() = "<#$id>"
 }

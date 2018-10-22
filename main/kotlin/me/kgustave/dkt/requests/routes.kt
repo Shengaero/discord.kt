@@ -17,6 +17,7 @@
 package me.kgustave.dkt.requests
 
 import io.ktor.http.HttpMethod
+import io.ktor.http.HttpMethod.Companion.Delete
 import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.formUrlEncode
@@ -46,7 +47,10 @@ sealed class Route {
 
         val CreateDM = route(Post, "/users/@me/channels")
 
+        val GetMessage    = route(Get, "/channels/{channel.id}/messages/{message.id}", listOf("channel.id", "message.id"))
         val CreateMessage = route(Post, "/channels/{channel.id}/messages", listOf("channel.id"))
+
+        val LeaveGuild = route(Delete, "/users/@me/guilds/{guild.id}", listOf("guild.id"))
     }
 }
 

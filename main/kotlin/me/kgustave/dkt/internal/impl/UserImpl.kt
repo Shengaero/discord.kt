@@ -18,13 +18,13 @@ package me.kgustave.dkt.internal.impl
 import kotlinx.serialization.json.json
 import me.kgustave.dkt.entities.PrivateChannel
 import me.kgustave.dkt.entities.User
-import me.kgustave.dkt.internal.data.RawUser
-import me.kgustave.dkt.internal.rest.emptyPromise
-import me.kgustave.dkt.internal.rest.restPromise
-import me.kgustave.dkt.requests.RestPromise
+import me.kgustave.dkt.internal.data.RawUserData
+import me.kgustave.dkt.promises.RestPromise
+import me.kgustave.dkt.promises.emptyPromise
+import me.kgustave.dkt.promises.restPromise
 import me.kgustave.dkt.requests.Route
 
-internal open class UserImpl(override val bot: DiscordBotImpl, raw: RawUser): User {
+internal open class UserImpl(override val bot: DiscordBotImpl, raw: RawUserData): User {
     override val id: Long = raw.id
     override val isBot: Boolean = raw.bot
     override var name: String = raw.username
@@ -43,7 +43,7 @@ internal open class UserImpl(override val bot: DiscordBotImpl, raw: RawUser): Us
 
     override fun openPrivateChannel(): RestPromise<PrivateChannel> {
         privateChannel?.let { return bot.emptyPromise(it) }
-        val body = json { "recipient_id" to id }
+        val body = json { "recipient_id" to "$id" }
         return bot.restPromise(Route.CreateDM, body = body) {
             TODO()
         }
@@ -53,7 +53,7 @@ internal open class UserImpl(override val bot: DiscordBotImpl, raw: RawUser): Us
      * Patches the [UserImpl] with the data contained by the
      * provided [raw] user instance.
      */
-    internal fun patch(raw: RawUser) {
+    internal fun patch(raw: RawUserData) {
         require(id == raw.id) { "User ID mismatch! Expected $id, Actual: ${raw.id}" }
 
         this.name = raw.username

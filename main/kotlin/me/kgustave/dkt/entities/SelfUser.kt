@@ -15,7 +15,7 @@
  */
 package me.kgustave.dkt.entities
 
-import me.kgustave.dkt.requests.RestPromise
+import me.kgustave.dkt.promises.RestPromise
 
 interface SelfUser: User {
 

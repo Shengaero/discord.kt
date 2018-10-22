@@ -17,4 +17,26 @@ package me.kgustave.dkt.entities.cache
 
 import me.kgustave.dkt.entities.Member
 
-interface MemberCache: NamedCache<Long, Member>, OrderedCache<Long, Member>
+interface MemberCache: Cache<Member> {
+    fun getByNickname(nickname: String, ignoreCase: Boolean = false): List<Member> {
+        val returns = arrayListOf<Member>()
+        for(entity in this) {
+            val entityNickname = entity.nickname ?: continue
+            if(entityNickname.equals(nickname, ignoreCase)) {
+                returns += entity
+            }
+        }
+        return returns
+    }
+
+    fun getByUsername(username: String, ignoreCase: Boolean = false): List<Member> {
+        val returns = arrayListOf<Member>()
+        for(entity in this) {
+            if(entity.user.name.equals(username, ignoreCase)) {
+                returns += entity
+            }
+        }
+        return returns
+
+    }
+}

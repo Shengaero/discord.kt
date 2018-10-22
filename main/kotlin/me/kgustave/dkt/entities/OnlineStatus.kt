@@ -13,37 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("unused")
 package me.kgustave.dkt.entities
 
 import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializer
 
 enum class OnlineStatus {
     ONLINE,
     IDLE,
-    DND,
+    DO_NOT_DISTURB("DND"),
     INVISIBLE,
     OFFLINE,
+    @Deprecated("Use DO_NOT_DISTURB instead!", ReplaceWith("DO_NOT_DISTURB")) DND,
     UNKNOWN;
 
-    @Serializer(forClass = OnlineStatus::class)
+    val statusName: String
+
+    // note: this is a compiler workaround for kotlinx.serialization
+    constructor() { this.statusName = this.name }
+    constructor(statusName: String) { this.statusName = statusName }
+
+    @Serializer(OnlineStatus::class)
     companion object {
-        fun serializer(): KSerializer<OnlineStatus> = this
+        @JvmStatic fun of(name: String): OnlineStatus {
+            @Suppress("DEPRECATION")
+            if(name.toUpperCase() == DND.statusName) return DO_NOT_DISTURB
 
-        @JvmStatic fun of(name: String) = values().firstOrNull { it.name == name.toUpperCase() } ?: UNKNOWN
-
-        override fun deserialize(input: Decoder): OnlineStatus {
-            val value = input.decodeString()
-
-            return of(value)
+            return values().firstOrNull { it.statusName == name.toUpperCase() } ?: UNKNOWN
         }
 
+        override fun deserialize(input: Decoder): OnlineStatus = of(input.decodeString())
         override fun serialize(output: Encoder, obj: OnlineStatus) {
-            require(obj != UNKNOWN) { "Cannot serialize OnlineStatus 'UNKNOWN'!" }
-
-            output.encodeString(obj.name.toLowerCase())
+            output.encodeString(obj.statusName.toLowerCase())
         }
     }
 }

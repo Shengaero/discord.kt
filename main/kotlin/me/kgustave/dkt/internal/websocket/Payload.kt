@@ -18,13 +18,16 @@ package me.kgustave.dkt.internal.websocket
 import kotlinx.serialization.*
 import kotlinx.serialization.internal.makeNullable
 import kotlinx.serialization.json.*
+import me.kgustave.dkt.internal.data.RawGuild
+import me.kgustave.dkt.internal.data.RawUnavailableGuild
+import me.kgustave.dkt.internal.data.events.RawGuildMembersChunkEvent
 import me.kgustave.dkt.internal.data.events.RawReadyEvent
 import me.kgustave.dkt.internal.data.events.RawResumeEvent
 import me.kgustave.dkt.internal.data.serializers.IntPairArraySerializer
 import me.kgustave.dkt.internal.impl.PresenceImpl
-import me.kgustave.dkt.internal.websocket.EventType.READY
-import me.kgustave.dkt.internal.websocket.EventType.RESUMED
+import me.kgustave.dkt.internal.websocket.EventType.*
 import me.kgustave.dkt.util.IntPair
+import me.kgustave.dkt.util.JsonParser
 import me.kgustave.dkt.util.stringify
 
 @Serializable
@@ -32,7 +35,10 @@ internal data class Payload(
     val op: Int,
     @Optional val d: Any? = null,
     @Optional val s: Long? = null,
-    @Optional val t: EventType? = null
+    @Optional val t: EventType? = null,
+
+    // This is used for debugging unknown events
+    @Optional @Transient val debugT: String? = null
 ) {
     @Serializable
     data class Hello(
@@ -89,6 +95,31 @@ internal data class Payload(
         val seq: Long
     )
 
+    @Serializable
+    data class GuildMemberRequest(
+        @SerialName("guild_id")
+        val guildId: List<Long>,
+        val query: String,
+        val limit: Int
+    ) {
+        @Serializer(forClass = GuildMemberRequest::class)
+        companion object {
+            override fun serialize(output: Encoder, obj: GuildMemberRequest) {
+                check(output is JSON.JsonOutput)
+                val json = json {
+                    if(obj.guildId.size == 1) {
+                        "guild_id" to obj.guildId[0].toString()
+                    } else {
+                        "guild_id" to JsonArray(obj.guildId.map { JsonPrimitive(it.toString()) })
+                    }
+                    "query" to obj.query
+                    "limit" to obj.limit
+                }
+                output.writeTree(json)
+            }
+        }
+    }
+
     @Serializer(forClass = Payload::class)
     companion object {
         override fun deserialize(input: Decoder): Payload {
@@ -98,12 +129,12 @@ internal data class Payload(
             val d: Any? = when(op) {
                 OP.Event -> {
                     val s = json["s"].long
-                    val t = EventType.of(json["t"].content)
+                    val t = EventType.of(json["t"].content.replace(' ', '_').toUpperCase())
                     val d = deserializeEventData(t, json["d"])
-                    return Payload(op, d, s, t)
+                    return Payload(op, d, s, t, if(t == UNKNOWN) json["t"].content else null)
                 }
 
-                OP.Hello -> JSON.nonstrict.parse<Hello>("${json["d"]}")
+                OP.Hello -> JsonParser.parse<Hello>("${json["d"]}")
 
                 OP.Heartbeat, OP.HeartbeatACK -> null
 
@@ -157,6 +188,12 @@ internal data class Payload(
                     output.encodeSerializableElement(descriptor, dIndex, PresenceImpl.serializer(), presence)
                 }
 
+                OP.RequestGuildMembers -> {
+                    val guildMemberRequest = obj.d
+                    require(guildMemberRequest is GuildMemberRequest) { "Expected GuildMemberRequest data!" }
+                    output.encodeSerializableElement(descriptor, dIndex, GuildMemberRequest.serializer(), guildMemberRequest)
+                }
+
                 else -> throw UnsupportedOperationException("Serialization OP $op is not supported!")
             }
 
@@ -165,8 +202,14 @@ internal data class Payload(
 
         @JvmStatic private fun deserializeEventData(type: EventType, data: JsonElement): Any? {
             return when(type) {
-                READY -> JSON.nonstrict.parse<RawReadyEvent>(data.stringify())
-                RESUMED -> JSON.nonstrict.parse<RawResumeEvent>(data.stringify())
+                READY -> JsonParser.parse<RawReadyEvent>(data.stringify())
+                RESUMED -> JsonParser.parse<RawResumeEvent>(data.stringify())
+                GUILD_CREATE -> if(data.jsonObject.getOrNull("unavailable")?.booleanOrNull == true) {
+                    JsonParser.parse<RawUnavailableGuild>(data.stringify())
+                } else {
+                    JsonParser.parse<RawGuild>(data.stringify())
+                }
+                GUILD_MEMBERS_CHUNK -> JsonParser.parse<RawGuildMembersChunkEvent>(data.stringify())
                 else -> data
             }
         }

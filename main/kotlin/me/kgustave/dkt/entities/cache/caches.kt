@@ -16,37 +16,23 @@
 package me.kgustave.dkt.entities.cache
 
 import me.kgustave.dkt.entities.Snowflake
+import java.lang.UnsupportedOperationException
 
 // FIXME simplify type hierarchy for caches
 // TODO possibly add type variance to values?
 
-interface Cache<K, V>: Map<K, V>, Collection<V> {
+interface Cache<V>: Map<Long, V>, Collection<V> {
     override fun contains(element: V): Boolean = values.contains(element)
     override fun containsAll(elements: Collection<V>): Boolean = values.containsAll(elements)
     override fun iterator(): Iterator<V> = values.iterator()
+
+    fun toList(): List<V> = toList<V>()
+
+    fun getById(id: Long): V? = this[id]
+
+    fun getByName(name: String, ignoreCase: Boolean = false): List<V> {
+        throw UnsupportedOperationException("Getting cached entities by name is not supported by this cache!")
+    }
 }
 
-interface OrderedCache<K, V: Comparable<V>>: Cache<K, V>
-interface SnowflakeCache<S: Snowflake>: Cache<Long, S>
-interface NamedCache<K, V>: Cache<K, V> {
-    fun getByName(name: String, ignoreCase: Boolean = false): List<V>
-}
-
-interface OrderedSnowflakeCache<S>:
-    SnowflakeCache<S>,
-    OrderedCache<Long, S>
-    where S: Snowflake, S: Comparable<S>
-
-interface NamedSnowflakeCache<S: Snowflake>:
-    SnowflakeCache<S>,
-    NamedCache<Long, S>
-
-interface NamedOrderedCache<K, V: Comparable<V>>:
-    NamedCache<K, V>,
-    OrderedCache<K, V>
-
-interface NamedOrderedSnowflakeCache<S>:
-    OrderedSnowflakeCache<S>,
-    NamedSnowflakeCache<S>,
-    NamedOrderedCache<Long, S>
-    where S: Snowflake, S: Comparable<S>
+interface SnowflakeCache<S: Snowflake>: Cache<S>

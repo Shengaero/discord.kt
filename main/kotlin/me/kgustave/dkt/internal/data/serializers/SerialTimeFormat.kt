@@ -17,6 +17,7 @@ package me.kgustave.dkt.internal.data.serializers
 
 import java.time.format.DateTimeFormatter as DTF // I'm DTF ;3
 
+@Deprecated("create and implement format specific serializers")
 annotation class SerialTimeFormat(val kind: SerialTimeFormat.Kind) {
     enum class Kind(val formatter: DTF) {
         ISO_OFFSET_DATE_TIME(DTF.ISO_OFFSET_DATE_TIME),

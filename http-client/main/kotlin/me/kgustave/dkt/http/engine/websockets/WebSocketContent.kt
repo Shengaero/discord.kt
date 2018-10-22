@@ -23,12 +23,13 @@ import io.ktor.http.HttpHeaders.SecWebSocketAccept
 import io.ktor.http.HttpHeaders.SecWebSocketKey
 import io.ktor.http.HttpHeaders.SecWebSocketVersion
 import io.ktor.http.HttpHeaders.Upgrade
-import io.ktor.util.encodeBase64
-import java.util.Random
+import io.ktor.util.KtorExperimentalAPI
+import java.util.*
 
 internal class WebSocketContent: ClientUpgradeContent() {
-    private val nonce = encodeBase64(ByteArray(24).also(rand::nextBytes))
+    private val nonce = Base64.getEncoder().encodeToString(ByteArray(24).also(rand::nextBytes))
 
+    @KtorExperimentalAPI
     override val headers = buildHeaders {
         this[Upgrade] = "websocket"
         this[Connection] = "upgrade"

@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.internal.data
+package me.kgustave.dkt.internal.impl
 
-import kotlinx.serialization.Optional
-import kotlinx.serialization.Serializable
-import me.kgustave.dkt.internal.data.serializers.SnowflakeSerializer
+import me.kgustave.dkt.entities.Member
+import me.kgustave.dkt.entities.VoiceChannel
 
-@Serializable
-internal data class RawSelfUser(
-    @Serializable(SnowflakeSerializer::class) val id: Long,
-    val username: String,
-    val discriminator: String,
-    val avatar: String?,
-    @Optional val bot: Boolean = false
-) {
-    fun rawUserData() = RawUser(id, username, discriminator, avatar, bot)
+internal class VoiceChannelImpl(
+    id: Long,
+    guild: GuildImpl
+): VoiceChannel, AbstractGuildChannelImpl(id, guild) {
+    internal var parentId: Long? = null
+    override val parent: CategoryImpl? get() = parentId?.let { guild.categoryCache[it] }
+
+    internal val connectedMembers = hashMapOf<Long, Member>()
 }

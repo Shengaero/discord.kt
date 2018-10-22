@@ -15,26 +15,22 @@
  */
 package me.kgustave.dkt.internal.data.serializers
 
-import kotlinx.serialization.CompositeDecoder
 import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.internal.SerialClassDescImpl
+import me.kgustave.dkt.util.parseOffsetDateTime
 import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 
-object TimestampSerializer: KSerializer<OffsetDateTime> {
-    override val descriptor = SerialClassDescImpl("io.ktor.util.date.GMTDate")
+internal object ISO8601Serializer: KSerializer<OffsetDateTime> {
+    override val descriptor = SerialClassDescImpl("java.time.OffsetDateTime")
     override fun deserialize(input: Decoder): OffsetDateTime {
-        require(input is CompositeDecoder)
-        val index = input.decodeElementIndex(descriptor)
-        val annotations = descriptor.getElementAnnotations(index)
-        val timeFormat = annotations.asSequence().mapNotNull { it as? SerialTimeFormat }.firstOrNull()
-        requireNotNull(timeFormat) { "GMTDate deserialization requires @SerialTimeFormat" }
         val raw = input.decodeString()
-        return OffsetDateTime.parse(raw, timeFormat.kind.formatter)
+        return parseOffsetDateTime(raw, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
     }
 
     override fun serialize(output: Encoder, obj: OffsetDateTime) {
-        throw UnsupportedOperationException("Serializing OffsetDateTime is not supported!")
+        output.encodeString(obj.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
     }
 }

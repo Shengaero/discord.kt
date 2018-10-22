@@ -97,5 +97,5 @@ inline fun DiscordBot.Config.dispatcherProvider(block: () -> DispatcherProvider)
 
 @BotConfigDsl
 @JvmSynthetic
-@Deprecated("renamed to compression", replaceWith = ReplaceWith("compression(block)", imports = ["me.kgustave.dkt.compression"]))
+@Deprecated("renamed to compression", ReplaceWith("compression(block)", imports = ["me.kgustave.dkt.compression"]))
 inline fun DiscordBot.Config.useCompression(block: () -> Boolean) = compression(block)

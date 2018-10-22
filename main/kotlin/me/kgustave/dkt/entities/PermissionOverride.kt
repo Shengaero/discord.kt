@@ -13,17 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.internal.data
+package me.kgustave.dkt.entities
 
-import kotlinx.serialization.Optional
-import kotlinx.serialization.Serializable
-import me.kgustave.dkt.internal.data.serializers.SnowflakeSerializer
+import me.kgustave.dkt.DiscordBot
+import me.kgustave.dkt.Permission
+import me.kgustave.dkt.promises.RestPromise
 
-@Serializable
-internal data class RawUser(
-    @Serializable(SnowflakeSerializer::class) val id: Long,
-    val username: String,
-    val discriminator: String,
-    val avatar: String?,
-    @Optional val bot: Boolean = false
-)
+interface PermissionOverride {
+    val rawAllowed: Long
+    val rawInherited: Long
+    val rawDenied: Long
+
+    val allowed: List<Permission>
+    val inherited: List<Permission>
+    val denied: List<Permission>
+
+    val bot: DiscordBot
+    val channel: GuildChannel
+    val member: Member?
+    val role: Role?
+    val guild: Guild get() = channel.guild
+
+    fun delete(): RestPromise<Unit>
+}
