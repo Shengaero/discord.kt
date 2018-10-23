@@ -60,6 +60,7 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
     override val textChannelCache = SnowflakeCacheImpl(TextChannelImpl::name)
     override val voiceChannelCache = SnowflakeCacheImpl(VoiceChannelImpl::name)
     override val categoryCache = SnowflakeCacheImpl(CategoryImpl::name)
+    override val privateChannelCache = SnowflakeCacheImpl<PrivateChannelImpl>()
 
     private lateinit var shutdownHook: Thread
 
@@ -77,6 +78,7 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
         }
 
         engine {
+            expectSuccess = false
             pipelining = true
             response.defaultCharset = Charsets.UTF_8
         }
@@ -100,7 +102,7 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
             token = token,
             rateLimitDispatcher = rateLimitDispatcher,
             shutdownDispatcher = shutdownRateLimitDispatcher,
-            sessionHandler = sessionHandler
+            globalRateLimitProvider = sessionHandler
         )
     }
 

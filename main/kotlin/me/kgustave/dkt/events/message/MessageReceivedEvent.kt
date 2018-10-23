@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.entities.cache
+package me.kgustave.dkt.events.message
 
-import me.kgustave.dkt.entities.Member
+import me.kgustave.dkt.DiscordBot
+import me.kgustave.dkt.entities.Message
+import me.kgustave.dkt.events.message.MessageEvent
 
-interface MemberCache: Cache<Member> {
-    fun getByNickname(nickname: String, ignoreCase: Boolean = false): List<Member>
-
-    fun getByUsername(username: String, ignoreCase: Boolean = false): List<Member>
+class MessageReceivedEvent(override val bot: DiscordBot, val message: Message): MessageEvent {
+    override val messageId = message.id
+    override val channel = message.channel
 }

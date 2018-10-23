@@ -18,8 +18,9 @@ package me.kgustave.dkt.util
 
 import io.ktor.client.response.HttpResponse
 import io.ktor.http.HttpHeaders
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.io.jvm.javaio.toInputStream
+import io.ktor.util.cio.toByteArray
+import kotlinx.coroutines.runBlocking
+import java.io.ByteArrayInputStream
 import java.nio.charset.Charset
 import java.util.zip.GZIPInputStream
 
@@ -32,9 +33,17 @@ fun HttpResponse.isGzip(): Boolean = headers[HttpHeaders.ContentEncoding]?.toLow
  * Reads the response body content of the [HttpResponse], returning it as a string.
  */
 fun HttpResponse.readBody(isGzip: Boolean = isGzip(), charset: Charset = Charsets.UTF_8): String {
-    content.toInputStream(coroutineContext[Job]).use {
-        val input = if(isGzip) GZIPInputStream(it) else it
-        return input.use { input.reader(charset).use { reader -> reader.readText() } }
+    val ba = runBlocking { content.toByteArray() }
+    return ByteArrayInputStream(ba).use { input ->
+        if(isGzip) {
+            GZIPInputStream(input).reader(charset).use { reader ->
+                reader.readText()
+            }
+        } else {
+            input.reader(charset).use { reader ->
+                reader.readText()
+            }
+        }
     }
 }
 

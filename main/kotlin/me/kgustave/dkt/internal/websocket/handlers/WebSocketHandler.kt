@@ -28,7 +28,8 @@ internal abstract class WebSocketHandler(val bot: DiscordBotImpl) {
             READY to ReadyHandler(bot),
             RESUMED to ResumeHandler(bot),
             GUILD_CREATE to GuildCreateHandler(bot),
-            GUILD_MEMBERS_CHUNK to GuildMembersChunkHandler(bot)
+            GUILD_MEMBERS_CHUNK to GuildMembersChunkHandler(bot),
+            MESSAGE_CREATE to MessageCreateHandler(bot)
         )
     }
 }

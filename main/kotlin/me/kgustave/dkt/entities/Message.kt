@@ -35,6 +35,7 @@ interface Message: Snowflake {
     }
 
     val bot: DiscordBot
+    val guild: Guild?
     val type: Type
     val channel: MessageChannel
     val channelType: Channel.Type
@@ -48,7 +49,7 @@ interface Message: Snowflake {
     val mentionedChannels: List<TextChannel>
     val isWebhook: Boolean
 
-    fun delete(): RestPromise<Message>
+    fun delete(): RestPromise<Unit>
 
     infix fun mentions(mentionable: Mentionable): Boolean
 

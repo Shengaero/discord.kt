@@ -20,6 +20,7 @@ enum class EventType {
     RESUMED,
     GUILD_CREATE,
     GUILD_MEMBERS_CHUNK,
+    MESSAGE_CREATE,
     UNKNOWN;
 
     companion object {

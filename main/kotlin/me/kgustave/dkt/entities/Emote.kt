@@ -21,8 +21,11 @@ interface Emote: Snowflake, Mentionable {
     val bot: DiscordBot
     val name: String
     val guild: Guild?
+    val user: User?
     val isAnimated: Boolean
     val isManaged: Boolean
     val imageUrl: String
     val roles: List<Role>?
+
+    override val mention: String get() = "<:$name:$id>"
 }

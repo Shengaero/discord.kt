@@ -23,7 +23,22 @@ internal class VoiceChannelImpl(
     guild: GuildImpl
 ): VoiceChannel, AbstractGuildChannelImpl(id, guild) {
     internal var parentId: Long? = null
+    internal val connectedMembers = hashMapOf<Long, Member>()
+
     override val parent: CategoryImpl? get() = parentId?.let { guild.categoryCache[it] }
 
-    internal val connectedMembers = hashMapOf<Long, Member>()
+    override var userLimit = 0
+    override var bitrate = 0
+
+    override val position: Int get() = guild.voiceChannels.binarySearch(this)
+
+    override fun compareTo(other: VoiceChannel): Int {
+        if(this === other) return 0
+        if(this == other) return 0
+
+        require(guild == other.guild) { "Cannot compare voice channels from different guilds!" }
+
+        if(rawPosition == other.rawPosition) return id.compareTo(other.id)
+        return rawPosition.compareTo(other.rawPosition)
+    }
 }

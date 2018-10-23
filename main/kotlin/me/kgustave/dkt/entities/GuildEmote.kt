@@ -15,4 +15,7 @@
  */
 package me.kgustave.dkt.entities
 
-interface GuildEmote: Emote
+interface GuildEmote: Emote {
+    override val guild: Guild
+    override val roles: List<Role>
+}

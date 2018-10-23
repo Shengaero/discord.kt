@@ -26,7 +26,7 @@ interface Cache<V>: Map<Long, V>, Collection<V> {
     override fun containsAll(elements: Collection<V>): Boolean = values.containsAll(elements)
     override fun iterator(): Iterator<V> = values.iterator()
 
-    fun toList(): List<V> = toList<V>()
+    fun toList(): List<V>
 
     fun getById(id: Long): V? = this[id]
 

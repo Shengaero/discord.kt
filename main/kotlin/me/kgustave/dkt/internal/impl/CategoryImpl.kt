@@ -24,8 +24,23 @@ internal class CategoryImpl(
     guild: GuildImpl
 ): Category, AbstractGuildChannelImpl(id, guild) {
     override val parent: CategoryImpl? get() = null
-    override val textChannels: List<TextChannel>
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
-    override val voiceChannels: List<VoiceChannel>
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+    override val position: Int get() = guild.categories.binarySearch(this)
+
+    override val textChannels: List<TextChannel> get() {
+        return guild.textChannels.filter { it.parent == this }
+    }
+
+    override val voiceChannels: List<VoiceChannel> get() {
+        return guild.voiceChannels.filter { it.parent == this }
+    }
+
+    override fun compareTo(other: Category): Int {
+        if(this === other) return 0
+        if(this == other) return 0
+
+        require(guild == other.guild) { "Cannot compare categories from different guilds!" }
+
+        if(rawPosition == other.rawPosition) return id.compareTo(other.id)
+        return rawPosition.compareTo(other.rawPosition)
+    }
 }

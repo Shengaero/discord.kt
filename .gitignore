@@ -15,6 +15,7 @@ build/
 
 ### Testing ###
 test-config.json
+test-*-config.json
 
 ### Temp Ignores ###
 # FIXME Examples

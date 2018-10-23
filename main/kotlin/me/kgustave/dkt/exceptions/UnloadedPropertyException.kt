@@ -17,4 +17,27 @@ package me.kgustave.dkt.exceptions
 
 import java.lang.RuntimeException
 
+/**
+ * Exception thrown when calls to functions or properties are made on an instance
+ * of some entity that has yet to completely load.
+ *
+ * This is used heavily when guilds are unavailable for example:
+ *
+ * ```kotlin
+ * suspend fun main(args: Array<String>) {
+ *     val bot = DiscordBot {
+ *         // ...
+ *         startAutomatically { true }
+ *     }
+ *
+ *     // at this point, "someGuild" is unavailable or not loaded completely.
+ *     val someGuild = bot.guildCache[getAGuildId()]!!
+ *
+ *     // throws UnloadedPropertyException
+ *     val name = someGuild.name
+ *
+ *     println(name)
+ * }
+ * ```
+ */
 class UnloadedPropertyException(message: String): RuntimeException(message)

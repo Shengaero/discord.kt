@@ -21,8 +21,10 @@ import me.kgustave.dkt.internal.util.canInteract
 
 internal class MemberImpl(override val guild: GuildImpl, override val user: UserImpl): Member {
     override var nickname: String? = null
+    override var activity: Activity? = null
     override var rawPermissions: Long = 0L
     override lateinit var voiceState: GuildVoiceStateImpl
+    override lateinit var status: OnlineStatus
 
     override val roles = arrayListOf<RoleImpl>()
 

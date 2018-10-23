@@ -23,21 +23,21 @@ import me.kgustave.dkt.exceptions.RequestException
 import me.kgustave.dkt.exceptions.UnloadedPropertyException
 import me.kgustave.dkt.internal.cache.MemberCacheImpl
 import me.kgustave.dkt.internal.cache.SnowflakeCacheImpl
+import me.kgustave.dkt.internal.cache.SortableSnowflakeCache
 import me.kgustave.dkt.promises.RestPromise
 import me.kgustave.dkt.promises.restPromise
 import me.kgustave.dkt.requests.Requester
 import me.kgustave.dkt.requests.Route
+import me.kgustave.dkt.util.delegates.weak
 
-internal class GuildImpl(
-    override val id: Long,
-    override val bot: DiscordBotImpl,
-    override var unavailable: Boolean = true
-): Guild {
+internal class GuildImpl(override val id: Long, bot: DiscordBotImpl, override var unavailable: Boolean = true): Guild {
     companion object {
         // 1: ID, 2: hash
         private const val IconUrlFormat   = "${Requester.CDNBaseUrl}/icons/%d/%s.png"
         private const val SplashUrlFormat = "${Requester.CDNBaseUrl}/splashes/%d/%s.png"
     }
+
+    override val bot: DiscordBotImpl by weak(bot)
 
     private lateinit var _name: String
     private lateinit var _publicRole: Role
@@ -144,12 +144,12 @@ internal class GuildImpl(
         return splashHash?.let { SplashUrlFormat.format(id, it) }
     }
 
-    override val roleCache = SnowflakeCacheImpl(RoleImpl::name)
-    override val emoteCache = SnowflakeCacheImpl(GuildEmote::name)
+    override val roleCache = SortableSnowflakeCache(RoleImpl::name, Comparator.reverseOrder())
+    override val emoteCache = SnowflakeCacheImpl(GuildEmoteImpl::name)
     override val memberCache = MemberCacheImpl()
-    override val categoryCache = SnowflakeCacheImpl(CategoryImpl::name)
-    override val textChannelCache = SnowflakeCacheImpl(TextChannelImpl::name)
-    override val voiceChannelCache = SnowflakeCacheImpl(VoiceChannelImpl::name)
+    override val categoryCache = SortableSnowflakeCache(CategoryImpl::name, Comparator.naturalOrder())
+    override val textChannelCache = SortableSnowflakeCache(TextChannelImpl::name, Comparator.naturalOrder())
+    override val voiceChannelCache = SortableSnowflakeCache(VoiceChannelImpl::name, Comparator.naturalOrder())
 
     override val roles: List<Role>                 get() = roleCache.toList()
     override val emotes: List<GuildEmote>          get() = emoteCache.toList()

@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.entities.cache
+package me.kgustave.dkt.internal.impl
 
-import me.kgustave.dkt.entities.Member
+import me.kgustave.dkt.entities.GuildEmote
+import me.kgustave.dkt.util.delegates.weak
 
-interface MemberCache: Cache<Member> {
-    fun getByNickname(nickname: String, ignoreCase: Boolean = false): List<Member>
+internal class GuildEmoteImpl(id: Long, bot: DiscordBotImpl, guild: GuildImpl): GuildEmote, EmoteImpl(id, bot) {
+    constructor(id: Long, guild: GuildImpl): this(id, guild.bot, guild)
 
-    fun getByUsername(username: String, ignoreCase: Boolean = false): List<Member>
+    override lateinit var user: UserImpl
+    override val guild: GuildImpl by weak(guild)
+    override val roles = arrayListOf<RoleImpl>()
 }

@@ -15,7 +15,11 @@
  */
 package me.kgustave.dkt.entities
 
-interface TextChannel: Mentionable, MessageChannel, GuildChannel {
+interface TextChannel: Mentionable, MessageChannel, GuildChannel, Comparable<TextChannel> {
+    val topic: String?
+    val nsfw: Boolean
+    val rateLimitPerUser: Int
+
     override val type get() = Channel.Type.TEXT
     override val mention get() = "<#$id>"
 }

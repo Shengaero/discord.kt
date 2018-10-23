@@ -41,6 +41,7 @@ interface DiscordBot {
     val textChannelCache: SnowflakeCache<out TextChannel>
     val voiceChannelCache: SnowflakeCache<out VoiceChannel>
     val categoryCache: SnowflakeCache<out Category>
+    val privateChannelCache: SnowflakeCache<out PrivateChannel>
 
     fun connect(): DiscordBot
 

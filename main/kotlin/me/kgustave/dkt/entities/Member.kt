@@ -24,6 +24,8 @@ interface Member: Mentionable, PermissionHolder {
     val nickname: String?
     val roles: List<Role>
     val voiceState: GuildVoiceState
+    val activity: Activity?
+    val status: OnlineStatus
 
     val name: String get() = nickname ?: user.name
     val isOwner: Boolean get() = this == guild.owner

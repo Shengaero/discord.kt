@@ -18,13 +18,11 @@ package me.kgustave.dkt.entities
 interface GuildChannel: Channel {
     val name: String
     val overrides: List<PermissionOverride>
+    val position: Int
+    val rawPosition: Int
     val parent: Category?
-    override val guild: Guild
 
-    @Deprecated("renamed to permissionOverrideFor", ReplaceWith("permissionOverrideFor(member)"))
-    fun getPermissionOverride(member: Member): PermissionOverride? = permissionOverrideFor(member)
-    @Deprecated("renamed to permissionOverrideFor", ReplaceWith("permissionOverrideFor(role)"))
-    fun getPermissionOverride(role: Role): PermissionOverride? = permissionOverrideFor(role)
+    override val guild: Guild // override guild for documentation changes and non-nullability
 
     fun permissionOverrideFor(member: Member): PermissionOverride?
     fun permissionOverrideFor(role: Role): PermissionOverride?

@@ -15,9 +15,11 @@
  */
 package me.kgustave.dkt.internal.impl
 
+import io.ktor.client.call.receive
 import kotlinx.serialization.json.json
 import me.kgustave.dkt.entities.PrivateChannel
 import me.kgustave.dkt.entities.User
+import me.kgustave.dkt.internal.data.RawChannel
 import me.kgustave.dkt.internal.data.RawUserData
 import me.kgustave.dkt.promises.RestPromise
 import me.kgustave.dkt.promises.emptyPromise
@@ -44,8 +46,9 @@ internal open class UserImpl(override val bot: DiscordBotImpl, raw: RawUserData)
     override fun openPrivateChannel(): RestPromise<PrivateChannel> {
         privateChannel?.let { return bot.emptyPromise(it) }
         val body = json { "recipient_id" to "$id" }
-        return bot.restPromise(Route.CreateDM, body = body) {
-            TODO()
+        return bot.restPromise(Route.CreateDM, body = body) { call ->
+            val rawChannel = call.response.receive<RawChannel>()
+            bot.entities.handlePrivateChannel(rawChannel)
         }
     }
 

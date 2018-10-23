@@ -15,4 +15,10 @@
  */
 package me.kgustave.dkt.entities
 
-interface MessageChannel: Channel
+import me.kgustave.dkt.promises.MessagePromise
+
+interface MessageChannel: Channel {
+    val lastMessageId: Long?
+
+    fun send(text: String): MessagePromise
+}

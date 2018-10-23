@@ -13,12 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.entities.cache
+package me.kgustave.dkt.requests
 
-import me.kgustave.dkt.entities.Member
-
-interface MemberCache: Cache<Member> {
-    fun getByNickname(nickname: String, ignoreCase: Boolean = false): List<Member>
-
-    fun getByUsername(username: String, ignoreCase: Boolean = false): List<Member>
+interface GlobalRateLimitProvider {
+    var globalRateLimit: Long
 }

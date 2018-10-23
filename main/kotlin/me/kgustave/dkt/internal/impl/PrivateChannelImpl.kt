@@ -13,12 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.entities.cache
+package me.kgustave.dkt.internal.impl
 
-import me.kgustave.dkt.entities.Member
+import me.kgustave.dkt.entities.Guild
+import me.kgustave.dkt.entities.PrivateChannel
+import me.kgustave.dkt.promises.MessagePromise
+import me.kgustave.dkt.util.delegates.weak
 
-interface MemberCache: Cache<Member> {
-    fun getByNickname(nickname: String, ignoreCase: Boolean = false): List<Member>
+internal class PrivateChannelImpl(override val id: Long, user: UserImpl): PrivateChannel {
+    override val recipient by weak(user)
 
-    fun getByUsername(username: String, ignoreCase: Boolean = false): List<Member>
+    override val bot: DiscordBotImpl get() = recipient.bot
+    override val guild: Guild? get() = null
+
+    override var lastMessageId: Long? = null
+
+    override fun send(text: String): MessagePromise = MessagePromise(bot, this, text)
 }

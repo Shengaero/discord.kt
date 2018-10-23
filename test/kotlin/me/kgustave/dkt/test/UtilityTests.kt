@@ -16,8 +16,12 @@
 @file:Suppress("UNUSED_VARIABLE", "UNCHECKED_CAST")
 package me.kgustave.dkt.test
 
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.json
 import me.kgustave.dkt.util.delegates.cleaningRef
 import me.kgustave.dkt.util.delegates.weak
+import me.kgustave.dkt.util.stringify
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -53,6 +57,22 @@ class UtilityTests {
             number = 5
             assertEquals(5, number)
             assertNull(number)
+        }
+    }
+
+    @Nested
+    @TestInstance(TestInstance.Lifecycle.PER_METHOD)
+    inner class JsonTests {
+        @Test fun `Test Json Stringify`() {
+            assertEquals("""{"foo":"bar","baz":"biz"}""", json {
+                "foo" to "bar"
+                "baz" to "biz"
+            }.stringify())
+            assertEquals("""["1",2,"three"]""", JsonArray(listOf(
+                JsonPrimitive("1"),
+                JsonPrimitive(2),
+                JsonPrimitive("three")
+            )).stringify())
         }
     }
 }

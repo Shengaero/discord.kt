@@ -18,4 +18,29 @@ package me.kgustave.dkt.internal.cache
 import me.kgustave.dkt.entities.Member
 import me.kgustave.dkt.entities.cache.MemberCache
 
-internal class MemberCacheImpl: MemberCache, AbstractCacheImpl<Member>(Member::name)
+internal class MemberCacheImpl: MemberCache, AbstractCacheImpl<Member>(Member::name) {
+    override fun getByNickname(nickname: String, ignoreCase: Boolean): List<Member> {
+        if(nickname.isBlank())
+            return emptyList()
+        val returns = arrayListOf<Member>()
+        for(entity in this) {
+            val entityNickname = entity.nickname ?: continue
+            if(entityNickname.equals(nickname, ignoreCase)) {
+                returns += entity
+            }
+        }
+        return returns
+    }
+
+    override fun getByUsername(username: String, ignoreCase: Boolean): List<Member> {
+        if(username.isBlank())
+            return emptyList()
+        val returns = arrayListOf<Member>()
+        for(entity in this) {
+            if(entity.user.name.equals(username, ignoreCase)) {
+                returns += entity
+            }
+        }
+        return returns
+    }
+}

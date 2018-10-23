@@ -27,11 +27,17 @@ import io.ktor.http.charset
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.content.TextContent
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonTreeParser
 import kotlinx.serialization.serializer
 import me.kgustave.dkt.exceptions.RequestException
 import me.kgustave.dkt.requests.Requester
-import me.kgustave.dkt.util.*
+import me.kgustave.dkt.util.JsonParser
+import me.kgustave.dkt.util.isGzip
+import me.kgustave.dkt.util.readBody
+import me.kgustave.dkt.util.stringify
 
 /**
  * Serializer for Discord.kt requests
@@ -53,17 +59,18 @@ class DiscordSerializer: JsonSerializer {
         val kotlinType = type.type
         val javaType = kotlinType.java
 
+        val statusCode = response.status.value
+
+        // This is a failed request with a response error. Note: 429 should be handled separately!
+        if(RequestException::class.java.isAssignableFrom(javaType) ||
+           (statusCode >= 400 && statusCode != 429)) {
+            throw JsonParser.parse<RequestException>(text)
+        }
+
         // If we are being asked to parse the text into
         //a raw JsonElement we want to cover this.
         // There are several cases where this is useful.
         if(JsonElement::class.java.isAssignableFrom(javaType)) return JsonTreeParser(text).readFully()
-
-        val statusCode = response.status.value
-
-        // This is a failed request with a response error. Note: 429 should be handled separately!
-        if(RequestException::class.java.isAssignableFrom(javaType) || (statusCode >= 400 && statusCode != 429)) {
-            throw JsonParser.parse<RequestException>(text)
-        }
 
         // Deserialize using kotlinx.serialization
         return JsonParser.parse(kotlinType.serializer(), text)

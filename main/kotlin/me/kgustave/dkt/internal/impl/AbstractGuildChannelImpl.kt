@@ -20,6 +20,7 @@ import me.kgustave.dkt.util.delegates.weak
 
 internal abstract class AbstractGuildChannelImpl(override val id: Long, guild: GuildImpl): GuildChannel {
     override lateinit var name: String
+    override var rawPosition: Int = -1
     override val guild: GuildImpl by weak(guild)
     override val bot: DiscordBotImpl get() = guild.bot
     override val overrides: List<PermissionOverride> get() = permissionOverrides.values.toList()

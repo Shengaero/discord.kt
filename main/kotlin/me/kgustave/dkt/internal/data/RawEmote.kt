@@ -18,6 +18,7 @@ package me.kgustave.dkt.internal.data
 import kotlinx.serialization.Optional
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import me.kgustave.dkt.internal.data.serializers.SnowflakeArraySerializer
 import me.kgustave.dkt.internal.data.serializers.SnowflakeSerializer
 
 @Serializable
@@ -28,7 +29,8 @@ internal data class RawEmote(
     val name: String,
 
     @Optional
-    val roles: List<RawRole> = emptyList(),
+    @Serializable(SnowflakeArraySerializer::class)
+    val roles: List<Long> = emptyList(),
 
     @Optional
     val user: RawUser? = null,

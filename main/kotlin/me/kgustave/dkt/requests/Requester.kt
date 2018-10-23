@@ -25,7 +25,6 @@ import io.ktor.client.response.HttpResponse
 import io.ktor.http.*
 import kotlinx.coroutines.*
 import me.kgustave.dkt.DiscordKt
-import me.kgustave.dkt.handle.SessionHandler
 import me.kgustave.dkt.util.createLogger
 import java.io.Closeable
 
@@ -34,9 +33,9 @@ class Requester(
     private val token: String,
     val rateLimitDispatcher: CoroutineDispatcher,
     val shutdownDispatcher: Boolean,
-    val sessionHandler: SessionHandler
+    val globalRateLimitProvider: GlobalRateLimitProvider
 ) {
-    val rateLimiter = RateLimiter(this)
+    val rateLimiter = RateLimiter(this, rateLimitDispatcher, globalRateLimitProvider)
 
     suspend fun <T> request(task: RestTask<T>): T {
         val request = DiscordRequest(task)

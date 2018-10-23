@@ -15,25 +15,27 @@
  */
 package me.kgustave.dkt.internal.websocket.handlers
 
-import me.kgustave.dkt.internal.data.events.RawReadyEvent
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.int
+import me.kgustave.dkt.entities.Message
+import me.kgustave.dkt.events.message.MessageReceivedEvent
 import me.kgustave.dkt.internal.impl.DiscordBotImpl
+import me.kgustave.dkt.internal.websocket.DiscordWebSocket
 import me.kgustave.dkt.internal.websocket.Payload
 
-internal class ReadyHandler(bot: DiscordBotImpl): WebSocketHandler(bot) {
+internal class MessageCreateHandler(bot: DiscordBotImpl): WebSocketHandler(bot) {
     override fun handle(payload: Payload) {
-        val entities = bot.entities
-        val ready = payload.d as RawReadyEvent
+        val data = payload.d as JsonObject
+        val type = Message.Type.of(data["type"].int)
 
-        val guilds = ready.guilds
-
-        entities.handleSelfUser(ready.user)
-
-        if(bot.guildSetupManager.setToCompleteAndIsReady(guilds.size)) {
-            for(guild in guilds) bot.guildSetupManager.ready(guild)
+        if(type == Message.Type.UNKNOWN) {
+            return DiscordWebSocket.Log.debug("Received an unknown message type (Type: $type)")
         }
 
-        for(chan in ready.privateChannels) {
-            entities.handlePrivateChannel(chan)
+        runCatching { bot.entities.handleReceivedMessage(data) }.onFailure {
+            // TODO
+        }.onSuccess { message ->
+            bot.eventManager.dispatch(MessageReceivedEvent(bot, message))
         }
     }
 }

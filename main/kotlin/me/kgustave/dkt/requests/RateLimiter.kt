@@ -20,6 +20,7 @@ import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
+import me.kgustave.dkt.handle.SessionHandler
 import me.kgustave.dkt.internal.data.errors.RateLimitedResponse
 import me.kgustave.dkt.util.*
 import java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME
@@ -27,7 +28,11 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.math.max
 
-class RateLimiter(private val requester: Requester) {
+class RateLimiter(
+    private val requester: Requester,
+    private val dispatcher: CoroutineDispatcher,
+    private val global: GlobalRateLimitProvider
+) {
     private companion object {
         private val Log = createLogger(RateLimiter::class)
 
@@ -46,8 +51,9 @@ class RateLimiter(private val requester: Requester) {
     private var offset = -1L
 
     private val now: Long get() = currentTimeMs + max(offset, 0L)
-    private val dispatcher get() = requester.rateLimitDispatcher
-    private val sessionHandler get() = requester.sessionHandler
+
+    @Deprecated("in order to allow extraction, this will be removed in a future release", level = DeprecationLevel.ERROR)
+    private val sessionHandler get() = global as SessionHandler
 
     fun submit(request: DiscordRequest) {
         reject(isShutdown) { "Cannot queue requests while RateLimiter is closing or shutdown!" }
@@ -75,13 +81,13 @@ class RateLimiter(private val requester: Requester) {
 
             if(status.value == 429) {
                 val global = headers[XRateLimitGlobal]
-                val text = response.readBody(response.isGzip())
+                val text = response.readBody()
                 val body = JsonParser.parse<RateLimitedResponse>(text)
                 val retryAfter = headers[HttpHeaders.RetryAfter]?.toLongOrNull() ?: body.retryAfter
                 Log.debug("RateLimit received: $body")
 
                 if(global?.toBoolean() == true) {
-                    this.sessionHandler.globalRateLimit = this.now + retryAfter
+                    this.global.globalRateLimit = this.now + retryAfter
                 } else {
                     bucket.update(headers, retryAfter)
                 }
@@ -117,13 +123,13 @@ class RateLimiter(private val requester: Requester) {
         private val queue = ConcurrentLinkedQueue<DiscordRequest>()
 
         fun rateLimitTime(): Long? {
-            val globalCooldown = sessionHandler.globalRateLimit
+            val globalCooldown = global.globalRateLimit
             if(globalCooldown > 0) {
                 val now = now
                 if(now < globalCooldown) {
                     return globalCooldown - now
                 }
-                sessionHandler.globalRateLimit = Long.MIN_VALUE
+                global.globalRateLimit = Long.MIN_VALUE
             }
 
             if(remaining <= 0) {

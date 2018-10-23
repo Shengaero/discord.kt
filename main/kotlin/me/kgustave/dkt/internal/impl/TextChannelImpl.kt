@@ -16,6 +16,7 @@
 package me.kgustave.dkt.internal.impl
 
 import me.kgustave.dkt.entities.TextChannel
+import me.kgustave.dkt.promises.MessagePromise
 
 internal class TextChannelImpl(
     id: Long,
@@ -24,4 +25,22 @@ internal class TextChannelImpl(
     internal var parentId: Long? = null
 
     override val parent: CategoryImpl? get() = parentId?.let { guild.categoryCache[it] }
+    override val position: Int get() = guild.textChannels.binarySearch(this)
+
+    override var topic: String? = null
+    override var nsfw: Boolean = false
+    override var rateLimitPerUser: Int = 0
+    override var lastMessageId: Long? = null
+
+    override fun send(text: String): MessagePromise = MessagePromise(bot, this, text)
+
+    override fun compareTo(other: TextChannel): Int {
+        if(this === other) return 0
+        if(this == other) return 0
+
+        require(guild == other.guild) { "Cannot compare text channels from different guilds!" }
+
+        if(rawPosition == other.rawPosition) return id.compareTo(other.id)
+        return rawPosition.compareTo(other.rawPosition)
+    }
 }

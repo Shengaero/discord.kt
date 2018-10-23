@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.entities.cache
+package me.kgustave.dkt.requests
 
-import me.kgustave.dkt.entities.Member
-
-interface MemberCache: Cache<Member> {
-    fun getByNickname(nickname: String, ignoreCase: Boolean = false): List<Member>
-
-    fun getByUsername(username: String, ignoreCase: Boolean = false): List<Member>
-}
+/**
+ * Annotation for basic discord requester API.
+ *
+ * The discord requester API will be a standalone publicly exposed API in the
+ * initial release of the full API, however at the moment, this is subject to
+ * sudden change without notice.
+ */
+@MustBeDocumented
+@Retention(AnnotationRetention.SOURCE)
+@Experimental(level = Experimental.Level.WARNING)
+annotation class ExperimentalDiscordRequester

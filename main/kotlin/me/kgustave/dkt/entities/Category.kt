@@ -15,7 +15,7 @@
  */
 package me.kgustave.dkt.entities
 
-interface Category: GuildChannel, ChannelHolder {
+interface Category: GuildChannel, ChannelHolder, Comparable<Category> {
     override val parent: Category? get() = null
     override val type get() = Channel.Type.CATEGORY
 }

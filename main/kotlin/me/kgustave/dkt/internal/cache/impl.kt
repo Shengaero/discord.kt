@@ -18,6 +18,9 @@ package me.kgustave.dkt.internal.cache
 import me.kgustave.dkt.entities.Snowflake
 import me.kgustave.dkt.entities.cache.Cache
 import me.kgustave.dkt.entities.cache.SnowflakeCache
+import java.util.Spliterators
+import java.util.Spliterator
+import java.util.stream.Stream
 
 private typealias ByNameFunction<T> = (entity: T) -> String
 
@@ -27,17 +30,46 @@ internal abstract class AbstractCacheImpl<T>(
 ): Cache<T>, MutableMap<Long, T> by map {
     constructor(byName: ByNameFunction<T>? = null): this(hashMapOf(), byName)
 
+    override fun toList(): List<T> = values.toList()
+
     override fun getByName(name: String, ignoreCase: Boolean): List<T> {
-        if(byName == null) throw UnsupportedOperationException("Getting entities by name is not supported!")
-        val returns = arrayListOf<T>()
+        if(byName == null)
+            throw UnsupportedOperationException("Getting entities by name is not supported by this cache!")
+        if(name.isBlank())
+            return emptyList()
+        val list = arrayListOf<T>()
         for(entity in this) {
             if(name.equals(byName.invoke(entity), ignoreCase)) {
-                returns += entity
+                list += entity
             }
         }
-        return returns
+        return list
     }
 }
 
-internal open class SnowflakeCacheImpl<S: Snowflake>
-constructor(byName: ByNameFunction<S>? = null): SnowflakeCache<S>, AbstractCacheImpl<S>(byName)
+internal open class SnowflakeCacheImpl<S: Snowflake>(byName: ByNameFunction<S>? = null):
+    SnowflakeCache<S>,
+    AbstractCacheImpl<S>(byName)
+
+internal open class SortableSnowflakeCache<S>(byName: ByNameFunction<S>? = null, private val comparator: Comparator<S>):
+    SnowflakeCache<S>,
+    AbstractCacheImpl<S>(byName)
+where S: Snowflake, S: Comparable<S> {
+    override fun toList(): List<S> {
+        // send to collection immediately, do not
+        //sequence to avoid concurrent modification
+        val list = values.toCollection(arrayListOf())
+        list.sortedWith(comparator)
+        return list
+    }
+
+    override fun stream(): Stream<S> = super<SnowflakeCache>.stream().sorted(comparator)
+    override fun parallelStream(): Stream<S> = super<SnowflakeCache>.parallelStream().sorted(comparator)
+
+    override fun iterator(): Iterator<S> = toList().iterator()
+
+    override fun spliterator(): Spliterator<S> {
+        return Spliterators.spliterator(iterator(), this.size.toLong(),
+            Spliterator.IMMUTABLE or Spliterator.ORDERED or Spliterator.NONNULL)
+    }
+}

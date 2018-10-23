@@ -20,9 +20,20 @@ import me.kgustave.dkt.util.JsonParser
 
 @Serializable data class TestConfig(val token: String)
 
+@Serializable data class GuildConfig(val id: Long, val name: String, val member: MemberConfig, val channel: ChannelConfig) {
+    @Serializable data class ChannelConfig(val id: Long)
+    @Serializable data class MemberConfig(val id: Long, val name: String, val discriminator: Int)
+}
+
 private val instance by lazy {
     val resource = TestConfig::class.java.getResource("/test-config.json")
     return@lazy JsonParser.parse<TestConfig>(resource.readText())
 }
 
+private val guildInstance by lazy {
+    val resource = GuildConfig::class.java.getResource("/test-guild-config.json")
+    return@lazy JsonParser.parse<GuildConfig>(resource.readText())
+}
+
 fun loadConfig(): TestConfig = instance
+fun loadGuildConfig(): GuildConfig = guildInstance

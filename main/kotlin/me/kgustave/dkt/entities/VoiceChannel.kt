@@ -15,6 +15,9 @@
  */
 package me.kgustave.dkt.entities
 
-interface VoiceChannel: GuildChannel {
+interface VoiceChannel: GuildChannel, Comparable<VoiceChannel> {
+    val userLimit: Int
+    val bitrate: Int
+
     override val type get() = Channel.Type.VOICE
 }

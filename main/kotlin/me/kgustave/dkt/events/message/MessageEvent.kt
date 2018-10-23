@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.entities.cache
+package me.kgustave.dkt.events.message
 
-import me.kgustave.dkt.entities.Member
+import me.kgustave.dkt.entities.MessageChannel
+import me.kgustave.dkt.events.Event
 
-interface MemberCache: Cache<Member> {
-    fun getByNickname(nickname: String, ignoreCase: Boolean = false): List<Member>
+interface MessageEvent: Event {
+    val messageId: Long
 
-    fun getByUsername(username: String, ignoreCase: Boolean = false): List<Member>
+    val channel: MessageChannel
 }

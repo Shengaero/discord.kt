@@ -49,6 +49,7 @@ sealed class Route {
 
         val GetMessage    = route(Get, "/channels/{channel.id}/messages/{message.id}", listOf("channel.id", "message.id"))
         val CreateMessage = route(Post, "/channels/{channel.id}/messages", listOf("channel.id"))
+        val DeleteMessage = route(Delete, "/channels/{channel.id}/messages/{message.id}", listOf("channel.id", "message.id"))
 
         val LeaveGuild = route(Delete, "/users/@me/guilds/{guild.id}", listOf("guild.id"))
     }

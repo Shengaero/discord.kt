@@ -17,10 +17,9 @@
 package me.kgustave.dkt.handle
 
 import me.kgustave.dkt.internal.websocket.WebSocketConnection
+import me.kgustave.dkt.requests.GlobalRateLimitProvider
 
-interface SessionHandler {
-    var globalRateLimit: Long
-
+interface SessionHandler: GlobalRateLimitProvider {
     fun queueConnection(connection: WebSocketConnection)
     fun dequeueConnection(connection: WebSocketConnection)
 
