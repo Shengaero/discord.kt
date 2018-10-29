@@ -18,8 +18,8 @@ package me.kgustave.dkt.internal.data
 import kotlinx.serialization.Optional
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import me.kgustave.dkt.internal.data.serializers.SnowflakeSerializer
 import me.kgustave.dkt.internal.data.serializers.ISO8601Serializer
+import me.kgustave.dkt.internal.data.serializers.SnowflakeArraySerializer
 import java.time.OffsetDateTime
 
 @Serializable
@@ -27,7 +27,7 @@ internal data class RawMember(
     val user: RawUser,
     @Optional
     val nick: String? = null,
-    //@Serializable(SnowflakeSerializer::class)
+    @Serializable(SnowflakeArraySerializer::class)
     val roles: List<Long>,
     @SerialName("joined_at")
     @Serializable(ISO8601Serializer::class)

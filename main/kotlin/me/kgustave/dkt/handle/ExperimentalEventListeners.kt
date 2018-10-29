@@ -13,12 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.internal.data.errors
+package me.kgustave.dkt.handle
 
-import kotlinx.serialization.Serializable
-
-@Serializable
-internal data class HttpRequestException(
-    override val message: String,
-    val code: Int
-): RuntimeException()
+@Experimental
+annotation class ExperimentalEventListeners

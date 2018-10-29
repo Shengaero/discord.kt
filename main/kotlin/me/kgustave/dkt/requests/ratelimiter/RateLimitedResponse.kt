@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.internal.data.serializers
+package me.kgustave.dkt.requests.ratelimiter
 
-import java.time.format.DateTimeFormatter as DTF // I'm DTF ;3
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@Deprecated("create and implement format specific serializers")
-annotation class SerialTimeFormat(val kind: SerialTimeFormat.Kind) {
-    enum class Kind(val formatter: DTF) {
-        ISO_OFFSET_DATE_TIME(DTF.ISO_OFFSET_DATE_TIME),
-        RFC_1123_DATE_TIME(DTF.RFC_1123_DATE_TIME),
-        BASIC_ISO_DATE(DTF.BASIC_ISO_DATE)
-    }
-}
+@Serializable
+internal data class RateLimitedResponse(
+    val message: String,
+    @SerialName("retry_after") val retryAfter: Long,
+    val global: Boolean
+)

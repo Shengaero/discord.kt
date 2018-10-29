@@ -16,12 +16,10 @@
 @file:Suppress("UNUSED_VARIABLE", "UNCHECKED_CAST")
 package me.kgustave.dkt.test
 
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.json
+import kotlinx.serialization.Serializable
+import me.kgustave.dkt.util.*
 import me.kgustave.dkt.util.delegates.cleaningRef
 import me.kgustave.dkt.util.delegates.weak
-import me.kgustave.dkt.util.stringify
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -60,19 +58,28 @@ class UtilityTests {
         }
     }
 
+    @Serializable data class Box(val h: Int, val w: Int)
+
     @Nested
     @TestInstance(TestInstance.Lifecycle.PER_METHOD)
     inner class JsonTests {
         @Test fun `Test Json Stringify`() {
-            assertEquals("""{"foo":"bar","baz":"biz"}""", json {
-                "foo" to "bar"
-                "baz" to "biz"
-            }.stringify())
-            assertEquals("""["1",2,"three"]""", JsonArray(listOf(
-                JsonPrimitive("1"),
-                JsonPrimitive(2),
-                JsonPrimitive("three")
-            )).stringify())
+            assertEquals("""{"foo":"bar","baz":"biz"}""",
+                jsonObjectOf("foo" to "bar", "baz" to "biz").stringify())
+            assertEquals("""["1",2,"three"]""",
+                jsonArrayOf("1", 2, "three").stringify())
+        }
+
+        @Test fun `Test Conversion To JsonObject`() {
+            assertEquals("""{"h":4,"w":2}""", Box(4, 2).toJsonObject().stringify())
+        }
+
+        @Test fun `Test Conversion To JsonArray`() {
+            assertEquals("""[{"h":2,"w":4},{"h":8,"w":2},{"h":6,"w":8}]""", listOf(
+                Box(2, 4),
+                Box(8, 2),
+                Box(6, 8)
+            ).toJsonArray().stringify())
         }
     }
 }

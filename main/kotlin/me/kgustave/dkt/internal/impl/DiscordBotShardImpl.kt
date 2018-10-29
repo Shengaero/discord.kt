@@ -15,19 +15,10 @@
  */
 package me.kgustave.dkt.internal.impl
 
-import me.kgustave.dkt.entities.Guild
-import me.kgustave.dkt.entities.PrivateChannel
-import me.kgustave.dkt.promises.MessagePromise
-import me.kgustave.dkt.util.delegates.weak
+import me.kgustave.dkt.DiscordBot
+import me.kgustave.dkt.DiscordBotShard
 
-internal class PrivateChannelImpl(override val id: Long, user: UserImpl): PrivateChannel {
-    override val recipient by weak(user)
-
-    override val bot: DiscordBotImpl get() = recipient.bot
-    override val guild: Guild? get() = null
-
-    override var lastMessageId: Long? = null
-    override var untracked: Boolean = user.untracked
-
-    override fun send(text: String): MessagePromise = MessagePromise(bot, this, text)
+internal class DiscordBotShardImpl(config: DiscordBotShard.Config): DiscordBotShard, DiscordBot by DiscordBotImpl(config) {
+    override val shardId = config.shardId
+    override val shardTotal = config.shardTotal
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.requests
+package me.kgustave.dkt.requests.ratelimiter
 
 import io.ktor.client.response.HttpResponse
 import io.ktor.http.Headers
@@ -21,7 +21,7 @@ import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import me.kgustave.dkt.handle.SessionHandler
-import me.kgustave.dkt.internal.data.errors.RateLimitedResponse
+import me.kgustave.dkt.requests.*
 import me.kgustave.dkt.util.*
 import java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME
 import java.util.concurrent.ConcurrentHashMap
@@ -106,12 +106,12 @@ class RateLimiter(
 
     private fun bucketFor(route: Route): Bucket {
         synchronized(buckets) {
-            return buckets.computeIfAbsent(route.path) { Bucket(route) }
+            return buckets.computeIfAbsent(route.rateLimitedPath) { Bucket(route) }
         }
     }
 
     private inner class Bucket(route: Route) {
-        val path = route.path
+        val path = route.rateLimitedPath
         val rateLimit = route.rateLimit
         val missingHeaders = route.missingHeaders
         val requestLock = Mutex() // lock for the queue

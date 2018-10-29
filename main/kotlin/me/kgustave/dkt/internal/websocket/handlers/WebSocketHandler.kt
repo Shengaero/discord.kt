@@ -19,6 +19,11 @@ import me.kgustave.dkt.internal.impl.DiscordBotImpl
 import me.kgustave.dkt.internal.websocket.EventType
 import me.kgustave.dkt.internal.websocket.EventType.*
 import me.kgustave.dkt.internal.websocket.Payload
+import me.kgustave.dkt.internal.websocket.handlers.create.ChannelCreateHandler
+import me.kgustave.dkt.internal.websocket.handlers.create.GuildCreateHandler
+import me.kgustave.dkt.internal.websocket.handlers.create.MessageCreateHandler
+import me.kgustave.dkt.internal.websocket.handlers.update.ChannelUpdateHandler
+import me.kgustave.dkt.internal.websocket.handlers.update.GuildMembersChunkHandler
 
 internal abstract class WebSocketHandler(val bot: DiscordBotImpl) {
     abstract fun handle(payload: Payload)
@@ -27,6 +32,8 @@ internal abstract class WebSocketHandler(val bot: DiscordBotImpl) {
         fun newFullSet(bot: DiscordBotImpl): Map<EventType, WebSocketHandler> = mapOf(
             READY to ReadyHandler(bot),
             RESUMED to ResumeHandler(bot),
+            CHANNEL_CREATE to  ChannelCreateHandler(bot),
+            CHANNEL_UPDATE to ChannelUpdateHandler(bot),
             GUILD_CREATE to GuildCreateHandler(bot),
             GUILD_MEMBERS_CHUNK to GuildMembersChunkHandler(bot),
             MESSAGE_CREATE to MessageCreateHandler(bot)

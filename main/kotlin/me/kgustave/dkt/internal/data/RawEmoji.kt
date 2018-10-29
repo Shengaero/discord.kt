@@ -13,14 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.internal.data.errors
+package me.kgustave.dkt.internal.data
 
+import kotlinx.serialization.Optional
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import me.kgustave.dkt.internal.data.serializers.SnowflakeArraySerializer
+import me.kgustave.dkt.internal.data.serializers.SnowflakeSerializer
 
 @Serializable
-internal data class RateLimitedResponse(
-    val message: String,
-    @SerialName("retry_after") val retryAfter: Long,
-    val global: Boolean
+internal data class RawEmoji(
+    @Serializable(SnowflakeSerializer::class)
+    val id: Long?,
+
+    val name: String,
+
+    @Optional
+    @Serializable(SnowflakeArraySerializer::class)
+    val roles: List<Long> = emptyList(),
+
+    @Optional
+    val user: RawUser? = null,
+
+    @Optional
+    @SerialName("require_colons")
+    val requireColons: Boolean = true,
+
+    @Optional
+    val managed: Boolean = true,
+
+    @Optional
+    val animated: Boolean = true
 )

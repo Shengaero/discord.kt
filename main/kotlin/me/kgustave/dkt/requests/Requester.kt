@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 @file:Suppress("MemberVisibilityCanBePrivate")
-
 package me.kgustave.dkt.requests
 
 import io.ktor.client.HttpClient
@@ -25,6 +24,7 @@ import io.ktor.client.response.HttpResponse
 import io.ktor.http.*
 import kotlinx.coroutines.*
 import me.kgustave.dkt.DiscordKt
+import me.kgustave.dkt.requests.ratelimiter.RateLimiter
 import me.kgustave.dkt.util.createLogger
 import java.io.Closeable
 
@@ -35,7 +35,8 @@ class Requester(
     val shutdownDispatcher: Boolean,
     val globalRateLimitProvider: GlobalRateLimitProvider
 ) {
-    val rateLimiter = RateLimiter(this, rateLimitDispatcher, globalRateLimitProvider)
+    val rateLimiter =
+        RateLimiter(this, rateLimitDispatcher, globalRateLimitProvider)
 
     suspend fun <T> request(task: RestTask<T>): T {
         val request = DiscordRequest(task)
@@ -96,8 +97,8 @@ class Requester(
                 if(response.status.value < 500) break
 
                 run++
-                log.debug("Request for ${call.request.method} - ${call.request.url.encodedPath} " +
-                                                                       "returned a ${response.status.value}! Retrying... (attempt $run)")
+                Log.debug("Request for ${call.request.method} - ${call.request.url.encodedPath} " +
+                          "returned a ${response.status.value}! Retrying... (attempt $run)")
 
                 try { delay(50L * run) } catch(e: CancellationException) {
                     // cancellation, we cannot continue suspending,
@@ -126,6 +127,7 @@ class Requester(
             return RateLimitedDiscordResponse(response, retryAfter, rays)
         } catch(t: Throwable) {
             if(!retried) {
+                Log.debug("Request failed, retrying...")
                 return execute(request, handleRateLimit, true)
             }
             return ErrorDiscordResponse(response, t, rays)
@@ -142,7 +144,7 @@ class Requester(
     }
 
     companion object {
-        private val log = createLogger(Requester::class)
+        private val Log = createLogger(Requester::class)
 
         const val BaseUrl = "https://discordapp.com/api/v${DiscordKt.RESTVersion}"
         const val CDNBaseUrl = "https://cdn.discordapp.com/"

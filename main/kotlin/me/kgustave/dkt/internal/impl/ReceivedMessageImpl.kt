@@ -22,23 +22,23 @@ import me.kgustave.dkt.promises.RestPromise
 import me.kgustave.dkt.promises.restPromise
 import me.kgustave.dkt.requests.Route
 
-internal class ReceivedMessageImpl(
-    override val bot: DiscordBotImpl,
-    override val id: Long,
-    override val type: Message.Type,
-    override val channel: MessageChannel,
-    override val content: String,
-    override val author: User,
-    override val member: Member?,
-    override val embeds: List<Embed>,
-    override val attachments: List<Message.Attachment>,
-    override val isWebhook: Boolean
+internal open class ReceivedMessageImpl(
+    final override val bot: DiscordBotImpl,
+    final override val id: Long,
+    final override val type: Message.Type,
+    final override val channel: MessageChannel,
+    final override val content: String,
+    final override val author: User,
+    final override val embeds: List<Embed>,
+    final override val attachments: List<Message.Attachment>,
+    final override val isWebhook: Boolean
 ): Message {
-    override val channelType = channel.type
-    override val guild = channel.guild
-    override val mentionedUsers: List<User> by lazy { emptyList<User>() }
-    override val mentionedEmotes: List<Emote> by lazy { emptyList<Emote>() }
-    override val mentionedChannels: List<TextChannel> by lazy { emptyList<TextChannel>() }
+    final override val channelType: Channel.Type get() = channel.type
+    final override val guild: Guild? get() = channel.guild
+    final override val member: Member? get() = guild?.getMember(author)
+    final override val mentionedUsers: List<User> by lazy { emptyList<User>() }
+    final override val mentionedEmotes: List<Emote> by lazy { emptyList<Emote>() }
+    final override val mentionedChannels: List<TextChannel> by lazy { emptyList<TextChannel>() }
 
     override fun mentions(mentionable: Mentionable): Boolean {
         return when(mentionable) {

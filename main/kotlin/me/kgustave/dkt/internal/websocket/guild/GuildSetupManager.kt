@@ -152,6 +152,8 @@ internal class GuildSetupManager(val bot: DiscordBotImpl): AutoCloseable {
         builders.remove(guildId)
     }
 
+    fun isSettingUp(guildId: Long): Boolean = guildId in builders
+
     private fun sendChunkRequest(guildId: Long) = sendChunkRequest(listOf(guildId))
 
     private fun sendChunkRequest(guildIds: List<Long>) {

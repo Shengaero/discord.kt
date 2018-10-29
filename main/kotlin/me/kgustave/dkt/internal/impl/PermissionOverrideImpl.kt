@@ -15,35 +15,29 @@
  */
 package me.kgustave.dkt.internal.impl
 
-import me.kgustave.dkt.DiscordBot
 import me.kgustave.dkt.Permission
-import me.kgustave.dkt.entities.GuildChannel
-import me.kgustave.dkt.entities.Member
+import me.kgustave.dkt.entities.PermissionHolder
 import me.kgustave.dkt.entities.PermissionOverride
-import me.kgustave.dkt.entities.Role
 import me.kgustave.dkt.promises.RestPromise
+import me.kgustave.dkt.util.delegates.weak
 
-internal class PermissionOverrideImpl: PermissionOverride {
-    override val rawAllowed: Long
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
-    override val rawInherited: Long
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
-    override val rawDenied: Long
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
-    override val allowed: List<Permission>
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
-    override val inherited: List<Permission>
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
-    override val denied: List<Permission>
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
-    override val bot: DiscordBot
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
-    override val channel: GuildChannel
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
-    override val member: Member?
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
-    override val role: Role?
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+internal class PermissionOverrideImpl(
+    guildChannel: AbstractGuildChannelImpl,
+    internal val id: Long,
+    private val holder: PermissionHolder
+): PermissionOverride {
+    override val channel by weak(guildChannel)
+
+    override var rawAllowed = 0L
+    override var rawDenied = 0L
+    override val rawInherited get() = (rawAllowed or rawDenied).inv()
+    override val allowed get() = Permission.setOf(rawAllowed).toList()
+    override val denied get() = Permission.setOf(rawDenied).toList()
+    override val inherited get() = Permission.setOf(rawInherited).toList()
+
+    override val bot: DiscordBotImpl get() = channel.bot
+    override val member: MemberImpl? get() = holder as? MemberImpl
+    override val role: RoleImpl? get() = holder as? RoleImpl
 
     override fun delete(): RestPromise<Unit> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.

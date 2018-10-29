@@ -18,6 +18,9 @@ package me.kgustave.dkt.test
 import kotlinx.serialization.Serializable
 import me.kgustave.dkt.util.JsonParser
 
+const val TestConfigRes = "/test-config.json"
+const val TestGuildConfigRes = "/test-guild-config.json"
+
 @Serializable data class TestConfig(val token: String)
 
 @Serializable data class GuildConfig(val id: Long, val name: String, val member: MemberConfig, val channel: ChannelConfig) {

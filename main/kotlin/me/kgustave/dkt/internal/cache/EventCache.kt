@@ -40,6 +40,10 @@ internal class EventCache {
         Log.debug("Clearing ${ofType.size} events for ID: $id")
     }
 
+    @Synchronized fun clear() {
+        map.clear()
+    }
+
     @Synchronized fun count(): Int {
         return map.asSequence().sumBy { type ->
             type.value.values.asSequence().sumBy { id -> id.size }

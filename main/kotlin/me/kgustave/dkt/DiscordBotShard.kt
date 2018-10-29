@@ -13,8 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.internal.data
+package me.kgustave.dkt
 
-@Deprecated("renamed to RawEmoji",
-    ReplaceWith("RawEmoji", imports = ["me.kgustave.dkt.internal.data.RawEmoji"]))
-internal typealias RawEmote = RawEmoji
+interface DiscordBotShard: DiscordBot {
+    val shardId: Int
+    val shardTotal: Int
+
+    class Config: DiscordBot.Config() {
+        var shardId: Int = 0
+        var shardTotal: Int = 0
+
+        // var shardManager: ShardManager = ...
+    }
+}

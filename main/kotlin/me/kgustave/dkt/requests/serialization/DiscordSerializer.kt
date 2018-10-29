@@ -19,7 +19,7 @@ package me.kgustave.dkt.requests.serialization
 
 import io.ktor.client.call.TypeInfo
 import io.ktor.client.features.json.JsonSerializer
-import io.ktor.client.request.forms.FormDataContent
+import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.response.HttpResponse
 import io.ktor.client.response.readText
 import io.ktor.client.utils.EmptyContent
@@ -82,9 +82,9 @@ class DiscordSerializer: JsonSerializer {
             // Empty content returns itself
             is EmptyContent -> return data
 
-            // FormDataContent is used in for sending messages
+            // MultiPartFormDataContent is used in for sending messages
             //with file attachments, and it should be handled.
-            is FormDataContent -> return data
+            is MultiPartFormDataContent -> return data
 
             // Strings should just be sent as is.
             // Note that this option is used only in rare cases

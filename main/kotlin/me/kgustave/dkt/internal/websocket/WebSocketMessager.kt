@@ -81,13 +81,12 @@ internal class WebSocketMessager(
             }
         } catch(t: Throwable) {
             when(t) {
-                is CancellationException, is InterruptedException -> {
-                    Log.debug(
+                is CancellationException, is InterruptedException ->
+                    return Log.debug(
                         "WebSocketMessager has been interrupted. " +
                         "This is most likely due to a shutdown!"
                     )
-                    return
-                }
+
                 else -> throw t
             }
         } finally {
@@ -124,8 +123,3 @@ internal class WebSocketMessager(
         private val Log = DiscordWebSocket.Log
     }
 }
-
-internal fun CoroutineScope.webSocketMessager(
-    webSocket: DiscordWebSocket,
-    context: CoroutineContext
-) = WebSocketMessager(this, webSocket, context)

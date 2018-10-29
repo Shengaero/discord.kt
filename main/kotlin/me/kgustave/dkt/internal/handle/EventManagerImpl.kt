@@ -16,21 +16,33 @@
 package me.kgustave.dkt.internal.handle
 
 import me.kgustave.dkt.events.Event
+import me.kgustave.dkt.handle.EventListener
 import me.kgustave.dkt.handle.EventManager
+import me.kgustave.dkt.handle.ExperimentalEventListeners
 
-// TODO Standard EventManager Implementation
+@ExperimentalEventListeners
 internal class EventManagerImpl: EventManager {
-    override val listeners = mutableListOf<Any>()
+    override val listeners = mutableListOf<EventListener>()
 
     override fun dispatch(event: Event) {
-        // TODO
+        for(listener in listeners) {
+            try {
+                listener.on(event)
+            } catch(t: Throwable) {
+                // TODO
+            }
+        }
     }
 
     override fun addListener(listener: Any) {
-        // TODO
+        require(listener is EventListener) { "Listener must implement EventListener!" }
+
+        listeners += listener
     }
 
     override fun removeListener(listener: Any) {
-        // TODO
+        if(listener is EventListener) {
+            listeners -= listener
+        }
     }
 }

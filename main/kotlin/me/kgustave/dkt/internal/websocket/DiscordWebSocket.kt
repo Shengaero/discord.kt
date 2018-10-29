@@ -74,6 +74,7 @@ import me.kgustave.dkt.internal.data.events.RawReadyEvent
 import me.kgustave.dkt.internal.data.events.RawResumeEvent
 import me.kgustave.dkt.internal.data.responses.GatewayInfo
 import me.kgustave.dkt.internal.impl.DiscordBotImpl
+import me.kgustave.dkt.internal.impl.DiscordBotShardImpl
 import me.kgustave.dkt.internal.websocket.handlers.WebSocketHandler
 import me.kgustave.dkt.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -102,7 +103,7 @@ class DiscordWebSocket internal constructor(
     // Session Management //
     ////////////////////////
 
-    @Volatile private var connection: WebSocketConnection = InitialWebSocketConnection(this)
+    @Volatile private var connection = WebSocketConnection(this, false)
     @Volatile private var connected = false
     @Volatile private var shutdown = false
     @Volatile private var identifyTime = 0L
@@ -260,14 +261,14 @@ class DiscordWebSocket internal constructor(
                 firstInitialization = false
 
                 Log.info("Finished Loading!")
-                bot.eventManager.dispatch(ReadyEvent(bot))
+                _bot.emit(ReadyEvent(bot))
             } else {
                 Log.info("Finished (Re)Loading!")
-                bot.eventManager.dispatch(ReconnectEvent(bot))
+                _bot.emit(ReconnectEvent(bot))
             }
         } else {
             Log.info("Finished Resuming Session!")
-            bot.eventManager.dispatch(ResumeEvent(bot))
+            _bot.emit(ResumeEvent(bot))
         }
 
         _bot.status = DiscordBot.Status.CONNECTED
@@ -538,8 +539,7 @@ class DiscordWebSocket internal constructor(
     private fun setupMessager() {
         if(_messager != null) return
 
-        _messager = mainScope
-            .webSocketMessager(this, messagerDispatcher)
+        _messager = WebSocketMessager(mainScope, this, messagerDispatcher)
             .also(WebSocketMessager::start)
     }
 
@@ -610,7 +610,7 @@ class DiscordWebSocket internal constructor(
                 ),
                 presence = _bot.presence,
                 compress = compression,
-                shard = bot.shardInfo?.toIntPair(),
+                shard = (bot as? DiscordBotShardImpl)?.let { IntPair(it.shardId, it.shardTotal) },
                 largeThreshold = 250
             )
         )
@@ -699,7 +699,18 @@ class DiscordWebSocket internal constructor(
 
         doWhileLocked(guildMembersChunkQueue::clear)
 
-        _bot.guildCache.clear()
+        with(_bot) {
+            textChannelCache.clear()
+            voiceChannelCache.clear()
+            categoryCache.clear()
+            guildCache.clear()
+            userCache.clear()
+            privateChannelCache.clear()
+            untrackedUsers.clear()
+            untrackedPrivateChannels.clear()
+            eventCache.clear()
+            guildSetupManager.clear()
+        }
     }
 
     private tailrec suspend fun ReceiveChannel<Frame>.receiveNextPayload(): Payload {
@@ -817,7 +828,7 @@ class DiscordWebSocket internal constructor(
     private suspend fun queueReconnect() {
         try {
             _bot.status = DiscordBot.Status.RECONNECT_QUEUED
-            connection = ReconnectWebSocketConnection(this)
+            connection = WebSocketConnection(this, true)
             bot.sessionHandler.queueConnection(connection)
         } catch(ex: IllegalStateException) {
             Log.error("Reconnection was rejected! Shutting down...")
@@ -830,7 +841,8 @@ class DiscordWebSocket internal constructor(
         if(bot.status != DiscordBot.Status.SHUTDOWN) {
             _bot.status = DiscordBot.Status.SHUTDOWN
         }
-        bot.eventManager.dispatch(ShutdownEvent(bot, currentOffsetDateTime, withCode))
+
+        _bot.emit(ShutdownEvent(bot, currentOffsetDateTime, withCode))
     }
 
     /////////////////////
@@ -888,8 +900,6 @@ class DiscordWebSocket internal constructor(
         private const val MaxMessageSafeSendLimit = MaxMessageSendLimit - 4
 
         @JvmField internal val Log = createLogger(DiscordWebSocket::class)
-
-        @JvmStatic private fun DiscordBot.ShardInfo.toIntPair() = IntPair(id, total)
 
         @JvmStatic private fun threadName(kind: String) = "DiscordWebSocket $kind Thread"
 

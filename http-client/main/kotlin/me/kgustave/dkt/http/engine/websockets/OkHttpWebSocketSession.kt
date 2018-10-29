@@ -20,6 +20,7 @@ import io.ktor.http.cio.websocket.CloseReason
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readReason
 import io.ktor.http.cio.websocket.readText
+import io.ktor.util.KtorExperimentalAPI
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CoroutineStart.LAZY
 import kotlinx.coroutines.channels.Channel
@@ -129,6 +130,7 @@ internal class OkHttpWebSocketSession(
         terminate()
     }
 
+    @KtorExperimentalAPI
     override suspend fun close(cause: Throwable?) {
         outgoing.send(Frame.Close(defaultClose))
         flush()

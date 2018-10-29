@@ -15,6 +15,7 @@
  */
 package me.kgustave.dkt.util
 
+import kotlinx.serialization.*
 import kotlinx.serialization.json.*
 
 // More efficient stringify functions for JsonObject and JsonArray
@@ -24,14 +25,60 @@ import kotlinx.serialization.json.*
 
 internal val JsonParser = JSON(strictMode = false)
 
-fun JsonElement.stringify() = when(this) {
-    is JsonObject -> stringify()
-    is JsonArray -> stringify()
-    else -> throw UnsupportedOperationException("${this::class} is not supported by this function!")
+internal fun Any.toJsonObject(): JsonObject {
+    val m = Mapper.OutNullableMapper()
+    @Suppress("UNCHECKED_CAST")
+    m.encode(this::class.serializer() as KSerializer<Any>, this)
+    return m.map.toJsonObject()
+}
+
+operator fun JsonBuilder.set(key: String, value: Any?) {
+    key to jsonElementOf(value)
+}
+
+fun Array<*>.toJsonArray(): JsonArray = jsonArrayOf(*this)
+fun Collection<*>.toJsonArray(): JsonArray = JsonArray(map(::jsonElementOf))
+fun Map<String, *>.toJsonObject(): JsonObject = JsonObject(mapValues { jsonElementOf(it.value) })
+
+fun jsonObjectOf(vararg pairs: Pair<String, Any?>): JsonObject =
+    JsonObject(pairs.associate { (key, value) -> key to jsonElementOf(value) })
+
+fun jsonArrayOf(vararg elements: Any?): JsonArray = JsonArray(elements.map(::jsonElementOf))
+
+fun jsonElementOf(element: Any?): JsonElement {
+    return when(element) {
+        null -> JsonNull
+        is JsonElement -> element
+        is Number -> JsonPrimitive(element)
+        is Boolean -> JsonPrimitive(element)
+        is String -> JsonPrimitive(element)
+        is Array<*> -> element.toJsonArray()
+        is Collection<*> -> element.toJsonArray()
+        is Map<*, *> -> jsonObjectFromInvariantMap(element)
+        else -> element.toJsonObject()
+    }
+}
+
+fun JsonElement.stringify(): String {
+    return when(this) {
+        is JsonObject -> stringify()
+        is JsonArray -> stringify()
+        else -> throw UnsupportedOperationException("${this::class} is not supported by this function!")
+    }
 }
 
 fun JsonObject.stringify(): String = buildString { writeObj(this@stringify) }
 fun JsonArray.stringify(): String = buildString { writeArray(this@stringify) }
+
+private fun jsonObjectFromInvariantMap(map: Map<*, *>): JsonObject {
+    if(map.isEmpty()) return jsonObjectOf()
+    val mapped = hashMapOf<String, JsonElement>()
+    for((key, value) in map) {
+        val keyString = (key as? String) ?: key.toString()
+        mapped[keyString] = jsonElementOf(value)
+    }
+    return JsonObject(mapped)
+}
 
 private fun Appendable.writeObj(obj: JsonObject) {
     append('{') // prefix

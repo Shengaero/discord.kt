@@ -31,6 +31,10 @@ interface Message: Snowflake {
          */
         const val MaxTextLength = 2000
 
+        const val MaxFileSize = 8 shl 20
+
+        const val MaxFileNumber = 10
+
         internal fun contentEmpty(text: CharSequence?): Boolean = text == null || text.isBlank()
     }
 
@@ -72,10 +76,7 @@ interface Message: Snowflake {
         // workaround for serializer
 
         val type: Int
-
-        constructor(type: Int) {
-            this.type = type
-        }
+        constructor(type: Int) { this.type = type }
 
         @Serializer(forClass = Type::class)
         companion object {

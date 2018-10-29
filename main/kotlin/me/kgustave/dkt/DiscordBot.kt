@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("unused", "MemberVisibilityCanBePrivate")
+@file:Suppress("unused", "MemberVisibilityCanBePrivate", "DeprecatedCallableAddReplaceWith", "DEPRECATION")
 package me.kgustave.dkt
 
 import me.kgustave.dkt.entities.*
 import me.kgustave.dkt.entities.cache.SnowflakeCache
-import me.kgustave.dkt.handle.DispatcherProvider
-import me.kgustave.dkt.handle.EventManager
-import me.kgustave.dkt.handle.SessionHandler
-import me.kgustave.dkt.handle.SessionHandlerAdapter
+import me.kgustave.dkt.handle.*
 import me.kgustave.dkt.internal.handle.EventManagerImpl
 import me.kgustave.dkt.promises.RestPromise
 import okhttp3.OkHttpClient
@@ -31,9 +28,10 @@ interface DiscordBot {
     val responses: Long
     val self: SelfUser
     val sessionHandler: SessionHandler
-    val shardInfo: ShardInfo?
     val status: DiscordBot.Status
     val presence: Presence
+
+    @ExperimentalEventListeners
     val eventManager: EventManager
 
     val userCache: SnowflakeCache<out User>
@@ -45,16 +43,25 @@ interface DiscordBot {
 
     fun connect(): DiscordBot
 
+    fun updatePresence(block: Presence.Builder.() -> Unit)
+
+    fun lookupUserById(id: Long): RestPromise<User>
+
+    fun createGuild(): RestPromise<Guild>
+
+    @ExperimentalEventListeners
+    fun addListener(listener: Any)
+
+    @ExperimentalEventListeners
+    fun removeListener(listener: Any)
+
     suspend fun await(status: DiscordBot.Status): DiscordBot
 
     suspend fun awaitReady(): DiscordBot = await(DiscordBot.Status.CONNECTED)
 
-    fun updatePresence(block: Presence.Builder.() -> Unit)
-
     suspend fun shutdown()
 
-    fun lookupUserById(id: Long): RestPromise<User>
-
+    @Deprecated("sharding will be moved to a separate interface with an expanded configuration DSL")
     data class ShardInfo internal constructor(val id: Int, val total: Int)
 
     enum class Status(val isInit: Boolean = false) {
@@ -75,7 +82,7 @@ interface DiscordBot {
         FAILED_TO_LOGIN
     }
 
-    class Config {
+    open class Config {
         lateinit var token: String
 
         internal val presence = Presence.Builder()
@@ -83,10 +90,12 @@ interface DiscordBot {
         var startAutomatically: Boolean = true
         var autoLaunchTasks: Boolean = false
         var cacheEntities: Boolean = true
+
+        @ExperimentalEventListeners
         var eventManager: EventManager = EventManagerImpl()
+
         var sessionHandler: SessionHandler = SessionHandlerAdapter()
         var dispatcherProvider: DispatcherProvider = DispatcherProvider.Default
-        var shardInfo: ShardInfo? = null
         var compression: Boolean = false
         var activity: Activity?
             get() = presence.activity
@@ -97,9 +106,8 @@ interface DiscordBot {
         var afk: Boolean
             get() = presence.afk
             set(value) { presence.afk = value }
-        private var okHttp: OkHttpClient.Builder.() -> Unit = {}
 
-        @BotConfigDsl infix fun Int.of(total: Int): ShardInfo = ShardInfo(this, total)
+        private var okHttp: OkHttpClient.Builder.() -> Unit = {}
 
         @BotConfigDsl fun okHttp(okHttp: OkHttpClient.Builder.() -> Unit) {
             this.okHttp = okHttp
@@ -109,7 +117,13 @@ interface DiscordBot {
             require(::token.isInitialized) { "Token not specified!" }
         }
 
-        @Deprecated("renamed to compression", replaceWith = ReplaceWith("compression"))
+        @Deprecated("sharding will be moved to a separate interface with an expanded configuration DSL")
+        var shardInfo: ShardInfo? = null
+
+        @Deprecated("sharding will be moved to a separate interface with an expanded configuration DSL")
+        @BotConfigDsl infix fun Int.of(total: Int): ShardInfo = ShardInfo(this, total)
+
+        @Deprecated("renamed to compression", ReplaceWith("compression"), DeprecationLevel.HIDDEN)
         var useCompression: Boolean
             get() = compression
             set(value) { compression = value }

@@ -26,7 +26,7 @@ import me.kgustave.dkt.promises.emptyPromise
 import me.kgustave.dkt.promises.restPromise
 import me.kgustave.dkt.requests.Route
 
-internal open class UserImpl(override val bot: DiscordBotImpl, raw: RawUserData): User {
+internal open class UserImpl(override val bot: DiscordBotImpl, raw: RawUserData, override var untracked: Boolean): User {
     override val id: Long = raw.id
     override val isBot: Boolean = raw.bot
     override var name: String = raw.username
@@ -41,7 +41,7 @@ internal open class UserImpl(override val bot: DiscordBotImpl, raw: RawUserData)
         return "${User.DefaultAvatarBaseUrl}/$defaultAvatarHash.png"
     }
 
-    private var privateChannel: PrivateChannel? = null
+    internal var privateChannel: PrivateChannelImpl? = null
 
     override fun openPrivateChannel(): RestPromise<PrivateChannel> {
         privateChannel?.let { return bot.emptyPromise(it) }

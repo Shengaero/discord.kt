@@ -25,7 +25,7 @@ internal abstract class AbstractGuildChannelImpl(override val id: Long, guild: G
     override val bot: DiscordBotImpl get() = guild.bot
     override val overrides: List<PermissionOverride> get() = permissionOverrides.values.toList()
 
-    protected val permissionOverrides = mutableMapOf<Long, PermissionOverride>()
+    internal val permissionOverrides = mutableMapOf<Long, PermissionOverrideImpl>()
 
     abstract override val parent: CategoryImpl?
 

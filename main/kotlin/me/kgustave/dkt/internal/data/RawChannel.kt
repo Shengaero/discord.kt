@@ -27,7 +27,8 @@ internal data class RawChannel(
     @Serializable(SnowflakeSerializer::class)
     val id: Long,
 
-    val name: String,
+    @Optional
+    val name: String = "", // defaults to empty string as opposed to null, easier to handle nullability this way
 
     val type: Int,
 

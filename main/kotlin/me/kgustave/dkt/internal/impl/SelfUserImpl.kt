@@ -18,4 +18,4 @@ package me.kgustave.dkt.internal.impl
 import me.kgustave.dkt.entities.SelfUser
 import me.kgustave.dkt.internal.data.RawSelfUser
 
-internal class SelfUserImpl(bot: DiscordBotImpl, raw: RawSelfUser): SelfUser, UserImpl(bot, raw)
+internal class SelfUserImpl(bot: DiscordBotImpl, raw: RawSelfUser): SelfUser, UserImpl(bot, raw, false)

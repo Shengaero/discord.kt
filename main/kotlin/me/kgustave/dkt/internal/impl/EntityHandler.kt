@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("MemberVisibilityCanBePrivate", "FoldInitializerAndIfToElvis")
+@file:Suppress("MemberVisibilityCanBePrivate", "FoldInitializerAndIfToElvis", "LiftReturnOrAssignment")
 package me.kgustave.dkt.internal.impl
 
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.content
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.int
 import me.kgustave.dkt.entities.*
@@ -31,36 +32,76 @@ internal class EntityHandler(bot: DiscordBotImpl) {
     fun handleSelfUser(raw: RawSelfUser): SelfUserImpl {
         return when {
             // already initialized self user
-            bot.selfIsInit() -> bot.self.also {
+            bot.selfIsInit() -> bot.self.apply {
                 // patch in new data
-                it.patch(raw)
+                name = raw.username
+                discriminator = raw.discriminator.toInt()
+                avatarHash = raw.avatar
             }
 
             // need to create and cache self user
-            else -> SelfUserImpl(bot, raw).also {
+            else -> SelfUserImpl(bot, raw).also { self ->
                 // initialize self
-                bot.self = it
+                if(!bot.selfIsInit()) {
+                    bot.self = self
+                } else {
+                    Log.warn("Call to register SelfUser made after self was initialized!?")
+                }
+
                 // cache
-                bot.userCache[it.id] = it
+                if(bot.userCache.containsKey(self.id)) {
+                    val previousSelf = bot.userCache[self.id]
+                    if(previousSelf !is SelfUserImpl) {
+                        bot.userCache -= self.id
+                    } else return@also
+                }
+
+                bot.userCache[self.id] = self
             }
         }
     }
 
-    fun handleUser(raw: RawUser, modifyCache: Boolean = true): UserImpl {
-        var impl = bot.userCache[raw.id]
+    fun handleUntrackedUser(raw: RawUser, modifyCache: Boolean): UserImpl = handleUser(raw, true, modifyCache)
 
-        if(impl != null) with(impl) {
-            name = raw.username
-            discriminator = raw.discriminator.toInt()
-            avatarHash = raw.avatar
-        } else {
-            impl = UserImpl(bot, raw)
-            if(modifyCache) {
-                bot.userCache[impl.id] = impl
+    fun handleUser(raw: RawUser): UserImpl = handleUser(raw, false, true)
+
+    fun handleUser(raw: RawUser, untracked: Boolean, modifyCache: Boolean): UserImpl {
+        val id = raw.id
+        var user = bot.userCache[id]
+        if(user == null) {
+            user = bot.untrackedUsers[id]
+            if(user != null) {
+                if(!untracked && modifyCache) {
+                    user.untracked = false
+                    bot.untrackedUsers -= id
+                    bot.userCache[id] = user
+                    user.privateChannel?.let { privateChannel ->
+                        privateChannel.untracked = false
+                        bot.untrackedPrivateChannels -= privateChannel.id
+                        bot.privateChannelCache[privateChannel.id] = privateChannel
+                    }
+                }
+            } else {
+                user = UserImpl(bot, raw, untracked)
+                if(modifyCache) {
+                    if(untracked) {
+                        bot.untrackedUsers[user.id] = user
+                    } else {
+                        bot.userCache[user.id] = user
+                    }
+                }
             }
         }
 
-        return impl
+        with(user) {
+            name = raw.username
+            discriminator = raw.discriminator.toInt()
+            avatarHash = raw.avatar
+        }
+
+        if(!untracked && modifyCache) bot.eventCache.play(EventCache.Type.USER, id)
+
+        return user
     }
 
     fun handleGuild(raw: RawGuild, members: Map<Long, RawMember>): GuildImpl {
@@ -157,7 +198,9 @@ internal class EntityHandler(bot: DiscordBotImpl) {
 
         val overwrites = raw.permissionOverwrites
         if(overwrites.isNotEmpty()) {
-            // TODO Handle Overrides
+            for(overwrite in overwrites) {
+                handlePermissionOverwrite(overwrite, channel)
+            }
         }
 
         with(channel) {
@@ -190,7 +233,9 @@ internal class EntityHandler(bot: DiscordBotImpl) {
 
         val overwrites = raw.permissionOverwrites
         if(overwrites.isNotEmpty()) {
-            // TODO Handle Overrides
+            for(overwrite in overwrites) {
+                handlePermissionOverwrite(overwrite, channel)
+            }
         }
 
         with(channel) {
@@ -221,7 +266,9 @@ internal class EntityHandler(bot: DiscordBotImpl) {
 
         val overwrites = raw.permissionOverwrites
         if(overwrites.isNotEmpty()) {
-            // TODO Handle Overrides
+            for(overwrite in overwrites) {
+                handlePermissionOverwrite(overwrite, channel)
+            }
         }
 
         with(channel) {
@@ -233,18 +280,41 @@ internal class EntityHandler(bot: DiscordBotImpl) {
         return channel
     }
 
-    fun handleGuildEmote(raw: RawEmote, guild: GuildImpl): GuildEmoteImpl {
+    fun handlePermissionOverwrite(raw: RawPermissionOverwrite, channel: AbstractGuildChannelImpl): PermissionOverrideImpl {
+        val id = raw.id
+
+        val holder: PermissionHolder = when(raw.type.toLowerCase()) {
+            "role" -> checkNotNull(channel.guild.getRoleById(id)) {
+                "Tried to handle raw permission overwrite for role that was not cached (ID: $id)"
+            }
+            "member" -> checkNotNull(channel.guild.getMemberById(id)) {
+                "Tried to handle raw permission overwrite for member that was not cached (ID: $id)"
+            }
+            else -> throw IllegalArgumentException("Could not process raw permission overwrite with type: ${raw.type}")
+        }
+
+        return handlePermissionOverwrite(raw, channel, holder)
+    }
+
+    fun handlePermissionOverwrite(raw: RawPermissionOverwrite, channel: AbstractGuildChannelImpl, holder: PermissionHolder): PermissionOverrideImpl {
+        val override = channel.permissionOverrides.computeIfAbsent(raw.id) { id ->
+            return@computeIfAbsent PermissionOverrideImpl(channel, id, holder)
+        }
+
+        override.rawAllowed = raw.allow.toLong()
+        override.rawDenied = raw.deny.toLong()
+
+        return override
+    }
+
+    fun handleGuildEmote(raw: RawEmoji, guild: GuildImpl): GuildEmoteImpl {
         val id = requireNotNull(raw.id) { "RawEmote id was null!" }
         val roles = raw.roles
-
         val emote = guild.emoteCache.computeIfAbsent(id) { GuildEmoteImpl(id, guild) }
 
         val emoteRoles = emote.roles.also { it.clear() }
         roles.asSequence().mapNotNull { guild.getRoleById(it) as RoleImpl }.toCollection(emoteRoles)
-
-        raw.user?.let { user ->
-            emote.user = bot.userCache[user.id] ?: UserImpl(bot, user)
-        }
+        raw.user?.let { user -> emote.user = bot.userCache[user.id] ?: handleUntrackedUser(user, false) }
 
         with(emote) {
             name = raw.name
@@ -293,14 +363,16 @@ internal class EntityHandler(bot: DiscordBotImpl) {
         member.status = raw.status
     }
 
-    fun handleReceivedMessage(raw: JsonObject): ReceivedMessageImpl {
+    fun handleReceivedMessage(raw: JsonObject, errorOnMissingUser: Boolean = false): ReceivedMessageImpl {
         val channelId = raw["channel_id"].snowflake
-        val channel = bot.textChannelCache[channelId] ?: bot.privateChannelCache[channelId]
-        requireNotNull(channel) { "Missing Channel!" }
-        return handleReceivedMessage(raw, channel)
+        val channel = bot.textChannelCache[channelId] ?:
+                      bot.privateChannelCache[channelId] ?:
+                      bot.untrackedPrivateChannels[channelId]
+        checkNotNull(channel) { MissingChannelError }
+        return handleReceivedMessage(raw, channel, errorOnMissingUser)
     }
 
-    fun handleReceivedMessage(raw: JsonObject, channel: MessageChannel): ReceivedMessageImpl {
+    fun handleReceivedMessage(raw: JsonObject, channel: MessageChannel, errorOnMissingUser: Boolean): ReceivedMessageImpl {
         val id = raw["id"].snowflake
         val content = raw.getOrNull("content")?.contentOrNull
         val author = raw["author"].jsonObject
@@ -319,24 +391,28 @@ internal class EntityHandler(bot: DiscordBotImpl) {
 
         // TODO reactions
 
-        val user: User
-        val member: Member?
+        var user: User?
 
         when(channel.type) {
             Channel.Type.TEXT -> {
                 val chan = channel as TextChannel
-                if(webhookId != null) {
-                    unsupported { "Not yet supported!" }
-                    // TODO Webhook user
-                } else {
-                    member = chan.guild.getMemberById(authorId)
-                    checkNotNull(member) { "Got message from un-cached member (ID: $authorId)" }
-                    user = member.user
+                val member = chan.guild.getMemberById(authorId)
+                user = member?.user
+                if(user == null) {
+                    if(webhookId != null && !errorOnMissingUser) {
+                        val rawWebhookUser = RawUser(
+                            id = authorId,
+                            username = author["username"].content,
+                            discriminator = "0000",
+                            avatar = author.getOrNull("avatar")?.contentOrNull,
+                            bot = true
+                        )
+                        user = handleUntrackedUser(rawWebhookUser, false)
+                    } else error(MissingUserError)
                 }
             }
 
             Channel.Type.PRIVATE -> {
-                member = null
                 val chan = channel as PrivateChannel
                 user = chan.recipient
             }
@@ -352,7 +428,6 @@ internal class EntityHandler(bot: DiscordBotImpl) {
                 channel = channel,
                 content = content ?: "",
                 author = user,
-                member = member,
                 embeds = embeds,
                 attachments = attachments,
                 isWebhook = webhookId != null
@@ -365,19 +440,27 @@ internal class EntityHandler(bot: DiscordBotImpl) {
     }
 
     fun handlePrivateChannel(raw: RawChannel): PrivateChannelImpl {
-        val channel = bot.privateChannelCache.computeIfAbsent(raw.id) { channelId ->
-            val recipient = raw.recipients[0]
-            val id = recipient.id
-            val user = bot.userCache[id] ?: UserImpl(bot, recipient)
-            return@computeIfAbsent PrivateChannelImpl(channelId, user)
+        val recipient = raw.recipients[0]
+        val recipientId = recipient.id
+        val user = bot.userCache[recipientId] ?: handleUntrackedUser(recipient, true)
+        val channelId = raw.id
+
+        val channel = PrivateChannelImpl(channelId, user)
+        user.privateChannel = channel
+
+        if(user.untracked) {
+            bot.untrackedPrivateChannels[channelId] = channel
+        } else {
+            bot.privateChannelCache[channelId] = channel
+            bot.eventCache.play(EventCache.Type.CHANNEL, channelId)
         }
-
-        channel.lastMessageId = raw.lastMessageId
-
         return channel
     }
 
     companion object {
+        const val MissingUserError = "User was missing!"
+        const val MissingChannelError = "Channel was missing!"
+
         val Log = createLogger(EntityHandler::class)
     }
 }

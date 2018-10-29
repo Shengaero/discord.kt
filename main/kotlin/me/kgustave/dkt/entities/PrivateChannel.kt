@@ -19,4 +19,5 @@ interface PrivateChannel: MessageChannel {
     override val type get() = Channel.Type.PRIVATE
 
     val recipient: User
+    val untracked: Boolean
 }

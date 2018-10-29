@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("MemberVisibilityCanBePrivate")
+@file:Suppress("MemberVisibilityCanBePrivate", "MoveLambdaOutsideParentheses")
 package me.kgustave.dkt.promises
 
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import me.kgustave.dkt.internal.impl.DiscordBotImpl
@@ -27,7 +26,9 @@ import kotlin.coroutines.suspendCoroutine
 
 abstract class RestPromise<T>
 internal constructor(protected val bot: DiscordBotImpl, route: Route): RestTask<T>(bot.requester, route) {
-    fun promise(then: (T) -> Unit, catch: (Throwable) -> Unit): Deferred<T> {
+    fun promise() = promise({})
+    fun promise(then: (T) -> Unit) = promise(then, {})
+    fun promise(then: (T) -> Unit, catch: (Throwable) -> Unit) {
         val deferred = GlobalScope.async(bot.promiseDispatcher) {
             val value = await()
             suspendCoroutine<Unit> { it.resumeWith(runCatching { then(value) }) }
@@ -36,6 +37,5 @@ internal constructor(protected val bot: DiscordBotImpl, route: Route): RestTask<
         deferred.invokeOnCompletion {
             if(it != null && it !is CancellationException) catch(it)
         }
-        return deferred
     }
 }

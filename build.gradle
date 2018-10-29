@@ -138,15 +138,21 @@ dependencies {
     testCompile "ch.qos.logback:logback-classic:$logback_version"
 }
 
+tasks.withType(KotlinCompile).all {
+    kotlinOptions {
+        freeCompilerArgs = freeCompilerArgs + [
+            '-Xuse-experimental=me.kgustave.dkt.handle.ExperimentalEventListeners'
+        ]
+    }
+}
+
 test {
     useJUnitPlatform {
-        includeEngines 'junit-jupiter', 'junit-platform'
         excludeTags 'me.kgustave.dkt.test.tags.UsesAPI'
     }
     
     filter {
         failOnNoMatchingTests false
-        //includeTestsMatching '**.*Tests'
     }
 
     testLogging {

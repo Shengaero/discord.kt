@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:JvmName("LoggingUtil__InlinedKt")
+@file:JvmName("LoggingUtil")
 @file:Suppress("NOTHING_TO_INLINE", "unused")
 package me.kgustave.dkt.util
 
@@ -21,5 +21,5 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import kotlin.reflect.KClass
 
-@JvmSynthetic inline fun createLogger(name: String): Logger = LoggerFactory.getLogger(name)
-@JvmSynthetic inline fun createLogger(clazz: KClass<*>): Logger = LoggerFactory.getLogger(clazz.java)
+inline fun createLogger(name: String): Logger = LoggerFactory.getLogger(name)
+inline fun createLogger(clazz: KClass<*>): Logger = LoggerFactory.getLogger(clazz.java)

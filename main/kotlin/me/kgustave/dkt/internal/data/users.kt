@@ -20,16 +20,10 @@ import kotlinx.serialization.Serializable
 import me.kgustave.dkt.internal.data.serializers.SnowflakeSerializer
 
 sealed class RawUserData {
-    @Serializable(SnowflakeSerializer::class)
     abstract val id: Long
-
     abstract val username: String
-
     abstract val discriminator: String
-
     abstract val avatar: String?
-
-    @Optional
     abstract val bot: Boolean
 }
 

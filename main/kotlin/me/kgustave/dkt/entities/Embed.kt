@@ -17,9 +17,6 @@
 
 package me.kgustave.dkt.entities
 
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
-import kotlinx.serialization.Serializer
 import me.kgustave.dkt.util.requireNotLonger
 import java.awt.Color
 import java.time.*
@@ -161,25 +158,13 @@ data class Embed internal constructor(
         val url: String?
     )
 
-    enum class Type {
+    enum class Type constructor(type: String? = null) {
         IMAGE,
         VIDEO,
         LINK,
         RICH,
         UNKNOWN("");
 
-        val type: String
-
-        // workaround for serializer
-        constructor() { this.type = name.toLowerCase() }
-        constructor(type: String) { this.type = type }
-
-        @Serializer(forClass = Type::class)
-        companion object {
-            fun of(type: String): Embed.Type = values().firstOrNull { it.type == type } ?: UNKNOWN
-
-            override fun deserialize(input: Decoder): Type = of(input.decodeString())
-            override fun serialize(output: Encoder, obj: Type) = output.encodeString(obj.type)
-        }
+        val type: String = type ?: name.toLowerCase()
     }
 }

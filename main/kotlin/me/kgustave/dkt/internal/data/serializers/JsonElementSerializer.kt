@@ -15,37 +15,51 @@
  */
 package me.kgustave.dkt.internal.data.serializers
 
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
-import kotlinx.serialization.Serializer
-import kotlinx.serialization.json.JSON
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.*
+import kotlinx.serialization.json.*
+import me.kgustave.dkt.util.toJsonObject
 
 @Serializer(forClass = JsonElement::class)
 object JsonElementSerializer {
+    private val jsonObjectSerializer by lazy { (String.serializer() to this).map }
+    private val jsonArraySerializer by lazy { this.list }
+
     override fun deserialize(input: Decoder): JsonElement {
-        check(input is JSON.JsonInput)
-        return input.readAsTree()
+        return when(input) {
+            is JSON.JsonInput -> input.readAsTree()
+            is Mapper.InMapper -> input.map.toJsonObject()
+            is Mapper.InNullableMapper -> input.map.toJsonObject()
+            else -> throw UnsupportedOperationException(
+                "Cannot deserialize input type: ${input::class}")
+        }
     }
 
     override fun serialize(output: Encoder, obj: JsonElement) {
-        check(output is JSON.JsonOutput)
-        output.writeTree(obj)
+        when(output) {
+            // Fast path
+            is JSON.JsonOutput -> return output.writeTree(obj)
+
+            // Slow path
+            else -> return when(obj) {
+                is JsonNull -> output.encodeNull()
+                is JsonLiteral -> {
+                    obj.longOrNull?.let { return output.encodeLong(it) }
+                    obj.intOrNull?.let { return output.encodeInt(it) }
+                    obj.doubleOrNull?.let { return output.encodeDouble(it) }
+                    obj.floatOrNull?.let { return output.encodeFloat(it) }
+                    output.encodeString(obj.content)
+                }
+                is JsonObject -> output.encode(jsonObjectSerializer, obj)
+                is JsonArray -> output.encode(jsonArraySerializer, obj)
+            }
+        }
+    }
+
+    init {
+        registerSerializer("kotlinx.serialization.json.JsonElement", this)
+        registerSerializer("kotlinx.serialization.json.JsonNull", this)
+        registerSerializer("kotlinx.serialization.json.JsonLiteral", this)
+        registerSerializer("kotlinx.serialization.json.JsonObject", this)
+        registerSerializer("kotlinx.serialization.json.JsonArray", this)
     }
 }
-
-//@Serializer(forClass = JsonArray::class)
-//object JsonArraySerializer {
-//    override fun deserialize(input: Decoder): JsonArray = JsonElementSerializer.deserialize(input).jsonArray
-//
-//    override fun serialize(output: Encoder, obj: JsonArray) = JsonElementSerializer.serialize(output, obj)
-//}
-
-//@Serializer(forClass = JsonObject::class)
-//object JsonObjectSerializer {
-//    override fun deserialize(input: Decoder): JsonObject = JsonElementSerializer.deserialize(input).jsonObject
-//
-//    override fun serialize(output: Encoder, obj: JsonObject) = JsonElementSerializer.serialize(output, obj)
-//}

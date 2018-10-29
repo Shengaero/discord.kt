@@ -83,7 +83,7 @@ internal data class RawGuild(
 
     val roles: List<RawRole>,
 
-    val emojis: List<RawEmote>,
+    val emojis: List<RawEmoji>,
 
     val features: List<String>,
 

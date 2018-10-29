@@ -28,6 +28,7 @@ interface User: Snowflake, Mentionable {
     val defaultAvatarHash: String
     val avatarUrl: String
     val isBot: Boolean
+    val untracked: Boolean
 
     override val mention: String get() = "<@$id>"
 

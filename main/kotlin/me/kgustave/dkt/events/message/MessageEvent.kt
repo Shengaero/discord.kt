@@ -15,11 +15,16 @@
  */
 package me.kgustave.dkt.events.message
 
+import me.kgustave.dkt.entities.Guild
 import me.kgustave.dkt.entities.MessageChannel
+import me.kgustave.dkt.entities.PrivateChannel
+import me.kgustave.dkt.entities.TextChannel
 import me.kgustave.dkt.events.Event
 
 interface MessageEvent: Event {
     val messageId: Long
-
     val channel: MessageChannel
+    val guild: Guild? get() = channel.guild
+    val textChannel: TextChannel? get() = channel as? TextChannel
+    val privateChannel: PrivateChannel? get() = channel as? PrivateChannel
 }

@@ -52,5 +52,7 @@ internal class OkHttpResponse(
         else -> throw UnsupportedOperationException("Protocol not supported: $protocol")
     }
 
-    override fun close() = response.close()
+    override fun close() {
+        runCatching { response.close() }
+    }
 }

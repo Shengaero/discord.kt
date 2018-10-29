@@ -18,6 +18,9 @@ package me.kgustave.dkt.internal.websocket
 enum class EventType {
     READY,
     RESUMED,
+    CHANNEL_CREATE,
+    CHANNEL_UPDATE,
+    CHANNEL_DELETE,
     GUILD_CREATE,
     GUILD_MEMBERS_CHUNK,
     MESSAGE_CREATE,

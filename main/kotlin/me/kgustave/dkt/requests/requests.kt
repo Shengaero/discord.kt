@@ -63,25 +63,26 @@ internal data class BasicDiscordResponse(
 ): HttpResponse by base, DiscordResponse()
 
 internal sealed class FailedDiscordResponse: DiscordResponse() {
-    override val call: HttpClientCall get() = base?.call ?: cannotGet("call")
-    override val status: HttpStatusCode get() = base?.status ?: cannotGet("status")
-    override val headers: Headers get() = base?.headers ?: cannotGet("headers")
-    override val version: HttpProtocolVersion get() = base?.version ?: cannotGet("version")
+    abstract val error: Throwable?
+    override val call: HttpClientCall get() = base?.call ?: cannotGet("call", error)
+    override val status: HttpStatusCode get() = base?.status ?: cannotGet("status", error)
+    override val headers: Headers get() = base?.headers ?: cannotGet("headers", error)
+    override val version: HttpProtocolVersion get() = base?.version ?: cannotGet("version", error)
     override val content: ByteReadChannel
-        get() = base?.content ?: cannotGet("content")
+        get() = base?.content ?: cannotGet("content", error)
     override val coroutineContext: CoroutineContext
-        get() = base?.coroutineContext ?: cannotGet("coroutineContext")
+        get() = base?.coroutineContext ?: cannotGet("coroutineContext", error)
     override val requestTime: GMTDate
-        get() = base?.requestTime ?: cannotGet("requestTime")
+        get() = base?.requestTime ?: cannotGet("requestTime", error)
     override val responseTime: GMTDate
-        get() = base?.responseTime ?: cannotGet("responseTime")
+        get() = base?.responseTime ?: cannotGet("responseTime", error)
 
     override fun close() { base?.close() }
 }
 
 internal data class ErrorDiscordResponse(
     override val base: HttpResponse?,
-    val error: Throwable,
+    override val error: Throwable,
     override val cloudflareRays: Set<String> = emptySet()
 ): FailedDiscordResponse()
 
@@ -89,6 +90,9 @@ internal data class RateLimitedDiscordResponse(
     override val base: HttpResponse?,
     val retryAfter: Long,
     override val cloudflareRays: Set<String> = emptySet()
-): FailedDiscordResponse()
+): FailedDiscordResponse() {
+    override val error: Throwable? get() = null
+}
 
-private fun cannotGet(name: String): Nothing = throw UnsupportedOperationException("Cannot get $name from response!")
+private fun cannotGet(name: String, cause: Throwable?): Nothing =
+    throw IllegalStateException("Cannot get $name from response!", cause)

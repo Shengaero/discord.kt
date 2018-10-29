@@ -23,8 +23,11 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.selects.whileSelect
 import me.kgustave.dkt.DiscordBot
+import me.kgustave.dkt.entities.Guild
 import me.kgustave.dkt.entities.Presence
 import me.kgustave.dkt.entities.User
+import me.kgustave.dkt.events.Event
+import me.kgustave.dkt.handle.ExperimentalEventListeners
 import me.kgustave.dkt.http.engine.OkHttp
 import me.kgustave.dkt.http.engine.websockets.WebSockets
 import me.kgustave.dkt.internal.cache.EventCache
@@ -34,6 +37,7 @@ import me.kgustave.dkt.internal.data.responses.GatewayInfo
 import me.kgustave.dkt.internal.websocket.DiscordWebSocket
 import me.kgustave.dkt.internal.websocket.guild.GuildSetupManager
 import me.kgustave.dkt.promises.RestPromise
+import me.kgustave.dkt.promises.emptyPromise
 import me.kgustave.dkt.promises.restPromise
 import me.kgustave.dkt.requests.Requester
 import me.kgustave.dkt.requests.Route
@@ -43,7 +47,8 @@ import kotlin.concurrent.thread
 internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
     override val token = config.token
     override val sessionHandler = config.sessionHandler
-    override val shardInfo = config.shardInfo
+
+    @ExperimentalEventListeners
     override val eventManager = config.eventManager
 
     override lateinit var self: SelfUserImpl
@@ -54,6 +59,9 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
             //val old = field
             field = value
         }
+
+    val untrackedUsers = hashMapOf<Long, UserImpl>()
+    val untrackedPrivateChannels = hashMapOf<Long, PrivateChannelImpl>()
 
     override val userCache = SnowflakeCacheImpl(UserImpl::name)
     override val guildCache = SnowflakeCacheImpl(GuildImpl::name)
@@ -146,13 +154,6 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
         return this
     }
 
-    override suspend fun await(status: DiscordBot.Status): DiscordBot {
-        require(status.isInit) { "Cannot await non-init status: $status" }
-        if(this.status.ordinal >= status.ordinal) return this
-        whileSelect { onTimeout(50) { this@DiscordBotImpl.status.ordinal < status.ordinal } }
-        return this
-    }
-
     override fun updatePresence(block: Presence.Builder.() -> Unit) {
         val builder = Presence.Builder(presence).apply(block)
         this.presence = presence.copy(
@@ -164,11 +165,32 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
     }
 
     override fun lookupUserById(id: Long): RestPromise<User> {
-        // FIXME This is too basic to survive, we need more handling
+        userCache[id]?.let { return emptyPromise(it) }
+
         return restPromise(Route.GetUser.format(id)) { call ->
             val user = call.response.receive<RawUser>()
-            return@restPromise UserImpl(this, user)
+            return@restPromise entities.handleUntrackedUser(user, false)
         }
+    }
+
+    override fun createGuild(): RestPromise<Guild> {
+        check(!status.isInit) { "Cannot create guild while initializing!" }
+        check(guildCache.size < 10) { "Cannot create guild while on more than 10 guilds already!" }
+
+        TODO("Not yet implemented!")
+    }
+
+    @ExperimentalEventListeners
+    override fun addListener(listener: Any) = eventManager.addListener(listener)
+
+    @ExperimentalEventListeners
+    override fun removeListener(listener: Any) = eventManager.removeListener(listener)
+
+    override suspend fun await(status: DiscordBot.Status): DiscordBot {
+        require(status.isInit) { "Cannot await non-init status: $status" }
+        if(this.status.ordinal >= status.ordinal) return this
+        whileSelect { onTimeout(50) { this@DiscordBotImpl.status.ordinal < status.ordinal } }
+        return this
     }
 
     override suspend fun shutdown() {
@@ -181,6 +203,10 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
         websocket.shutdown()
         shutdownInternally()
         websocket.freeDispatchers()
+    }
+
+    internal fun emit(event: Event) {
+        eventManager.dispatch(event)
     }
 
     internal fun selfIsInit() = ::self.isInitialized

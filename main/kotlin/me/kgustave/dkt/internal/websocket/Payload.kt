@@ -18,6 +18,7 @@ package me.kgustave.dkt.internal.websocket
 import kotlinx.serialization.*
 import kotlinx.serialization.internal.makeNullable
 import kotlinx.serialization.json.*
+import me.kgustave.dkt.internal.data.RawChannel
 import me.kgustave.dkt.internal.data.RawGuild
 import me.kgustave.dkt.internal.data.RawUnavailableGuild
 import me.kgustave.dkt.internal.data.events.RawGuildMembersChunkEvent
@@ -204,11 +205,17 @@ internal data class Payload(
             return when(type) {
                 READY -> JsonParser.parse<RawReadyEvent>(data.stringify())
                 RESUMED -> JsonParser.parse<RawResumeEvent>(data.stringify())
+
+                CHANNEL_CREATE,
+                CHANNEL_UPDATE,
+                CHANNEL_DELETE -> JsonParser.parse<RawChannel>(data.stringify())
+
                 GUILD_CREATE -> if(data.jsonObject.getOrNull("unavailable")?.booleanOrNull == true) {
                     JsonParser.parse<RawUnavailableGuild>(data.stringify())
                 } else {
                     JsonParser.parse<RawGuild>(data.stringify())
                 }
+
                 GUILD_MEMBERS_CHUNK -> JsonParser.parse<RawGuildMembersChunkEvent>(data.stringify())
                 else -> data
             }

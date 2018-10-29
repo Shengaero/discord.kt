@@ -13,24 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.internal.websocket.handlers
+package me.kgustave.dkt.internal.websocket.handlers.create
 
-import me.kgustave.dkt.internal.data.events.RawGuildMembersChunkEvent
+import me.kgustave.dkt.internal.data.RawGuildData
 import me.kgustave.dkt.internal.impl.DiscordBotImpl
 import me.kgustave.dkt.internal.websocket.Payload
+import me.kgustave.dkt.internal.websocket.handlers.WebSocketHandler
 
-internal class GuildMembersChunkHandler(bot: DiscordBotImpl): WebSocketHandler(bot) {
+internal class GuildCreateHandler(bot: DiscordBotImpl): WebSocketHandler(bot) {
     override fun handle(payload: Payload) {
-        val d = payload.d
-        require(d is RawGuildMembersChunkEvent) { "Inner payload data was not RawGuildMembersChunkEvent!" }
+        val raw = requireNotNull(payload.d as RawGuildData)
+        val impl = bot.guildCache[raw.id] ?: return bot.guildSetupManager.create(raw)
 
-        val (guildId, members) = d
-
-        bot.guildCache[guildId]?.let { guild ->
-            val entities = bot.entities
-            for(member in members) entities.handleMember(member, guild)
+        // the guild has gone unavailable!
+        if(!impl.unavailable && raw.unavailable) {
+            impl.unavailable = raw.unavailable
+            // TODO Event
         }
-
-        bot.guildSetupManager.chunk(guildId, members)
+        // the guild has just become available!
+        else if(impl.unavailable && !raw.unavailable) {
+            impl.unavailable = raw.unavailable
+            // TODO Event
+        }
     }
 }

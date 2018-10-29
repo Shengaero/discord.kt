@@ -17,9 +17,6 @@ package me.kgustave.dkt.events
 
 import me.kgustave.dkt.DiscordBot
 
-/**
- * @author Kaidan Gustave
- */
 interface Event {
     val bot: DiscordBot
 }

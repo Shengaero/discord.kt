@@ -13,8 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.internal.data
+package me.kgustave.dkt.handle
 
-@Deprecated("renamed to RawEmoji",
-    ReplaceWith("RawEmoji", imports = ["me.kgustave.dkt.internal.data.RawEmoji"]))
-internal typealias RawEmote = RawEmoji
+import me.kgustave.dkt.events.Event
+
+@FunctionalInterface
+@ExperimentalEventListeners
+interface EventListener {
+    fun on(event: Event)
+}

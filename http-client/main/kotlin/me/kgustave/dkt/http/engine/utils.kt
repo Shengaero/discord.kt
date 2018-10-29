@@ -67,12 +67,12 @@ internal suspend fun Call.await(): Response {
     return callback.await()
 }
 
-internal fun CoroutineScope.convertToOkHttpBody(content: OutgoingContent): RequestBody? = when(content) {
+internal fun convertToOkHttpBody(content: OutgoingContent): RequestBody? = when(content) {
     is OutgoingContent.ByteArrayContent -> RequestBody.create(null, content.bytes())
     is OutgoingContent.ReadChannelContent -> StreamRequestBody { content.readFrom() }
     is OutgoingContent.ProtocolUpgrade, is OutgoingContent.NoContent -> null
     is OutgoingContent.WriteChannelContent -> StreamRequestBody body@ {
-        val job = writer(Dispatchers.IO) { content.writeTo(channel) }
+        val job = GlobalScope.writer(Dispatchers.IO) { content.writeTo(channel) }
         return@body job.channel
     }
     else -> throw UnsupportedContentTypeException(content)

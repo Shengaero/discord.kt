@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 @file:JvmName("Discord")
-@file:Suppress("MemberVisibilityCanBePrivate", "unused", "FunctionName")
+@file:Suppress("MemberVisibilityCanBePrivate", "unused", "FunctionName", "DeprecatedCallableAddReplaceWith")
 package me.kgustave.dkt
 
 import me.kgustave.dkt.entities.*
-import me.kgustave.dkt.handle.DispatcherProvider
-import me.kgustave.dkt.handle.EventManager
-import me.kgustave.dkt.handle.SessionHandler
+import me.kgustave.dkt.events.Event
+import me.kgustave.dkt.handle.*
 import me.kgustave.dkt.internal.impl.DiscordBotImpl
 
 @DslMarker
@@ -32,70 +31,73 @@ annotation class BotConfigDsl
 }
 
 @BotConfigDsl
-@JvmSynthetic
 inline fun DiscordBot(configure: DiscordBot.Config.() -> Unit) = DiscordBot(DiscordBot.Config().apply(configure))
 
 @BotConfigDsl
-@JvmSynthetic
 inline fun DiscordBot.Config.startAutomatically(block: () -> Boolean) {
     this.startAutomatically = block()
 }
 
 @BotConfigDsl
-@JvmSynthetic
 inline fun DiscordBot.Config.token(block: () -> String) {
     this.token = block()
 }
 
 @BotConfigDsl
-@JvmSynthetic
-inline fun DiscordBot.Config.shard(block: () -> DiscordBot.ShardInfo) {
-    this.shardInfo = block()
-}
-
-@BotConfigDsl
-@JvmSynthetic
 inline fun DiscordBot.Config.sessionHandler(block: () -> SessionHandler) {
     this.sessionHandler = block()
 }
 
 @BotConfigDsl
-@JvmSynthetic
 inline fun DiscordBot.Config.compression(block: () -> Boolean) {
     this.compression = block()
 }
 
 @BotConfigDsl
-@JvmSynthetic
 inline fun DiscordBot.Config.activity(block: () -> Activity?) {
     this.activity = block()
 }
 
 @BotConfigDsl
-@JvmSynthetic
 inline fun DiscordBot.Config.afk(block: () -> Boolean) {
     this.afk = block()
 }
 
 @BotConfigDsl
-@JvmSynthetic
 inline fun DiscordBot.Config.status(block: () -> OnlineStatus) {
     this.status = block()
 }
 
 @BotConfigDsl
-@JvmSynthetic
-inline fun DiscordBot.Config.eventManager(block: () -> EventManager) {
-    this.eventManager = block()
-}
-
-@BotConfigDsl
-@JvmSynthetic
 inline fun DiscordBot.Config.dispatcherProvider(block: () -> DispatcherProvider) {
     this.dispatcherProvider = block()
 }
 
 @BotConfigDsl
-@JvmSynthetic
-@Deprecated("renamed to compression", ReplaceWith("compression(block)", imports = ["me.kgustave.dkt.compression"]))
+@ExperimentalEventListeners
+inline fun DiscordBot.Config.eventManager(block: () -> EventManager) {
+    this.eventManager = block()
+}
+
+@BotConfigDsl
+@ExperimentalEventListeners
+inline fun <reified E: Event> DiscordBot.Config.on(crossinline block: (event: E) -> Unit) {
+    this.eventManager.addListener(object: EventListener {
+        override fun on(event: Event) {
+            if(event is E) block(event)
+        }
+    })
+}
+
+@BotConfigDsl
+@Suppress("DEPRECATION")
+@Deprecated("sharding will be moved to a separate interface with an expanded configuration DSL")
+inline fun DiscordBot.Config.shard(block: () -> DiscordBot.ShardInfo) {
+    this.shardInfo = block()
+}
+
+@BotConfigDsl
+@Deprecated("renamed to compression",
+    ReplaceWith("compression(block)", imports = ["me.kgustave.dkt.compression"]),
+    DeprecationLevel.HIDDEN)
 inline fun DiscordBot.Config.useCompression(block: () -> Boolean) = compression(block)

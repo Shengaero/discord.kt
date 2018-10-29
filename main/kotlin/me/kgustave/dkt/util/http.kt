@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:JvmName("HttpUtil")
+@file:Suppress("unused")
 package me.kgustave.dkt.util
 
 import io.ktor.client.response.HttpResponse
@@ -48,11 +49,11 @@ fun HttpResponse.readBody(isGzip: Boolean = isGzip(), charset: Charset = Charset
 }
 
 @Deprecated("replaced with extension",
-    ReplaceWith("response.readBody(isGzip)", imports = ["me.kgustave.dkt.util"]))
+    ReplaceWith("response.readBody(isGzip)", imports = ["me.kgustave.dkt.util"]), DeprecationLevel.HIDDEN)
 fun readHttpResponseBody(response: HttpResponse, isGzip: Boolean = response.isGzip()): String =
     response.readBody(isGzip)
 
-@Deprecated("unused, scheduled for removal without replacement", level = DeprecationLevel.ERROR)
+@Deprecated("unused, scheduled for removal without replacement", level = DeprecationLevel.HIDDEN)
 fun readGzipText(text: String, charset: Charset = Charsets.UTF_8): String {
     return text.byteInputStream(charset).use {
         GZIPInputStream(it).use { gzip ->
