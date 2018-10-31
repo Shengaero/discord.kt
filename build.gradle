@@ -85,7 +85,9 @@ allprojects {
             freeCompilerArgs = [
                 '-Xuse-experimental=kotlin.Experimental',
                 '-Xuse-experimental=kotlin.ExperimentalUnsignedTypes',
-                '-Xuse-experimental=kotlin.contracts.ExperimentalContracts'
+                '-Xuse-experimental=kotlin.contracts.ExperimentalContracts',
+                '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
+                '-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi'
             ]
         }
     }
@@ -112,7 +114,6 @@ dependencies {
     compile "org.jetbrains.kotlinx:kotlinx-io-jvm:$io_version"
     compile "org.jetbrains.kotlinx:kotlinx-coroutines-io-jvm:$io_version"
     compile "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serialization_version"
-    compile "org.jetbrains.kotlinx:kotlinx-serialization-runtime-jsonparser:$serialization_version"
 
     // logging
     compile "org.slf4j:slf4j-api:$slf4j_version"
@@ -141,7 +142,9 @@ dependencies {
 tasks.withType(KotlinCompile).all {
     kotlinOptions {
         freeCompilerArgs = freeCompilerArgs + [
-            '-Xuse-experimental=me.kgustave.dkt.handle.ExperimentalEventListeners'
+            '-Xuse-experimental=me.kgustave.dkt.handle.ExperimentalEventListeners',
+            '-Xuse-experimental=kotlinx.serialization.ImplicitReflectionSerializer',
+            '-Xuse-experimental=me.kgustave.dkt.http.engine.DiscordKtHttpEngineAPI'
         ]
     }
 }

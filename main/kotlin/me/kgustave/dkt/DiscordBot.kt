@@ -61,9 +61,6 @@ interface DiscordBot {
 
     suspend fun shutdown()
 
-    @Deprecated("sharding will be moved to a separate interface with an expanded configuration DSL")
-    data class ShardInfo internal constructor(val id: Int, val total: Int)
-
     enum class Status(val isInit: Boolean = false) {
         INITIALIZING(true),
         INITIALIZED(true),
@@ -116,16 +113,5 @@ interface DiscordBot {
         internal fun requireToken() {
             require(::token.isInitialized) { "Token not specified!" }
         }
-
-        @Deprecated("sharding will be moved to a separate interface with an expanded configuration DSL")
-        var shardInfo: ShardInfo? = null
-
-        @Deprecated("sharding will be moved to a separate interface with an expanded configuration DSL")
-        @BotConfigDsl infix fun Int.of(total: Int): ShardInfo = ShardInfo(this, total)
-
-        @Deprecated("renamed to compression", ReplaceWith("compression"), DeprecationLevel.HIDDEN)
-        var useCompression: Boolean
-            get() = compression
-            set(value) { compression = value }
     }
 }

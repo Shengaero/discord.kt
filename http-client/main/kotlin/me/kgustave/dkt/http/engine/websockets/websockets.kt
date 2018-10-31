@@ -25,11 +25,22 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.cio.websocket.WebSocketSession
 import io.ktor.http.isWebsocket
 import io.ktor.util.AttributeKey
+import me.kgustave.dkt.http.engine.DiscordKtHttpEngineAPI
 
-interface ClientWebSocketSession: WebSocketSession {
+@Deprecated(
+    "Renamed to DiscordWebSocketSession to prevent naming confusion with " +
+    "ktor's official interface. This will be removed shortly.",
+    ReplaceWith("DiscordWebSocketSession"), DeprecationLevel.ERROR
+)
+@UseExperimental(DiscordKtHttpEngineAPI::class)
+typealias ClientWebSocketSession = DiscordWebSocketSession
+
+@DiscordKtHttpEngineAPI
+interface DiscordWebSocketSession: WebSocketSession {
     val call: HttpClientCall
 }
 
+@DiscordKtHttpEngineAPI
 class WebSockets private constructor() {
     companion object Feature: HttpClientFeature<Unit, WebSockets> {
         override val key = AttributeKey<WebSockets>("Websocket")

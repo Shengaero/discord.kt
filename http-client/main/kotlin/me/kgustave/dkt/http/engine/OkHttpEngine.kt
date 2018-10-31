@@ -23,25 +23,27 @@ import io.ktor.client.request.HttpRequestData
 import io.ktor.http.isWebsocket
 import io.ktor.util.cio.toByteReadChannel
 import io.ktor.util.date.GMTDate
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.io.ByteReadChannel
-import kotlinx.coroutines.withContext
 import me.kgustave.dkt.http.engine.websockets.OkHttpWebSocketResponse
 import me.kgustave.dkt.http.engine.websockets.OkHttpWebSocketSession
 import okhttp3.OkHttpClient
 import okhttp3.Response
 
+@DiscordKtHttpEngineAPI
 internal class OkHttpEngine(override val config: OkHttp.Config): HttpClientEngine {
     internal val engine = OkHttpClient.Builder().apply(config.config).build()
     override val dispatcher = engine.dispatcher().executorService().asCoroutineDispatcher()
-    override val coroutineContext = Job(parent = dispatcher[Job])
+    override val coroutineContext = SupervisorJob()
 
     override suspend fun execute(call: HttpClientCall, data: HttpRequestData): HttpEngineCall {
         val request = DefaultHttpRequest(call, data)
         val requestTime = GMTDate()
         if(request.url.protocol.isWebsocket()) {
-            val session = OkHttpWebSocketSession(this, call, true, Long.MAX_VALUE)
+            val session = OkHttpWebSocketSession(this, Job(parent = coroutineContext), call, true, Long.MAX_VALUE)
             engine.newWebSocket(request.toOkRequest(), session)
             val response = session.responseDef.await()
             val okResponse = createOkResponse(call, requestTime, response)
@@ -54,12 +56,12 @@ internal class OkHttpEngine(override val config: OkHttp.Config): HttpClientEngin
 
     override fun close() { /* No-op */ }
 
-    private suspend fun createOkResponse(call: HttpClientCall, requestTime: GMTDate, response: Response): OkHttpResponse {
-        val responseContent = withContext(dispatcher) {
+    private fun createOkResponse(call: HttpClientCall, requestTime: GMTDate, response: Response): OkHttpResponse {
+        // dispatch this on IO to offset read blocking of the created channel
+        val responseContent =
+            @Suppress("EXPERIMENTAL_API_USAGE")
             response.body()?.byteStream()
-                ?.toByteReadChannel(context = coroutineContext) ?: ByteReadChannel.Empty
-        }
-
-        return OkHttpResponse(response, coroutineContext, call, requestTime, responseContent)
+                ?.toByteReadChannel(context = Dispatchers.IO, parent = coroutineContext) ?: ByteReadChannel.Empty
+        return OkHttpResponse(response, Job(parent = coroutineContext), call, requestTime, responseContent)
     }
 }

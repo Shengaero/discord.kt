@@ -63,13 +63,15 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.serialization.parse
+import kotlinx.serialization.stringify
 import me.kgustave.dkt.DiscordBot
 import me.kgustave.dkt.DiscordKt
 import me.kgustave.dkt.events.ReadyEvent
 import me.kgustave.dkt.events.ReconnectEvent
 import me.kgustave.dkt.events.ResumeEvent
 import me.kgustave.dkt.events.ShutdownEvent
-import me.kgustave.dkt.http.engine.websockets.ClientWebSocketSession
+import me.kgustave.dkt.http.engine.websockets.DiscordWebSocketSession
 import me.kgustave.dkt.internal.data.events.RawReadyEvent
 import me.kgustave.dkt.internal.data.events.RawResumeEvent
 import me.kgustave.dkt.internal.data.responses.GatewayInfo
@@ -77,7 +79,6 @@ import me.kgustave.dkt.internal.impl.DiscordBotImpl
 import me.kgustave.dkt.internal.impl.DiscordBotShardImpl
 import me.kgustave.dkt.internal.websocket.handlers.WebSocketHandler
 import me.kgustave.dkt.util.*
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.locks.ReentrantLock
@@ -108,7 +109,7 @@ class DiscordWebSocket internal constructor(
     @Volatile private var shutdown = false
     @Volatile private var identifyTime = 0L
 
-    private lateinit var session: ClientWebSocketSession
+    private lateinit var session: DiscordWebSocketSession
     private var _trace = emptySet<String>()
     private var reconnectTimeoutDelay = 2 // In seconds
     private var sessionId: String? = null
@@ -127,8 +128,8 @@ class DiscordWebSocket internal constructor(
     private val incoming get() = session.incoming
     private val outgoing get() = session.outgoing
 
-    internal val guildMembersChunkQueue = ConcurrentLinkedQueue<String>()
-    internal val messageQueue = ConcurrentLinkedQueue<String>()
+    internal val guildMembersChunkQueue = Channel<String>(Channel.UNLIMITED)
+    internal val messageQueue = Channel<String>(Channel.UNLIMITED)
     internal val lock = ReentrantLock()
 
     ///////////////
@@ -153,8 +154,6 @@ class DiscordWebSocket internal constructor(
     private val messagerDispatcher  = newSingleThreadContext(threadName("Messager"))
     private val heartbeatDispatcher = newSingleThreadContext(threadName("Heartbeat"))
     private val readerDispatcher    = newSingleThreadContext(threadName("Reader"))
-
-    private val mainScope = CoroutineScope(mainDispatcher)
 
     ///////////////////////
     // Public Properties //
@@ -286,7 +285,7 @@ class DiscordWebSocket internal constructor(
     internal fun sendGuildMemberRequest(request: Payload.GuildMemberRequest) {
         val payload = Payload(op = OP.RequestGuildMembers, d = request)
         val message = JsonParser.stringify(payload)
-        doWhileLocked { guildMembersChunkQueue += message }
+        doWhileLocked { guildMembersChunkQueue.offer(message) }
     }
 
     internal fun nullifyMessager() {
@@ -361,13 +360,13 @@ class DiscordWebSocket internal constructor(
         //coroutine scope. This allows us to cancel all child jobs,
         //regardless of context, by simply cancelling the 'main'
         //parent job.
-        _main = mainScope.launch(mainDispatcher) { handleSession(false) }
+        _main = GlobalScope.launch(mainDispatcher) { handleSession(false) }
 
         _main.invokeOnCompletion {
             if(it is CancellationException) {
-                Log.debug("$mainDispatcher received a cancellation!")
+                Log.debug("WebSocket main job received a cancellation!")
             } else if(it !== null) {
-                Log.error("$mainDispatcher encountered an unexpected exception!", it)
+                Log.error("WebSocket main job encountered an unexpected exception!", it)
             }
         }
     }
@@ -386,6 +385,10 @@ class DiscordWebSocket internal constructor(
             }
         }
 
+        // immediately enable masking!
+        session.masking = true
+        connected = true
+
         _bot.status = DiscordBot.Status.IDENTIFYING_SESSION
 
         when(sessionId) {
@@ -401,17 +404,16 @@ class DiscordWebSocket internal constructor(
             Log.trace("Received cf-ray: $ray")
         }
 
-        session.masking = true
-        connected = true
-
         rateLimitPeriodReset = currentTimeMs + 60000 // currentTimeMs + 60 seconds
     }
 
-    private suspend fun handleSession(isReconnect: Boolean) {
+    private suspend fun handleSession(isReconnect: Boolean) = coroutineScope {
         // now that we have connected, we should setup our messaging queue
         if(!isReconnect) setupMessager()
 
-        handleHello()
+        val interval = handleHello()
+
+        setupHeartbeat(interval)
 
         // Now that we've started up the internal handlers for sending messages
         //to the websocket, we need to actually send the websocket info about
@@ -429,11 +431,11 @@ class DiscordWebSocket internal constructor(
         setupReader()
 
         // Wait on close
-        val (closeReason, isClient) = closer.receiveOrNull() ?: run {
+        val (closeReason, isClient) = runCatching { closer.receive() }.getOrElse { e ->
             // our closer died? immediately terminate
             session.terminate()
-            Log.error("Closer died?! Will shut down...")
-            return@run CloseOrder(CloseReason(1000, ""), isClient = false)
+            Log.error("Closer died?! Will shut down...", e)
+            return@getOrElse CloseOrder(CloseReason(1000, ""), isClient = false)
         }
 
         Log.debug("CloseOrder fulfilled!")
@@ -472,7 +474,7 @@ class DiscordWebSocket internal constructor(
             }
 
             dispatchShutdown(closeCode)
-            return Log.debug("WebSocket has shutdown completely!")
+            return@coroutineScope Log.debug("WebSocket has shutdown completely!")
         }
 
         compressor.reset()
@@ -489,7 +491,7 @@ class DiscordWebSocket internal constructor(
         }
     }
 
-    private suspend fun handleHello() {
+    private suspend fun handleHello(): Long {
         // Read the payload contents
         val payload = incoming.receiveNextPayload()
 
@@ -500,7 +502,8 @@ class DiscordWebSocket internal constructor(
         val hello = payload.d as Payload.Hello
 
         storeTraces(hello.trace, "HELLO", OP.Hello)
-        setupHeartbeat(hello.heartbeatInterval)
+
+        return hello.heartbeatInterval
     }
 
     private suspend fun handleReady() {
@@ -536,15 +539,15 @@ class DiscordWebSocket internal constructor(
     // Job Setup //
     ///////////////
 
-    private fun setupMessager() {
+    private fun CoroutineScope.setupMessager() {
         if(_messager != null) return
 
-        _messager = WebSocketMessager(mainScope, this, messagerDispatcher)
+        _messager = WebSocketMessager(this, this@DiscordWebSocket, messagerDispatcher)
             .also(WebSocketMessager::start)
     }
 
-    private fun setupReader() {
-        _reader = mainScope.launch(readerDispatcher) {
+    private fun CoroutineScope.setupReader() {
+        _reader = launch(readerDispatcher) {
             while(connected) {
                 try {
                     val payload = incoming.receiveNextPayload()
@@ -564,8 +567,8 @@ class DiscordWebSocket internal constructor(
         }
     }
 
-    private fun setupHeartbeat(interval: Long) {
-        _heartbeat = mainScope.launch(heartbeatDispatcher) {
+    private fun CoroutineScope.setupHeartbeat(interval: Long) {
+        _heartbeat = launch(heartbeatDispatcher) {
             while(connected) {
                 try {
                     sendHeartbeat()
@@ -643,7 +646,7 @@ class DiscordWebSocket internal constructor(
     }
 
     private fun queueMessage(text: String) {
-        doWhileLocked { messageQueue.add(text) }
+        doWhileLocked { messageQueue.offer(text) }
     }
 
     internal suspend fun sendPayload(payload: Payload, queue: Boolean): Boolean {
@@ -697,7 +700,7 @@ class DiscordWebSocket internal constructor(
         sessionId = null
         authenticated = false
 
-        doWhileLocked(guildMembersChunkQueue::clear)
+        doWhileLocked {  }
 
         with(_bot) {
             textChannelCache.clear()
@@ -901,7 +904,7 @@ class DiscordWebSocket internal constructor(
 
         @JvmField internal val Log = createLogger(DiscordWebSocket::class)
 
-        @JvmStatic private fun threadName(kind: String) = "DiscordWebSocket $kind Thread"
+        @JvmStatic private fun threadName(kind: String): String = "DiscordWebSocket $kind Thread"
 
         @JvmStatic private fun checkEventType(expect: EventType, payload: Payload) {
             check(expect == payload.t) { "Failed event type check. Expected: '$expect', actual: '${payload.t}'" }

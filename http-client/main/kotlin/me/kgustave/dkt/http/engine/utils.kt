@@ -43,7 +43,7 @@ private class CompletableCallback(call: Call, parent: Job?): Callback {
     suspend fun await() = completion.await()
 
     override fun onFailure(call: Call, e: IOException) {
-        completion.cancel(e)
+        completion.completeExceptionally(e)
     }
 
     override fun onResponse(call: Call, response: Response) {
@@ -61,12 +61,14 @@ private class StreamRequestBody(
     }
 }
 
+@DiscordKtHttpEngineAPI
 internal suspend fun Call.await(): Response {
     val callback = CompletableCallback(this, coroutineContext[Job])
     enqueue(callback)
     return callback.await()
 }
 
+@DiscordKtHttpEngineAPI
 internal fun convertToOkHttpBody(content: OutgoingContent): RequestBody? = when(content) {
     is OutgoingContent.ByteArrayContent -> RequestBody.create(null, content.bytes())
     is OutgoingContent.ReadChannelContent -> StreamRequestBody { content.readFrom() }
@@ -78,6 +80,7 @@ internal fun convertToOkHttpBody(content: OutgoingContent): RequestBody? = when(
     else -> throw UnsupportedContentTypeException(content)
 }
 
+@DiscordKtHttpEngineAPI
 @UseExperimental(InternalAPI::class)
 internal fun DefaultHttpRequest.toOkRequest(): Request = Request.Builder().apply {
     url(url.toString())

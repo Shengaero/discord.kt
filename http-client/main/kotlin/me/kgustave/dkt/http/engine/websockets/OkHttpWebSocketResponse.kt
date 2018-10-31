@@ -17,8 +17,10 @@ package me.kgustave.dkt.http.engine.websockets
 
 import io.ktor.client.call.HttpClientCall
 import io.ktor.client.response.HttpResponse
+import me.kgustave.dkt.http.engine.DiscordKtHttpEngineAPI
 import me.kgustave.dkt.http.engine.OkHttpResponse
 
+@DiscordKtHttpEngineAPI
 internal class OkHttpWebSocketResponse(
     override val call: HttpClientCall,
     private val okResponse: OkHttpResponse,

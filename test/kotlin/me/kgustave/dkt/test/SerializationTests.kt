@@ -17,6 +17,7 @@
 
 package me.kgustave.dkt.test
 
+import kotlinx.serialization.parse
 import me.kgustave.dkt.internal.data.RawEmoji
 import me.kgustave.dkt.internal.data.RawRole
 import me.kgustave.dkt.internal.data.RawUser

@@ -22,6 +22,7 @@ import me.kgustave.dkt.compression
 import me.kgustave.dkt.entities.Activity
 import me.kgustave.dkt.entities.OnlineStatus
 import me.kgustave.dkt.entities.listeningTo
+import me.kgustave.dkt.entities.playing
 import me.kgustave.dkt.events.message.MessageReceivedEvent
 import me.kgustave.dkt.handle.ExperimentalEventListeners
 import me.kgustave.dkt.handle.on
@@ -41,7 +42,6 @@ import kotlin.test.assertTrue
 
 @Slow
 @UsesAPI
-@Disabled("broken, will fix later :P")
 @EnabledIfResourcePresent(TestConfigRes)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DiscordBotTests: CoroutineTestBase() {
@@ -63,7 +63,13 @@ class DiscordBotTests: CoroutineTestBase() {
         delay(5000)
     }
 
+    @Disabled("broken, will fix later :P")
     @Test fun `Test Bot Update Status`() = runBotTest { bot ->
+        bot.updatePresence {
+            this.status = OnlineStatus.ONLINE
+            this.activity = playing("with discord.kt")
+        }
+
         var presence = bot.presence
         var activity = presence.activity
 
@@ -86,6 +92,8 @@ class DiscordBotTests: CoroutineTestBase() {
         assertEquals(OnlineStatus.DO_NOT_DISTURB, presence.status)
         assertEquals("the Gateway", activity.name)
         assertEquals(Activity.Type.LISTENING, activity.type)
+
+        delay(2000)
     }
 
     @EnabledIfResourcePresent(TestGuildConfigRes)
@@ -172,7 +180,7 @@ class DiscordBotTests: CoroutineTestBase() {
 
         bot.on<MessageReceivedEvent> { event ->
             if(event.message.guild?.id != id) return@on
-            if(event.message.member?.user?.id == member.id) return@on
+            if(event.message.member?.user?.id != member.id) return@on
             if(event.message.channel.id != channel.id) return@on
 
             if(event.message.content == "done") {
@@ -181,9 +189,11 @@ class DiscordBotTests: CoroutineTestBase() {
                     event.message.delete().promise()
                     message.delete().promise()
                     done.complete(Unit)
-                }, { done.cancel(it) })
+                }, { done.completeExceptionally(it) })
             }
         }
+
+        done.await()
     }
 
     private fun runBotTest(block: suspend (bot: DiscordBot) -> Unit) = runTest {

@@ -25,19 +25,21 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.CoroutineStart.LAZY
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
+import me.kgustave.dkt.http.engine.DiscordKtHttpEngineAPI
 import me.kgustave.dkt.http.engine.OkHttpEngine
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
 
+@DiscordKtHttpEngineAPI
 internal class OkHttpWebSocketSession(
     engine: OkHttpEngine,
+    private val socketJob: Job,
     override val call: HttpClientCall,
     override var masking: Boolean,
     override var maxFrameSize: Long
-): WebSocketListener(), ClientWebSocketSession {
-    private val socketJob = Job(parent = engine.dispatcher[Job])
+): WebSocketListener(), DiscordWebSocketSession {
     private val socketScope = CoroutineScope(socketJob)
     private val readerThread = newSingleThreadContext("OkHttpWebSocketSession Reader")
 
@@ -62,7 +64,6 @@ internal class OkHttpWebSocketSession(
     //allows the caller to quickly return when sending to this actor.
     override val outgoing = socketScope.actor<Frame>(coroutineContext, capacity = 8, start = LAZY) {
         responseDef.await()
-        var e: Throwable? = null
         try {
             loop@ while(!isClosedForReceive) {
                 when(val frame = receiveOrNull()) {
@@ -85,7 +86,6 @@ internal class OkHttpWebSocketSession(
                 if(isEmpty) flush?.complete(Unit)
             }
         } catch(t: Throwable) {
-            e = t
             // rethrow the exception to debug
             throw t
         } finally {
@@ -95,7 +95,7 @@ internal class OkHttpWebSocketSession(
             flush?.complete(Unit)
 
             // finally cancel
-            cancel(e)
+            cancel()
         }
     }
 
@@ -106,7 +106,7 @@ internal class OkHttpWebSocketSession(
 
     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
         this.webSocket = webSocket
-        if(response == null) responseDef.cancel(t) else responseDef.complete(response)
+        if(response == null) responseDef.completeExceptionally(t) else responseDef.complete(response)
     }
 
     override fun onMessage(webSocket: WebSocket, text: String) {
@@ -155,11 +155,11 @@ internal class OkHttpWebSocketSession(
         // immediately send a default close
         webSocket.close(defaultClose.code.toInt(), defaultClose.message)
 
-        val cancel = CancellationException("Connection terminated normally!")
+        //val cancel = CancellationException("Connection terminated normally!")
 
         // cancel the socket job and the incoming channel
-        socketJob.cancel(cancel)
-        incoming.cancel(cancel) // FIXME maybe find a way to delegate this close to socketJob
+        socketJob.cancel()
+        incoming.cancel() // FIXME maybe find a way to delegate this close to socketJob
 
         // close reader thread
         readerThread.close()

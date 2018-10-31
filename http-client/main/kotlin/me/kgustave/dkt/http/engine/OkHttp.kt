@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("unused")
 package me.kgustave.dkt.http.engine
 
 import io.ktor.client.engine.HttpClientEngine
@@ -21,6 +22,7 @@ import io.ktor.client.engine.HttpClientEngineFactory
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 
+@DiscordKtHttpEngineAPI
 object OkHttp: HttpClientEngineFactory<OkHttp.Config> {
     override fun create(block: OkHttp.Config.() -> Unit): HttpClientEngine =
         OkHttpEngine(OkHttp.Config().apply(block))

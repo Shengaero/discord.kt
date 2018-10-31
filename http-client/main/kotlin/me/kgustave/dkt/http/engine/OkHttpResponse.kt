@@ -26,6 +26,7 @@ import okhttp3.Protocol
 import okhttp3.Response
 import kotlin.coroutines.CoroutineContext
 
+@DiscordKtHttpEngineAPI
 internal class OkHttpResponse(
     private val response: Response,
     override val coroutineContext: CoroutineContext,

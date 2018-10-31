@@ -205,6 +205,11 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
         websocket.freeDispatchers()
     }
 
+    /**
+     * Emits an [Event] to the [eventManager].
+     *
+     * This is used to handle events in a centralized way.
+     */
     internal fun emit(event: Event) {
         eventManager.dispatch(event)
     }

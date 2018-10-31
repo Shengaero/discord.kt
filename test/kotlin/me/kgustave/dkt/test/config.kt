@@ -16,6 +16,7 @@
 package me.kgustave.dkt.test
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.parse
 import me.kgustave.dkt.util.JsonParser
 
 const val TestConfigRes = "/test-config.json"

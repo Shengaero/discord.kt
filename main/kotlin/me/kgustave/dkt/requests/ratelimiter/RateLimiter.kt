@@ -20,7 +20,7 @@ import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
-import me.kgustave.dkt.handle.SessionHandler
+import kotlinx.serialization.parse
 import me.kgustave.dkt.requests.*
 import me.kgustave.dkt.util.*
 import java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME
@@ -51,9 +51,6 @@ class RateLimiter(
     private var offset = -1L
 
     private val now: Long get() = currentTimeMs + max(offset, 0L)
-
-    @Deprecated("in order to allow extraction, this will be removed in a future release", level = DeprecationLevel.ERROR)
-    private val sessionHandler get() = global as SessionHandler
 
     fun submit(request: DiscordRequest) {
         reject(isShutdown) { "Cannot queue requests while RateLimiter is closing or shutdown!" }
@@ -218,7 +215,7 @@ class RateLimiter(
                         }
                     } catch(e: Exception) {
                         iterator.remove()
-                        request.completion.cancel(e)
+                        request.completion.completeExceptionally(e)
                     }
                 }
 

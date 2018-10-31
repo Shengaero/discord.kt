@@ -88,16 +88,3 @@ inline fun <reified E: Event> DiscordBot.Config.on(crossinline block: (event: E)
         }
     })
 }
-
-@BotConfigDsl
-@Suppress("DEPRECATION")
-@Deprecated("sharding will be moved to a separate interface with an expanded configuration DSL")
-inline fun DiscordBot.Config.shard(block: () -> DiscordBot.ShardInfo) {
-    this.shardInfo = block()
-}
-
-@BotConfigDsl
-@Deprecated("renamed to compression",
-    ReplaceWith("compression(block)", imports = ["me.kgustave.dkt.compression"]),
-    DeprecationLevel.HIDDEN)
-inline fun DiscordBot.Config.useCompression(block: () -> Boolean) = compression(block)

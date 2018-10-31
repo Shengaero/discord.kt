@@ -24,8 +24,10 @@ import io.ktor.http.HttpHeaders.SecWebSocketKey
 import io.ktor.http.HttpHeaders.SecWebSocketVersion
 import io.ktor.http.HttpHeaders.Upgrade
 import io.ktor.util.KtorExperimentalAPI
+import me.kgustave.dkt.http.engine.DiscordKtHttpEngineAPI
 import java.util.*
 
+@DiscordKtHttpEngineAPI
 internal class WebSocketContent: ClientUpgradeContent() {
     private val nonce = Base64.getEncoder().encodeToString(ByteArray(24).also(rand::nextBytes))
 
