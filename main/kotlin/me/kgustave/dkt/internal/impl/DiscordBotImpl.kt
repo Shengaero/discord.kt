@@ -30,6 +30,7 @@ import me.kgustave.dkt.events.Event
 import me.kgustave.dkt.handle.ExperimentalEventListeners
 import me.kgustave.dkt.http.engine.OkHttp
 import me.kgustave.dkt.http.engine.websockets.WebSockets
+import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.internal.cache.EventCache
 import me.kgustave.dkt.internal.cache.SnowflakeCacheImpl
 import me.kgustave.dkt.internal.data.RawUser
@@ -44,7 +45,8 @@ import me.kgustave.dkt.requests.Route
 import me.kgustave.dkt.requests.serialization.DiscordSerializer
 import kotlin.concurrent.thread
 
-internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
+@DktInternal
+class DiscordBotImpl internal constructor(config: DiscordBot.Config): DiscordBot {
     override val token = config.token
     override val sessionHandler = config.sessionHandler
 
@@ -60,8 +62,8 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
             field = value
         }
 
-    val untrackedUsers = hashMapOf<Long, UserImpl>()
-    val untrackedPrivateChannels = hashMapOf<Long, PrivateChannelImpl>()
+    internal val untrackedUsers = hashMapOf<Long, UserImpl>()
+    internal val untrackedPrivateChannels = hashMapOf<Long, PrivateChannelImpl>()
 
     override val userCache = SnowflakeCacheImpl(UserImpl::name)
     override val guildCache = SnowflakeCacheImpl(GuildImpl::name)
@@ -72,7 +74,7 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
 
     private lateinit var shutdownHook: Thread
 
-    val entities = EntityHandler(this)
+    internal val entities = EntityHandler(this)
     val dispatcherProvider = config.dispatcherProvider
 
     //////////////////////
@@ -133,8 +135,8 @@ internal class DiscordBotImpl(config: DiscordBot.Config): DiscordBot {
     ///////////////
 
     val maxReconnectDelay = 900 // FIXME Make configurable
-    val eventCache = EventCache()
-    val guildSetupManager = GuildSetupManager(this)
+    internal val eventCache = EventCache()
+    internal val guildSetupManager = GuildSetupManager(this)
     val websocket = DiscordWebSocket(this, config.compression)
 
     init {

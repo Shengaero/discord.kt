@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.internal.impl
+package me.kgustave.dkt.voice
 
-import me.kgustave.dkt.entities.SelfUser
-import me.kgustave.dkt.internal.DktInternal
-import me.kgustave.dkt.internal.data.RawSelfUser
-
-@DktInternal
-class SelfUserImpl internal constructor(bot: DiscordBotImpl, raw: RawSelfUser): SelfUser, UserImpl(bot, raw, false)
+/**
+ * Annotation for types and functions that use discord.kt's experimental
+ * audio API. At the moment, this is a volatile and dangerous API, and should
+ * be avoided by library users until further releases begin to work on it.
+ */
+@Experimental
+@MustBeDocumented
+annotation class ExperimentalVoiceAPI

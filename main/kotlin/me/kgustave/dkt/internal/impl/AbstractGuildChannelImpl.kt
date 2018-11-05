@@ -16,9 +16,11 @@
 package me.kgustave.dkt.internal.impl
 
 import me.kgustave.dkt.entities.*
+import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.util.delegates.weak
 
-internal abstract class AbstractGuildChannelImpl(override val id: Long, guild: GuildImpl): GuildChannel {
+@DktInternal
+abstract class AbstractGuildChannelImpl internal constructor(override val id: Long, guild: GuildImpl): GuildChannel {
     override lateinit var name: String
     override var rawPosition: Int = -1
     override val guild: GuildImpl by weak(guild)

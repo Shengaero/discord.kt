@@ -22,7 +22,7 @@ import me.kgustave.dkt.util.IntPair
 
 @Serializer(forClass = IntPair::class)
 object IntPairArraySerializer {
-    override val descriptor: SerialDescriptor = ArrayClassDesc(IntDescriptor)
+    override val descriptor: SerialDescriptor = Int.serializer().list.descriptor
 
     override fun deserialize(input: Decoder): IntPair {
         @Suppress("NAME_SHADOWING")

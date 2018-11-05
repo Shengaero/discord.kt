@@ -20,7 +20,3 @@ import java.io.Serializable
 data class IntPair(val first: Int, val second: Int): Serializable {
     override fun toString(): String = "($first, $second)"
 }
-
-data class LongPair(val first: Long, val second: Long): Serializable {
-    override fun toString(): String = "($first, $second)"
-}

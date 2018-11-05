@@ -16,26 +16,32 @@
 @file:Suppress("MemberVisibilityCanBePrivate", "MoveLambdaOutsideParentheses")
 package me.kgustave.dkt.promises
 
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
 import me.kgustave.dkt.internal.impl.DiscordBotImpl
 import me.kgustave.dkt.requests.RestTask
 import me.kgustave.dkt.requests.Route
-import kotlin.coroutines.suspendCoroutine
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.startCoroutine
 
 abstract class RestPromise<T>
 internal constructor(protected val bot: DiscordBotImpl, route: Route): RestTask<T>(bot.requester, route) {
+    companion object {
+        private var defaultFailureHandle = { t: Throwable ->
+
+        }
+
+        fun defaultFailure(block: (t: Throwable) -> Unit) {
+            defaultFailureHandle = block
+        }
+    }
+
     fun promise() = promise({})
-    fun promise(then: (T) -> Unit) = promise(then, {})
+    fun promise(then: (T) -> Unit) = promise(then, defaultFailureHandle)
     fun promise(then: (T) -> Unit, catch: (Throwable) -> Unit) {
-        val deferred = GlobalScope.async(bot.promiseDispatcher) {
-            val value = await()
-            suspendCoroutine<Unit> { it.resumeWith(runCatching { then(value) }) }
-            return@async value
+        val cont = Continuation<T>(bot.promiseDispatcher) { result ->
+            result.onSuccess(then)
+            result.onFailure(catch)
         }
-        deferred.invokeOnCompletion {
-            if(it != null && it !is CancellationException) catch(it)
-        }
+
+        suspend { this.await() }.startCoroutine(cont)
     }
 }

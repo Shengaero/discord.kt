@@ -17,8 +17,10 @@ package me.kgustave.dkt.internal.impl
 
 import me.kgustave.dkt.DiscordBot
 import me.kgustave.dkt.DiscordBotShard
+import me.kgustave.dkt.internal.DktInternal
 
-internal class DiscordBotShardImpl(config: DiscordBotShard.Config): DiscordBotShard, DiscordBot by DiscordBotImpl(config) {
+@UseExperimental(DktInternal::class)
+internal class DiscordBotShardImpl internal constructor(config: DiscordBotShard.Config): DiscordBotShard, DiscordBot by DiscordBotImpl(config) {
     override val shardId = config.shardId
     override val shardTotal = config.shardTotal
 }

@@ -18,13 +18,15 @@ package me.kgustave.dkt.internal.cache
 import me.kgustave.dkt.entities.Snowflake
 import me.kgustave.dkt.entities.cache.Cache
 import me.kgustave.dkt.entities.cache.SnowflakeCache
+import me.kgustave.dkt.internal.DktInternal
 import java.util.Spliterators
 import java.util.Spliterator
 import java.util.stream.Stream
 
 private typealias ByNameFunction<T> = (entity: T) -> String
 
-internal abstract class AbstractCacheImpl<T>(
+@DktInternal
+abstract class AbstractCacheImpl<T> internal constructor(
     private val map: MutableMap<Long, T>,
     private val byName: ByNameFunction<T>? = null
 ): Cache<T>, MutableMap<Long, T> by map {
@@ -47,11 +49,13 @@ internal abstract class AbstractCacheImpl<T>(
     }
 }
 
-internal open class SnowflakeCacheImpl<S: Snowflake>(byName: ByNameFunction<S>? = null):
+@DktInternal
+open class SnowflakeCacheImpl<S: Snowflake> internal constructor(byName: ByNameFunction<S>? = null):
     SnowflakeCache<S>,
     AbstractCacheImpl<S>(byName)
 
-internal open class SortableSnowflakeCache<S>(byName: ByNameFunction<S>? = null, private val comparator: Comparator<S>):
+@DktInternal
+open class SortableSnowflakeCache<S> internal constructor(byName: ByNameFunction<S>? = null, private val comparator: Comparator<S>):
     SnowflakeCache<S>,
     AbstractCacheImpl<S>(byName)
 where S: Snowflake, S: Comparable<S> {

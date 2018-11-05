@@ -19,6 +19,7 @@ import io.ktor.client.call.receive
 import kotlinx.serialization.json.json
 import me.kgustave.dkt.entities.PrivateChannel
 import me.kgustave.dkt.entities.User
+import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.internal.data.RawChannel
 import me.kgustave.dkt.internal.data.RawUserData
 import me.kgustave.dkt.promises.RestPromise
@@ -26,7 +27,8 @@ import me.kgustave.dkt.promises.emptyPromise
 import me.kgustave.dkt.promises.restPromise
 import me.kgustave.dkt.requests.Route
 
-internal open class UserImpl(override val bot: DiscordBotImpl, raw: RawUserData, override var untracked: Boolean): User {
+@DktInternal
+open class UserImpl(override val bot: DiscordBotImpl, raw: RawUserData, override var untracked: Boolean): User {
     override val id: Long = raw.id
     override val isBot: Boolean = raw.bot
     override var name: String = raw.username

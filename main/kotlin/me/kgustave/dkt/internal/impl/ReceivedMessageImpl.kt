@@ -18,11 +18,13 @@ package me.kgustave.dkt.internal.impl
 import io.ktor.client.call.receive
 import me.kgustave.dkt.entities.*
 import me.kgustave.dkt.exceptions.RequestException
+import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.promises.RestPromise
 import me.kgustave.dkt.promises.restPromise
 import me.kgustave.dkt.requests.Route
 
-internal open class ReceivedMessageImpl(
+@DktInternal
+open class ReceivedMessageImpl(
     final override val bot: DiscordBotImpl,
     final override val id: Long,
     final override val type: Message.Type,

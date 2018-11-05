@@ -17,9 +17,11 @@ package me.kgustave.dkt.internal.impl
 
 import me.kgustave.dkt.Permission
 import me.kgustave.dkt.entities.*
+import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.internal.util.canInteract
 
-internal class MemberImpl(override val guild: GuildImpl, override val user: UserImpl): Member {
+@DktInternal
+class MemberImpl(override val guild: GuildImpl, override val user: UserImpl): Member {
     override var nickname: String? = null
     override var activity: Activity? = null
     override var rawPermissions: Long = 0L

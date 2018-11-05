@@ -106,17 +106,18 @@ internal data class Payload(
         @Serializer(forClass = GuildMemberRequest::class)
         companion object {
             override fun serialize(output: Encoder, obj: GuildMemberRequest) {
-                check(output is JSON.JsonOutput)
-                val json = json {
-                    if(obj.guildId.size == 1) {
-                        "guild_id" to obj.guildId[0].toString()
-                    } else {
-                        "guild_id" to JsonArray(obj.guildId.map { JsonPrimitive(it.toString()) })
-                    }
-                    "query" to obj.query
-                    "limit" to obj.limit
+                check(output is CompositeEncoder)
+
+                val guildIdIndex = descriptor.getElementIndex("guild_id")
+                if(obj.guildId.size == 1) {
+                    output.encodeStringElement(descriptor, guildIdIndex, obj.guildId[0].toString())
+                } else {
+                    output.encodeSerializableElement(descriptor, guildIdIndex,
+                        String.serializer().list, obj.guildId.map(Long::toString))
                 }
-                output.writeTree(json)
+
+                output.encodeStringElement(descriptor, descriptor.getElementIndex("query"), obj.query)
+                output.encodeIntElement(descriptor, descriptor.getElementIndex("limit"), obj.limit)
             }
         }
     }

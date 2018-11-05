@@ -16,9 +16,11 @@
 package me.kgustave.dkt.internal.impl
 
 import me.kgustave.dkt.entities.TextChannel
+import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.promises.MessagePromise
 
-internal class TextChannelImpl(
+@DktInternal
+class TextChannelImpl(
     id: Long,
     guild: GuildImpl
 ): TextChannel, AbstractGuildChannelImpl(id, guild) {

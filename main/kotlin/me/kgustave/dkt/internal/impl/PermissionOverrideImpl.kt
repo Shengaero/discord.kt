@@ -18,10 +18,12 @@ package me.kgustave.dkt.internal.impl
 import me.kgustave.dkt.Permission
 import me.kgustave.dkt.entities.PermissionHolder
 import me.kgustave.dkt.entities.PermissionOverride
+import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.promises.RestPromise
 import me.kgustave.dkt.util.delegates.weak
 
-internal class PermissionOverrideImpl(
+@DktInternal
+class PermissionOverrideImpl(
     guildChannel: AbstractGuildChannelImpl,
     internal val id: Long,
     private val holder: PermissionHolder

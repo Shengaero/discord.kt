@@ -29,7 +29,7 @@ internal inline fun <reified T> DiscordBotImpl.restPromise(
     body: Any? = null,
     headers: Headers = headersOf(),
     crossinline handle: suspend (call: DiscordCall) -> T
-): RestPromise<T> = object: RestPromise<T>(this, route) {
+): RestPromise<T> = object: RestPromise<T>(this@restPromise, route) {
     override val headers: Headers get() = headers
     override val body: Any get() = body ?: super.body
     override suspend fun handle(call: DiscordCall): T = handle(call)

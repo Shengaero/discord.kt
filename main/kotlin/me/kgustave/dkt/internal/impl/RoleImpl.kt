@@ -19,10 +19,12 @@ import me.kgustave.dkt.Permission
 import me.kgustave.dkt.entities.Member
 import me.kgustave.dkt.entities.Role
 import me.kgustave.dkt.entities.Snowflake
+import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.internal.util.canInteract
 import java.awt.Color
 
-internal class RoleImpl(override val guild: GuildImpl, override val id: Long): Role {
+@DktInternal
+class RoleImpl(override val guild: GuildImpl, override val id: Long): Role {
     override val bot: DiscordBotImpl get() = guild.bot
     override lateinit var name: String
 

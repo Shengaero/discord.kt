@@ -21,11 +21,13 @@ import kotlinx.serialization.json.content
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.int
 import me.kgustave.dkt.entities.*
+import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.internal.cache.EventCache
 import me.kgustave.dkt.internal.data.*
 import me.kgustave.dkt.util.*
 import me.kgustave.dkt.util.delegates.weak
 
+@DktInternal
 internal class EntityHandler(bot: DiscordBotImpl) {
     private val bot by weak(bot)
 

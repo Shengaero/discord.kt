@@ -16,9 +16,11 @@
 package me.kgustave.dkt.internal.impl
 
 import me.kgustave.dkt.entities.GuildEmote
+import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.util.delegates.weak
 
-internal class GuildEmoteImpl(id: Long, bot: DiscordBotImpl, guild: GuildImpl): GuildEmote, EmoteImpl(id, bot) {
+@DktInternal
+class GuildEmoteImpl(id: Long, bot: DiscordBotImpl, guild: GuildImpl): GuildEmote, EmoteImpl(id, bot) {
     constructor(id: Long, guild: GuildImpl): this(id, guild.bot, guild)
 
     override lateinit var user: UserImpl

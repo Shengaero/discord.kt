@@ -18,6 +18,12 @@ package me.kgustave.dkt.requests
 
 import io.ktor.client.utils.EmptyContent
 import io.ktor.http.headersOf
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 abstract class RestTask<T>(protected val requester: Requester, val route: Route) {
     open val headers = headersOf()
@@ -25,6 +31,18 @@ abstract class RestTask<T>(protected val requester: Requester, val route: Route)
     open val body: Any get() = EmptyContent
 
     open suspend fun await(): T = requester.request(this)
+
+    fun <R> spawn(
+        on: CoroutineScope,
+        context: CoroutineContext = EmptyCoroutineContext,
+        start: CoroutineStart = CoroutineStart.DEFAULT,
+        block: suspend CoroutineScope.(T) -> R
+    ): Deferred<R> {
+        return on.async(context, start) {
+            val result = await()
+            return@async block(result)
+        }
+    }
 
     abstract suspend fun handle(call: DiscordCall): T
 }

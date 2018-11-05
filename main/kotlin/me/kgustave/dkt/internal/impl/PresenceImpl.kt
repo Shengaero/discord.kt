@@ -20,10 +20,12 @@ import me.kgustave.dkt.entities.Activity
 import me.kgustave.dkt.internal.data.serializers.ActivitySerializer
 import me.kgustave.dkt.entities.OnlineStatus
 import me.kgustave.dkt.entities.Presence
+import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.util.currentTimeMs
 
+@DktInternal
 @Serializable
-internal data class PresenceImpl(
+data class PresenceImpl(
     override val status: OnlineStatus,
     override val afk: Boolean,
     @Optional @SerialName("game") override val activity: Activity? = null,

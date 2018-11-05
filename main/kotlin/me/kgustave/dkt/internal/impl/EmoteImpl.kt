@@ -16,9 +16,11 @@
 package me.kgustave.dkt.internal.impl
 
 import me.kgustave.dkt.entities.Emote
+import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.util.delegates.weak
 
-internal open class EmoteImpl(override val id: Long, bot: DiscordBotImpl): Emote {
+@DktInternal
+open class EmoteImpl internal constructor(override val id: Long, bot: DiscordBotImpl): Emote {
     override val bot: DiscordBotImpl by weak(bot)
 
     override lateinit var name: String

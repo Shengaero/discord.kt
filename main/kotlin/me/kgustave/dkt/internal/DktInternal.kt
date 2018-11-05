@@ -13,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.internal.impl
+package me.kgustave.dkt.internal
 
-import me.kgustave.dkt.entities.SelfUser
-import me.kgustave.dkt.internal.DktInternal
-import me.kgustave.dkt.internal.data.RawSelfUser
-
-@DktInternal
-class SelfUserImpl internal constructor(bot: DiscordBotImpl, raw: RawSelfUser): SelfUser, UserImpl(bot, raw, false)
+/**
+ * Internal marker for cross-module internal APIs.
+ *
+ * __DO NOT USE ANYTHING MARKED WITH THIS__
+ *
+ * These APIs are subject to massively breaking changes at any time, and without notice!
+ */
+@Experimental
+@MustBeDocumented
+annotation class DktInternal

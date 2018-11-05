@@ -72,6 +72,7 @@ import me.kgustave.dkt.events.ReconnectEvent
 import me.kgustave.dkt.events.ResumeEvent
 import me.kgustave.dkt.events.ShutdownEvent
 import me.kgustave.dkt.http.engine.websockets.DiscordWebSocketSession
+import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.internal.data.events.RawReadyEvent
 import me.kgustave.dkt.internal.data.events.RawResumeEvent
 import me.kgustave.dkt.internal.data.responses.GatewayInfo
@@ -85,6 +86,7 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.math.min
 
 // FIXME This needs to be moved from 'internal.websocket' to just 'websocket'
+@UseExperimental(DktInternal::class)
 class DiscordWebSocket internal constructor(
     internal val _bot: DiscordBotImpl,
     private val compression: Boolean = false,
@@ -608,8 +610,8 @@ class DiscordWebSocket internal constructor(
                 token = bot.token,
                 properties = Payload.Identify.Properties(
                     os = System.getProperty("os.name"),
-                    browser = "Discord.kt",
-                    device = "Discord.kt"
+                    browser = "discord.kt",
+                    device = "discord.kt"
                 ),
                 presence = _bot.presence,
                 compress = compression,

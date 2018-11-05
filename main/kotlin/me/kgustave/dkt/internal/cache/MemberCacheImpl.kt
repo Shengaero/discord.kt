@@ -17,8 +17,10 @@ package me.kgustave.dkt.internal.cache
 
 import me.kgustave.dkt.entities.Member
 import me.kgustave.dkt.entities.cache.MemberCache
+import me.kgustave.dkt.internal.DktInternal
 
-internal class MemberCacheImpl: MemberCache, AbstractCacheImpl<Member>(Member::name) {
+@DktInternal
+class MemberCacheImpl: MemberCache, AbstractCacheImpl<Member>(Member::name) {
     override fun getByNickname(nickname: String, ignoreCase: Boolean): List<Member> {
         if(nickname.isBlank())
             return emptyList()

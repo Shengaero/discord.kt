@@ -21,6 +21,7 @@ import io.ktor.client.call.receive
 import me.kgustave.dkt.entities.*
 import me.kgustave.dkt.exceptions.RequestException
 import me.kgustave.dkt.exceptions.UnloadedPropertyException
+import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.internal.cache.MemberCacheImpl
 import me.kgustave.dkt.internal.cache.SnowflakeCacheImpl
 import me.kgustave.dkt.internal.cache.SortableSnowflakeCache
@@ -30,7 +31,8 @@ import me.kgustave.dkt.requests.Requester
 import me.kgustave.dkt.requests.Route
 import me.kgustave.dkt.util.delegates.weak
 
-internal class GuildImpl(override val id: Long, bot: DiscordBotImpl, override var unavailable: Boolean = true): Guild {
+@DktInternal
+class GuildImpl(override val id: Long, bot: DiscordBotImpl, override var unavailable: Boolean = true): Guild {
     companion object {
         // 1: ID, 2: hash
         private const val IconUrlFormat   = "${Requester.CDNBaseUrl}/icons/%d/%s.png"

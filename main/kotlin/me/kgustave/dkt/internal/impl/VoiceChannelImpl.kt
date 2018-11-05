@@ -17,8 +17,10 @@ package me.kgustave.dkt.internal.impl
 
 import me.kgustave.dkt.entities.Member
 import me.kgustave.dkt.entities.VoiceChannel
+import me.kgustave.dkt.internal.DktInternal
 
-internal class VoiceChannelImpl(
+@DktInternal
+class VoiceChannelImpl(
     id: Long,
     guild: GuildImpl
 ): VoiceChannel, AbstractGuildChannelImpl(id, guild) {

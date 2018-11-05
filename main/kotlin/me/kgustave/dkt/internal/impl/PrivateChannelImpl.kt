@@ -17,10 +17,12 @@ package me.kgustave.dkt.internal.impl
 
 import me.kgustave.dkt.entities.Guild
 import me.kgustave.dkt.entities.PrivateChannel
+import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.promises.MessagePromise
 import me.kgustave.dkt.util.delegates.weak
 
-internal class PrivateChannelImpl(override val id: Long, user: UserImpl): PrivateChannel {
+@DktInternal
+class PrivateChannelImpl(override val id: Long, user: UserImpl): PrivateChannel {
     override val recipient by weak(user)
 
     override val bot: DiscordBotImpl get() = recipient.bot

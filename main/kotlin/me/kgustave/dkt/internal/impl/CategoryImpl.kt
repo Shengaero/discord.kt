@@ -18,8 +18,10 @@ package me.kgustave.dkt.internal.impl
 import me.kgustave.dkt.entities.Category
 import me.kgustave.dkt.entities.TextChannel
 import me.kgustave.dkt.entities.VoiceChannel
+import me.kgustave.dkt.internal.DktInternal
 
-internal class CategoryImpl(
+@DktInternal
+class CategoryImpl internal constructor(
     id: Long,
     guild: GuildImpl
 ): Category, AbstractGuildChannelImpl(id, guild) {

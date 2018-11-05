@@ -21,3 +21,6 @@ dependencies {
     compile "io.ktor:ktor-client-core-jvm:$ktor_version"
     compile "io.ktor:ktor-http-cio:$ktor_version"
 }
+
+useExperimental('kotlinx.coroutines.ExperimentalCoroutinesApi')
+useExperimental('kotlinx.coroutines.ObsoleteCoroutinesApi')

@@ -18,39 +18,23 @@ package me.kgustave.dkt.test
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CoroutineStart.LAZY
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.fail
 import java.util.concurrent.TimeUnit
 
 abstract class CoroutineTestBase {
-    private lateinit var runContext: ExecutorCoroutineDispatcher
-    private var testNumber = 0
-
-    private val scope get() = CoroutineScope(runContext)
-
-    @BeforeEach fun initNewContext() {
-        testNumber++
-        runContext = newSingleThreadContext("Test Context Thread ($testNumber)")
-    }
-
     protected fun runTest(block: suspend CoroutineScope.() -> Unit) {
-        val job = scope.async(runContext, start = LAZY, block = block)
+        val job = GlobalScope.async(Dispatchers.Default, start = LAZY, block = block)
 
         runBlocking { job.await() }
     }
 
     protected fun runTestWithTimeout(time: Long, unit: TimeUnit, block: suspend CoroutineScope.() -> Unit) {
-        val job = scope.async(runContext, start = LAZY) {
+        val job = GlobalScope.async(Dispatchers.Default, start = LAZY) {
             withTimeoutOrNull(unit.toMillis(time), block) ?: fail {
                 "Test timed out!"
             }
         }
 
         runBlocking { job.await() }
-    }
-
-    @AfterEach fun destroyOldContext() {
-        runContext.close()
     }
 }
