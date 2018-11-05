@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
-}
+package opus
 
-rootProject.name = 'discord.kt'
-
-include ':http-client'
-include ':opus'
+/**
+ * Experimental annotation for opus library components.
+ *
+ * Currently the frontend API for this library is unstable
+ * and subject to breaking changes without notice.
+ *
+ * This will be finalized in the future once the API is
+ * less volatile and less prone to change.
+ */
+@Experimental
+@MustBeDocumented
+annotation class ExperimentalOpus

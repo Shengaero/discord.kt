@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
+@file:Suppress("MemberVisibilityCanBePrivate")
+package opus.exceptions
+
+import opus.ExperimentalOpus
+import opus.Opus
+
+@UseExperimental(ExperimentalOpus::class)
+class OpusDecoderException
+internal constructor(failure: String, val code: Int): RuntimeException(buildString {
+    append("$failure: ")
+    if(code != Int.MIN_VALUE) {
+        append("$code - ${Opus.strError(code)}")
+    } else {
+        append("unknown")
     }
-}
-
-rootProject.name = 'discord.kt'
-
-include ':http-client'
-include ':opus'
+})

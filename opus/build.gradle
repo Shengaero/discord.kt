@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
+apply plugin: 'kotlinx-atomicfu'
+
+dependencies {
+    compile "net.java.dev.jna:jna:$jna_version"
+    compile "club.minnced:opus-java-natives:$opus_java_version"
+    compile "org.jetbrains.kotlinx:kotlinx-io-jvm:$io_version"
+    
+    compileOnly "org.jetbrains.kotlinx:atomicfu:$atomicfu_version"
+    testRuntime "org.jetbrains.kotlinx:atomicfu:$atomicfu_version"
 }
-
-rootProject.name = 'discord.kt'
-
-include ':http-client'
-include ':opus'

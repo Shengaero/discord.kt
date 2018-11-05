@@ -13,15 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
+package opus
+
+import com.sun.jna.ptr.PointerByReference
+
+@ExperimentalOpus
+interface OpusEncoder: OpusStruct {
+    /**
+     * The native pointer reference that corresponds to this encoder.
+     *
+     * @throws IllegalStateException if this encoder has been [destroyed][destroy].
+     */
+    override val ptr: PointerByReference
+
+    /**
+     * Encodes the [data].
+     */
+    fun encode(data: ByteArray, frameSize: Int = 20): ByteArray
 }
-
-rootProject.name = 'discord.kt'
-
-include ':http-client'
-include ':opus'
