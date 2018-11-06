@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.internal.websocket.handlers
+package me.kgustave.dkt.internal.entities
 
-import me.kgustave.dkt.internal.entities.DiscordBotImpl
-import me.kgustave.dkt.internal.websocket.Payload
+import me.kgustave.dkt.entities.SelfUser
+import me.kgustave.dkt.internal.DktInternal
+import me.kgustave.dkt.internal.data.RawSelfUser
 
-
-internal class ResumeHandler(bot: DiscordBotImpl): WebSocketHandler(bot) {
-    override fun handle(payload: Payload) {
-        // TODO
-    }
-}
+@DktInternal
+class SelfUserImpl internal constructor(bot: DiscordBotImpl, raw: RawSelfUser): SelfUser, UserImpl(bot, raw, false)

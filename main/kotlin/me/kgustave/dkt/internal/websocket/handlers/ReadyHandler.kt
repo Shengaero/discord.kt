@@ -16,7 +16,7 @@
 package me.kgustave.dkt.internal.websocket.handlers
 
 import me.kgustave.dkt.internal.data.events.RawReadyEvent
-import me.kgustave.dkt.internal.impl.DiscordBotImpl
+import me.kgustave.dkt.internal.entities.DiscordBotImpl
 import me.kgustave.dkt.internal.websocket.Payload
 
 internal class ReadyHandler(bot: DiscordBotImpl): WebSocketHandler(bot) {

@@ -15,7 +15,7 @@
  */
 package me.kgustave.dkt.internal.websocket.handlers
 
-import me.kgustave.dkt.internal.impl.DiscordBotImpl
+import me.kgustave.dkt.internal.entities.DiscordBotImpl
 import me.kgustave.dkt.internal.websocket.EventType
 import me.kgustave.dkt.internal.websocket.EventType.*
 import me.kgustave.dkt.internal.websocket.Payload

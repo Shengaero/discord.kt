@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 @file:Suppress("MemberVisibilityCanBePrivate", "FoldInitializerAndIfToElvis", "LiftReturnOrAssignment")
-package me.kgustave.dkt.internal.impl
+package me.kgustave.dkt.internal.entities
 
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.content

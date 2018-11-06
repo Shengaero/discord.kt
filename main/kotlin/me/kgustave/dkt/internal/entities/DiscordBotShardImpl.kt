@@ -13,23 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.internal.impl
+package me.kgustave.dkt.internal.entities
 
-import me.kgustave.dkt.entities.Guild
-import me.kgustave.dkt.entities.PrivateChannel
+import me.kgustave.dkt.DiscordBot
+import me.kgustave.dkt.DiscordBotShard
 import me.kgustave.dkt.internal.DktInternal
-import me.kgustave.dkt.promises.MessagePromise
-import me.kgustave.dkt.util.delegates.weak
 
-@DktInternal
-class PrivateChannelImpl(override val id: Long, user: UserImpl): PrivateChannel {
-    override val recipient by weak(user)
-
-    override val bot: DiscordBotImpl get() = recipient.bot
-    override val guild: Guild? get() = null
-
-    override var lastMessageId: Long? = null
-    override var untracked: Boolean = user.untracked
-
-    override fun send(text: String): MessagePromise = MessagePromise(bot, this, text)
+@UseExperimental(DktInternal::class)
+internal class DiscordBotShardImpl internal constructor(config: DiscordBotShard.Config): DiscordBotShard, DiscordBot by DiscordBotImpl(config) {
+    override val shardId = config.shardId
+    override val shardTotal = config.shardTotal
 }

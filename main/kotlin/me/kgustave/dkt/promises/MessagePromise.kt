@@ -29,7 +29,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.json
 import me.kgustave.dkt.entities.Message
 import me.kgustave.dkt.entities.MessageChannel
-import me.kgustave.dkt.internal.impl.DiscordBotImpl
+import me.kgustave.dkt.internal.entities.DiscordBotImpl
 import me.kgustave.dkt.requests.DiscordCall
 import me.kgustave.dkt.requests.Route
 import me.kgustave.dkt.util.stringify

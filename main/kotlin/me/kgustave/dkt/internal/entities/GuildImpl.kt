@@ -15,7 +15,7 @@
  */
 @file:Suppress("MemberVisibilityCanBePrivate")
 
-package me.kgustave.dkt.internal.impl
+package me.kgustave.dkt.internal.entities
 
 import io.ktor.client.call.receive
 import me.kgustave.dkt.entities.*

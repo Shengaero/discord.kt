@@ -25,7 +25,7 @@ import me.kgustave.dkt.internal.data.events.RawGuildMembersChunkEvent
 import me.kgustave.dkt.internal.data.events.RawReadyEvent
 import me.kgustave.dkt.internal.data.events.RawResumeEvent
 import me.kgustave.dkt.internal.data.serializers.IntPairArraySerializer
-import me.kgustave.dkt.internal.impl.PresenceImpl
+import me.kgustave.dkt.internal.entities.PresenceImpl
 import me.kgustave.dkt.internal.websocket.EventType.*
 import me.kgustave.dkt.util.IntPair
 import me.kgustave.dkt.util.JsonParser

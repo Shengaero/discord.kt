@@ -19,7 +19,7 @@ import kotlinx.coroutines.*
 import me.kgustave.dkt.internal.data.RawGuildData
 import me.kgustave.dkt.internal.data.RawMember
 import me.kgustave.dkt.internal.data.RawUnavailableGuild
-import me.kgustave.dkt.internal.impl.DiscordBotImpl
+import me.kgustave.dkt.internal.entities.DiscordBotImpl
 import me.kgustave.dkt.internal.websocket.Payload
 import me.kgustave.dkt.util.createLogger
 import me.kgustave.dkt.util.currentTimeMs

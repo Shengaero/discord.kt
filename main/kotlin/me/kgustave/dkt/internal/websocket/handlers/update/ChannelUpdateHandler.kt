@@ -23,8 +23,8 @@ import me.kgustave.dkt.entities.Role
 import me.kgustave.dkt.internal.cache.EventCache
 import me.kgustave.dkt.internal.data.RawChannel
 import me.kgustave.dkt.internal.data.RawPermissionOverwrite
-import me.kgustave.dkt.internal.impl.AbstractGuildChannelImpl
-import me.kgustave.dkt.internal.impl.DiscordBotImpl
+import me.kgustave.dkt.internal.entities.AbstractGuildChannelImpl
+import me.kgustave.dkt.internal.entities.DiscordBotImpl
 import me.kgustave.dkt.internal.websocket.DiscordWebSocket
 import me.kgustave.dkt.internal.websocket.Payload
 import me.kgustave.dkt.internal.websocket.handlers.WebSocketHandler

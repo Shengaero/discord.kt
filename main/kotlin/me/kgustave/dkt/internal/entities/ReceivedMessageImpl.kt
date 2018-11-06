@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.internal.impl
+package me.kgustave.dkt.internal.entities
 
 import io.ktor.client.call.receive
 import me.kgustave.dkt.entities.*

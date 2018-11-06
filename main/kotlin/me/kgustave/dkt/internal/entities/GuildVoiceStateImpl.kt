@@ -13,17 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.internal.impl
+package me.kgustave.dkt.internal.entities
 
-import me.kgustave.dkt.entities.GuildEmote
+import me.kgustave.dkt.entities.*
 import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.util.delegates.weak
 
 @DktInternal
-class GuildEmoteImpl(id: Long, bot: DiscordBotImpl, guild: GuildImpl): GuildEmote, EmoteImpl(id, bot) {
-    constructor(id: Long, guild: GuildImpl): this(id, guild.bot, guild)
+class GuildVoiceStateImpl(guild: GuildImpl, member: MemberImpl): GuildVoiceState {
+    override val guild by weak(guild)
+    override val member by weak(member)
 
-    override lateinit var user: UserImpl
-    override val guild: GuildImpl by weak(guild)
-    override val roles = arrayListOf<RoleImpl>()
+    override var channel: VoiceChannelImpl? = null
+    override var sessionId: String? = null
+    override var deaf: Boolean = false
+    override var mute: Boolean = false
+    override var selfDeaf: Boolean = false
+    override var selfMute: Boolean = false
+    override var suppress: Boolean = false
+
+    override val bot: DiscordBotImpl get() = guild.bot
+    override val user: UserImpl get() = member.user
+
 }

@@ -18,7 +18,7 @@ package me.kgustave.dkt.handle
 import kotlinx.coroutines.CompletableDeferred
 import me.kgustave.dkt.DiscordBot
 import me.kgustave.dkt.events.Event
-import me.kgustave.dkt.internal.impl.DiscordBotImpl
+import me.kgustave.dkt.internal.entities.DiscordBotImpl
 
 @ExperimentalEventListeners
 inline fun <reified E: Event> DiscordBot.on(crossinline listener: (event: E) -> Unit) {

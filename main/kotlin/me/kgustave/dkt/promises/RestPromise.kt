@@ -16,7 +16,7 @@
 @file:Suppress("MemberVisibilityCanBePrivate", "MoveLambdaOutsideParentheses")
 package me.kgustave.dkt.promises
 
-import me.kgustave.dkt.internal.impl.DiscordBotImpl
+import me.kgustave.dkt.internal.entities.DiscordBotImpl
 import me.kgustave.dkt.requests.RestTask
 import me.kgustave.dkt.requests.Route
 import kotlin.coroutines.Continuation

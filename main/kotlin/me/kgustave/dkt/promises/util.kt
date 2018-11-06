@@ -18,7 +18,7 @@ package me.kgustave.dkt.promises
 
 import io.ktor.http.Headers
 import io.ktor.http.headersOf
-import me.kgustave.dkt.internal.impl.DiscordBotImpl
+import me.kgustave.dkt.internal.entities.DiscordBotImpl
 import me.kgustave.dkt.requests.DiscordCall
 import me.kgustave.dkt.requests.FakeRoute
 import me.kgustave.dkt.requests.Route

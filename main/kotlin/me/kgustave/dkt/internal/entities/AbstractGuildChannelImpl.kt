@@ -13,26 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.internal.impl
+package me.kgustave.dkt.internal.entities
 
 import me.kgustave.dkt.entities.*
 import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.util.delegates.weak
 
 @DktInternal
-class GuildVoiceStateImpl(guild: GuildImpl, member: MemberImpl): GuildVoiceState {
-    override val guild by weak(guild)
-    override val member by weak(member)
-
-    override var channel: VoiceChannelImpl? = null
-    override var sessionId: String? = null
-    override var deaf: Boolean = false
-    override var mute: Boolean = false
-    override var selfDeaf: Boolean = false
-    override var selfMute: Boolean = false
-    override var suppress: Boolean = false
-
+abstract class AbstractGuildChannelImpl internal constructor(override val id: Long, guild: GuildImpl): GuildChannel {
+    override lateinit var name: String
+    override var rawPosition: Int = -1
+    override val guild: GuildImpl by weak(guild)
     override val bot: DiscordBotImpl get() = guild.bot
-    override val user: UserImpl get() = member.user
+    override val overrides: List<PermissionOverride> get() = permissionOverrides.values.toList()
 
+    internal val permissionOverrides = mutableMapOf<Long, PermissionOverrideImpl>()
+
+    abstract override val parent: CategoryImpl?
+
+    override fun permissionOverrideFor(member: Member): PermissionOverride? = permissionOverrides[member.user.id]
+    override fun permissionOverrideFor(role: Role): PermissionOverride? = permissionOverrides[role.id]
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 @file:Suppress("MemberVisibilityCanBePrivate")
-package me.kgustave.dkt.internal.impl
+package me.kgustave.dkt.internal.entities
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.receive

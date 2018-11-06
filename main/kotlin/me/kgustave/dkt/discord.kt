@@ -20,7 +20,7 @@ package me.kgustave.dkt
 import me.kgustave.dkt.entities.*
 import me.kgustave.dkt.events.Event
 import me.kgustave.dkt.handle.*
-import me.kgustave.dkt.internal.impl.DiscordBotImpl
+import me.kgustave.dkt.internal.entities.DiscordBotImpl
 
 @DslMarker
 annotation class BotConfigDsl

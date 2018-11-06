@@ -76,8 +76,8 @@ import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.internal.data.events.RawReadyEvent
 import me.kgustave.dkt.internal.data.events.RawResumeEvent
 import me.kgustave.dkt.internal.data.responses.GatewayInfo
-import me.kgustave.dkt.internal.impl.DiscordBotImpl
-import me.kgustave.dkt.internal.impl.DiscordBotShardImpl
+import me.kgustave.dkt.internal.entities.DiscordBotImpl
+import me.kgustave.dkt.internal.entities.DiscordBotShardImpl
 import me.kgustave.dkt.internal.websocket.handlers.WebSocketHandler
 import me.kgustave.dkt.util.*
 import java.util.concurrent.ExecutorService

@@ -20,8 +20,8 @@ import kotlinx.serialization.json.int
 import me.kgustave.dkt.entities.Message
 import me.kgustave.dkt.events.message.MessageReceivedEvent
 import me.kgustave.dkt.internal.cache.EventCache
-import me.kgustave.dkt.internal.impl.DiscordBotImpl
-import me.kgustave.dkt.internal.impl.EntityHandler
+import me.kgustave.dkt.internal.entities.DiscordBotImpl
+import me.kgustave.dkt.internal.entities.EntityHandler
 import me.kgustave.dkt.internal.websocket.DiscordWebSocket
 import me.kgustave.dkt.internal.websocket.Payload
 import me.kgustave.dkt.internal.websocket.handlers.WebSocketHandler

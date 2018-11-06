@@ -17,7 +17,7 @@ package me.kgustave.dkt.internal.websocket.handlers.create
 
 import me.kgustave.dkt.entities.Channel
 import me.kgustave.dkt.internal.data.RawChannel
-import me.kgustave.dkt.internal.impl.DiscordBotImpl
+import me.kgustave.dkt.internal.entities.DiscordBotImpl
 import me.kgustave.dkt.internal.websocket.Payload
 import me.kgustave.dkt.internal.websocket.handlers.WebSocketHandler
 

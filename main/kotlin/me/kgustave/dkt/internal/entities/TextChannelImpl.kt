@@ -13,32 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.internal.impl
+package me.kgustave.dkt.internal.entities
 
-import me.kgustave.dkt.entities.Member
-import me.kgustave.dkt.entities.VoiceChannel
+import me.kgustave.dkt.entities.TextChannel
 import me.kgustave.dkt.internal.DktInternal
+import me.kgustave.dkt.promises.MessagePromise
 
 @DktInternal
-class VoiceChannelImpl(
+class TextChannelImpl(
     id: Long,
     guild: GuildImpl
-): VoiceChannel, AbstractGuildChannelImpl(id, guild) {
+): TextChannel, AbstractGuildChannelImpl(id, guild) {
     internal var parentId: Long? = null
-    internal val connectedMembers = hashMapOf<Long, Member>()
 
     override val parent: CategoryImpl? get() = parentId?.let { guild.categoryCache[it] }
+    override val position: Int get() = guild.textChannels.binarySearch(this)
 
-    override var userLimit = 0
-    override var bitrate = 0
+    override var topic: String? = null
+    override var nsfw: Boolean = false
+    override var rateLimitPerUser: Int = 0
+    override var lastMessageId: Long? = null
 
-    override val position: Int get() = guild.voiceChannels.binarySearch(this)
+    override fun send(text: String): MessagePromise = MessagePromise(bot, this, text)
 
-    override fun compareTo(other: VoiceChannel): Int {
+    override fun compareTo(other: TextChannel): Int {
         if(this === other) return 0
         if(this == other) return 0
 
-        require(guild == other.guild) { "Cannot compare voice channels from different guilds!" }
+        require(guild == other.guild) { "Cannot compare text channels from different guilds!" }
 
         if(rawPosition == other.rawPosition) return id.compareTo(other.id)
         return rawPosition.compareTo(other.rawPosition)
