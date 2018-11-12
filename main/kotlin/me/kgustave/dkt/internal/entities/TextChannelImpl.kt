@@ -20,19 +20,16 @@ import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.promises.MessagePromise
 
 @DktInternal
-class TextChannelImpl(
-    id: Long,
-    guild: GuildImpl
-): TextChannel, AbstractGuildChannelImpl(id, guild) {
+class TextChannelImpl
+internal constructor(id: Long, guild: GuildImpl): TextChannel, AbstractGuildChannelImpl(id, guild) {
     internal var parentId: Long? = null
-
-    override val parent: CategoryImpl? get() = parentId?.let { guild.categoryCache[it] }
-    override val position: Int get() = guild.textChannels.binarySearch(this)
-
     override var topic: String? = null
     override var nsfw: Boolean = false
     override var rateLimitPerUser: Int = 0
     override var lastMessageId: Long? = null
+
+    override val parent: CategoryImpl? get() = parentId?.let { guild.categoryCache[it] }
+    override val position: Int get() = guild.textChannels.binarySearch(this)
 
     override fun send(text: String): MessagePromise = MessagePromise(bot, this, text)
 

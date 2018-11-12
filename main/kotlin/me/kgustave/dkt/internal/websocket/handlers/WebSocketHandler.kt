@@ -16,14 +16,10 @@
 package me.kgustave.dkt.internal.websocket.handlers
 
 import me.kgustave.dkt.internal.entities.DiscordBotImpl
+import me.kgustave.dkt.internal.websocket.DiscordWebSocket
 import me.kgustave.dkt.internal.websocket.EventType
 import me.kgustave.dkt.internal.websocket.EventType.*
 import me.kgustave.dkt.internal.websocket.Payload
-import me.kgustave.dkt.internal.websocket.handlers.create.ChannelCreateHandler
-import me.kgustave.dkt.internal.websocket.handlers.create.GuildCreateHandler
-import me.kgustave.dkt.internal.websocket.handlers.create.MessageCreateHandler
-import me.kgustave.dkt.internal.websocket.handlers.update.ChannelUpdateHandler
-import me.kgustave.dkt.internal.websocket.handlers.update.GuildMembersChunkHandler
 
 internal abstract class WebSocketHandler(val bot: DiscordBotImpl) {
     abstract fun handle(payload: Payload)
@@ -32,11 +28,22 @@ internal abstract class WebSocketHandler(val bot: DiscordBotImpl) {
         fun newFullSet(bot: DiscordBotImpl): Map<EventType, WebSocketHandler> = mapOf(
             READY to ReadyHandler(bot),
             RESUMED to ResumeHandler(bot),
-            CHANNEL_CREATE to  ChannelCreateHandler(bot),
+            CHANNEL_CREATE to ChannelCreateHandler(bot),
             CHANNEL_UPDATE to ChannelUpdateHandler(bot),
+            CHANNEL_DELETE to ChannelDeleteHandler(bot),
             GUILD_CREATE to GuildCreateHandler(bot),
+            GUILD_DELETE to GuildDeleteHandler(bot),
+            *GuildBanHandler(bot).let { arrayOf(GUILD_BAN_ADD to it, GUILD_BAN_REMOVE to it) },
+            GUILD_MEMBER_ADD to GuildMemberAddHandler(bot),
+            GUILD_MEMBER_UPDATE to GuildMemberUpdateHandler(bot),
+            GUILD_MEMBER_REMOVE to GuildMemberRemoveHandler(bot),
             GUILD_MEMBERS_CHUNK to GuildMembersChunkHandler(bot),
-            MESSAGE_CREATE to MessageCreateHandler(bot)
+            MESSAGE_CREATE to MessageCreateHandler(bot),
+            TYPING_START to TypingStartHandler(bot)
         )
+
+        fun logUnCachedEntity(t: String, entity: String, id: Long) {
+            DiscordWebSocket.Log.debug("Received $t event containing data for a un-cached $entity (ID: $id)")
+        }
     }
 }

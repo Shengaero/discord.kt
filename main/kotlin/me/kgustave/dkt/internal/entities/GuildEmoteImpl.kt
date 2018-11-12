@@ -20,8 +20,11 @@ import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.util.delegates.weak
 
 @DktInternal
-class GuildEmoteImpl(id: Long, bot: DiscordBotImpl, guild: GuildImpl): GuildEmote, EmoteImpl(id, bot) {
-    constructor(id: Long, guild: GuildImpl): this(id, guild.bot, guild)
+@Suppress("DEPRECATION")
+@Deprecated("GuildEmote is now deprecated in favor of GuildEmoji")
+class GuildEmoteImpl
+internal constructor(id: Long, bot: DiscordBotImpl, guild: GuildImpl): GuildEmote, EmoteImpl(id, bot) {
+    internal constructor(id: Long, guild: GuildImpl): this(id, guild.bot, guild)
 
     override lateinit var user: UserImpl
     override val guild: GuildImpl by weak(guild)

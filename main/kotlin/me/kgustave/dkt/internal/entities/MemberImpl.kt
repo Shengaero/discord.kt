@@ -21,7 +21,7 @@ import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.internal.util.canInteract
 
 @DktInternal
-class MemberImpl(override val guild: GuildImpl, override val user: UserImpl): Member {
+class MemberImpl internal constructor(override val guild: GuildImpl, override val user: UserImpl): Member {
     override var nickname: String? = null
     override var activity: Activity? = null
     override var rawPermissions: Long = 0L

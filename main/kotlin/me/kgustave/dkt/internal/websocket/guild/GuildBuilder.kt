@@ -17,10 +17,7 @@
 package me.kgustave.dkt.internal.websocket.guild
 
 import me.kgustave.dkt.internal.cache.EventCache
-import me.kgustave.dkt.internal.data.RawGuild
-import me.kgustave.dkt.internal.data.RawGuildData
-import me.kgustave.dkt.internal.data.RawMember
-import me.kgustave.dkt.internal.data.RawUnavailableGuild
+import me.kgustave.dkt.internal.data.*
 import me.kgustave.dkt.internal.websocket.Payload
 import java.util.*
 import kotlin.collections.HashMap
@@ -88,10 +85,10 @@ internal class GuildBuilder(val id: Long, val manager: GuildSetupManager, val jo
         membersToRemove.remove(id)
     }
 
-    fun handleRemoveMember(raw: RawMember) {
+    fun handleRemoveMember(raw: RawUser) {
         if(!::members.isInitialized || !::membersToRemove.isInitialized)
             expectedSize++
-        val id = raw.user.id
+        val id = raw.id
         members.remove(id)
         membersToRemove.add(id)
         val eventCache = manager.bot.eventCache

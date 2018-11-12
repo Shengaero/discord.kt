@@ -15,12 +15,20 @@
  */
 package me.kgustave.dkt.entities
 
-import me.kgustave.dkt.promises.RestPromise
-
+/**
+ * Represents a the currently logged in [User].
+ *
+ * This is a separate interface to have documentation changes
+ * as well as for any functions that would be more appropriately
+ * placed here than in the [DiscordBot][me.kgustave.dkt.DiscordBot]
+ * interface.
+ */
 interface SelfUser: User {
 
     /**
      * This is unsupported for [SelfUser]!
+     *
+     * @throws UnsupportedOperationException
      */
-    override fun openPrivateChannel(): RestPromise<PrivateChannel>
+    override fun openPrivateChannel(): Nothing
 }

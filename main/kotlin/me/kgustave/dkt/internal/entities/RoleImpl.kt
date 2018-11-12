@@ -24,15 +24,12 @@ import me.kgustave.dkt.internal.util.canInteract
 import java.awt.Color
 
 @DktInternal
-class RoleImpl(override val guild: GuildImpl, override val id: Long): Role {
+class RoleImpl internal constructor(override val guild: GuildImpl, override val id: Long): Role {
     override val bot: DiscordBotImpl get() = guild.bot
     override lateinit var name: String
 
     override var rawPermissions = 0L
     override var rawPosition = 0
-
-    override lateinit var color: Color
-        private set
 
     override var colorInt = Role.DefaultColorInt
         set(value) {
@@ -40,8 +37,10 @@ class RoleImpl(override val guild: GuildImpl, override val id: Long): Role {
             color = Color(field)
         }
 
-    override val permissions: List<Permission> get() = Permission.setOf(rawPermissions).toList()
+    override var color: Color = Color(colorInt)
+        private set
 
+    override val permissions: List<Permission> get() = Permission.setOf(rawPermissions).toList()
     override val position: Int get() {
         if(this == guild.publicRole) return -1
 

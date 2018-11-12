@@ -20,7 +20,7 @@ import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.util.delegates.weak
 
 @DktInternal
-class GuildVoiceStateImpl(guild: GuildImpl, member: MemberImpl): GuildVoiceState {
+class GuildVoiceStateImpl internal constructor(guild: GuildImpl, member: MemberImpl): GuildVoiceState {
     override val guild by weak(guild)
     override val member by weak(member)
 

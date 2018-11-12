@@ -21,10 +21,10 @@ import me.kgustave.dkt.exceptions.RequestException
 import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.promises.RestPromise
 import me.kgustave.dkt.promises.restPromise
-import me.kgustave.dkt.requests.Route
+import me.kgustave.dkt.rest.Route
 
 @DktInternal
-open class ReceivedMessageImpl(
+open class ReceivedMessageImpl internal constructor(
     final override val bot: DiscordBotImpl,
     final override val id: Long,
     final override val type: Message.Type,
@@ -33,19 +33,18 @@ open class ReceivedMessageImpl(
     final override val author: User,
     final override val embeds: List<Embed>,
     final override val attachments: List<Message.Attachment>,
+    final override val reactions: List<ReactionImpl>,
     final override val isWebhook: Boolean
 ): Message {
     final override val channelType: Channel.Type get() = channel.type
     final override val guild: Guild? get() = channel.guild
     final override val member: Member? get() = guild?.getMember(author)
     final override val mentionedUsers: List<User> by lazy { emptyList<User>() }
-    final override val mentionedEmotes: List<Emote> by lazy { emptyList<Emote>() }
     final override val mentionedChannels: List<TextChannel> by lazy { emptyList<TextChannel>() }
 
     override fun mentions(mentionable: Mentionable): Boolean {
         return when(mentionable) {
             is User -> mentionable in mentionedUsers
-            is Emote -> mentionable in mentionedEmotes
             is TextChannel -> mentionable in mentionedChannels
             is Member -> mentionable.user in mentionedUsers
             else -> false

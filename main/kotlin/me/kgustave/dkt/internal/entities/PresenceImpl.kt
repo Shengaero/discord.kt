@@ -25,7 +25,7 @@ import me.kgustave.dkt.util.currentTimeMs
 
 @DktInternal
 @Serializable
-data class PresenceImpl(
+data class PresenceImpl internal constructor(
     override val status: OnlineStatus,
     override val afk: Boolean,
     @Optional @SerialName("game") override val activity: Activity? = null,

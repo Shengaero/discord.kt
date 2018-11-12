@@ -15,6 +15,8 @@
  */
 package me.kgustave.dkt.entities
 
+@Suppress("DEPRECATION")
+@Deprecated("GuildEmote is now deprecated in favor of GuildEmoji")
 interface GuildEmote: Emote {
     override val guild: Guild
     override val roles: List<Role>

@@ -16,7 +16,6 @@
 @file:Suppress("FoldInitializerAndIfToElvis", "RemoveEmptyPrimaryConstructor", "unused")
 package me.kgustave.dkt.entities
 
-import me.kgustave.dkt.util.IntPair
 import java.time.OffsetDateTime
 
 fun playing(game: String): Activity = BasicActivity(game, Activity.Type.GAME)
@@ -65,6 +64,6 @@ class RichPresenceActivity internal constructor(
 ): Activity() {
     data class Party internal constructor(
         val id: String? = null,
-        val size: IntPair? = null
+        val size: Pair<Int, Int>? = null
     )
 }

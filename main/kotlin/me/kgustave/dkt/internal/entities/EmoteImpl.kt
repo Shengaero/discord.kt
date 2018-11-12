@@ -20,6 +20,8 @@ import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.util.delegates.weak
 
 @DktInternal
+@Suppress("DEPRECATION")
+@Deprecated("Emote is now deprecated in favor of Emoji")
 open class EmoteImpl internal constructor(override val id: Long, bot: DiscordBotImpl): Emote {
     override val bot: DiscordBotImpl by weak(bot)
 

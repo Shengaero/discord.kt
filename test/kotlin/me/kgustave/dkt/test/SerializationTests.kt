@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 @file:Suppress("unused")
-
 package me.kgustave.dkt.test
 
 import kotlinx.serialization.parse
@@ -23,7 +22,7 @@ import me.kgustave.dkt.internal.data.RawRole
 import me.kgustave.dkt.internal.data.RawUser
 import me.kgustave.dkt.internal.data.RawVoiceState
 import me.kgustave.dkt.internal.data.responses.GatewayInfo
-import me.kgustave.dkt.util.JsonParser
+import me.kgustave.dkt.internal.util.JsonParser
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

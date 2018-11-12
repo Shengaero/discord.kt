@@ -23,7 +23,7 @@ import me.kgustave.dkt.promises.RestPromise
 import me.kgustave.dkt.util.delegates.weak
 
 @DktInternal
-class PermissionOverrideImpl(
+class PermissionOverrideImpl internal constructor(
     guildChannel: AbstractGuildChannelImpl,
     internal val id: Long,
     private val holder: PermissionHolder

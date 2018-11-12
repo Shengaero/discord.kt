@@ -40,9 +40,9 @@ import me.kgustave.dkt.internal.websocket.guild.GuildSetupManager
 import me.kgustave.dkt.promises.RestPromise
 import me.kgustave.dkt.promises.emptyPromise
 import me.kgustave.dkt.promises.restPromise
-import me.kgustave.dkt.requests.Requester
-import me.kgustave.dkt.requests.Route
-import me.kgustave.dkt.requests.serialization.DiscordSerializer
+import me.kgustave.dkt.rest.DiscordRequester
+import me.kgustave.dkt.rest.Route
+import me.kgustave.dkt.internal.util.DiscordSerializer
 import kotlin.concurrent.thread
 
 @DktInternal
@@ -100,19 +100,19 @@ class DiscordBotImpl internal constructor(config: DiscordBot.Config): DiscordBot
 
     val rateLimitDispatcher: CoroutineDispatcher
     val shutdownRateLimitDispatcher: Boolean
-    val requester: Requester
+    val requester: DiscordRequester
 
     init {
         val (dispatcher, shutdownAutomatically) = dispatcherProvider.provideRateLimitDispatcher(null) // FIXME
 
         this.rateLimitDispatcher = dispatcher
         this.shutdownRateLimitDispatcher = shutdownAutomatically
-        this.requester = Requester(
+        this.requester = DiscordRequester(
             client = httpClient,
             token = token,
             rateLimitDispatcher = rateLimitDispatcher,
             shutdownDispatcher = shutdownRateLimitDispatcher,
-            globalRateLimitProvider = sessionHandler
+            global = sessionHandler
         )
     }
 
@@ -224,6 +224,9 @@ class DiscordBotImpl internal constructor(config: DiscordBot.Config): DiscordBot
         if(shutdownPromiseDispatcher && promiseDispatcher is AutoCloseable) {
             promiseDispatcher.close()
         }
+
+        guildSetupManager.close()
+        guildSetupManager.shutdown()
 
         if(::shutdownHook.isInitialized) runCatching {
             Runtime.getRuntime().removeShutdownHook(shutdownHook)

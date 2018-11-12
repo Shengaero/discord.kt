@@ -151,7 +151,11 @@ dependencies {
     compile "io.ktor:ktor-client-core-jvm:$ktor_version"
     compile "io.ktor:ktor-client-json-jvm:$ktor_version"
     compile "io.ktor:ktor-http-cio:$ktor_version"
+    
+    // sub-projects
     compile project(':http-client')
+    compile project(':rest')
+    compile project(':util')
 
     // kotlin (test)
     testRuntime "org.jetbrains.kotlinx:atomicfu:$atomicfu_version"
@@ -161,10 +165,11 @@ dependencies {
 }
 
 useExperimental('me.kgustave.dkt.handle.ExperimentalEventListeners')
-useExperimental('kotlinx.serialization.ImplicitReflectionSerializer')
 useExperimental('me.kgustave.dkt.http.engine.DiscordKtHttpEngineAPI')
+useExperimental('me.kgustave.dkt.rest.ExperimentalDktREST')
 useExperimental('me.kgustave.dkt.internal.DktInternal')
 useExperimental('me.kgustave.dkt.internal.DktInternalExperiment')
+useExperimental('kotlinx.serialization.ImplicitReflectionSerializer')
 useExperimental('kotlinx.coroutines.ExperimentalCoroutinesApi')
 useExperimental('kotlinx.coroutines.ObsoleteCoroutinesApi')
 

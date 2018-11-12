@@ -19,6 +19,7 @@ import kotlinx.coroutines.*
 import me.kgustave.dkt.internal.data.RawGuildData
 import me.kgustave.dkt.internal.data.RawMember
 import me.kgustave.dkt.internal.data.RawUnavailableGuild
+import me.kgustave.dkt.internal.data.RawUser
 import me.kgustave.dkt.internal.entities.DiscordBotImpl
 import me.kgustave.dkt.internal.websocket.Payload
 import me.kgustave.dkt.util.createLogger
@@ -30,9 +31,9 @@ internal class GuildSetupManager(val bot: DiscordBotImpl): AutoCloseable {
     private val pending = hashMapOf<Long, Long>()
     private val chunking = hashSetOf<Long>()
 
-    private var toComplete = 0
-
     private val dispatcher = newSingleThreadContext("GuildBuilder Dispatcher")
+
+    private var toComplete = 0
 
     private lateinit var worker: Job
 
@@ -59,9 +60,9 @@ internal class GuildSetupManager(val bot: DiscordBotImpl): AutoCloseable {
         builder.create(raw)
     }
 
-    fun delete(raw: RawUnavailableGuild) {
+    fun delete(raw: RawUnavailableGuild): Boolean {
         val (id, unavailable) = raw
-        val builder = builders[id] ?: return
+        val builder = builders[id] ?: return false
         Log.debug("Received deletion of guild ID: $id")
         if(unavailable) {
             if(!builder.unavailable && !builder.chunkingRequested) {
@@ -80,6 +81,7 @@ internal class GuildSetupManager(val bot: DiscordBotImpl): AutoCloseable {
                 guildReady(id)
             }
         }
+        return true
     }
 
     fun chunk(guildId: Long, chunk: List<RawMember>) {
@@ -94,7 +96,7 @@ internal class GuildSetupManager(val bot: DiscordBotImpl): AutoCloseable {
         return true
     }
 
-    fun removeMember(guildId: Long, raw: RawMember): Boolean {
+    fun removeMember(guildId: Long, raw: RawUser): Boolean {
         val builder = builders[guildId] ?: return false
         builder.handleRemoveMember(raw)
         return true
@@ -190,18 +192,18 @@ internal class GuildSetupManager(val bot: DiscordBotImpl): AutoCloseable {
         worker = GlobalScope.launch(dispatcher) {
             loop@ while(isActive) {
                 delay(ChunkTimeout)
-                if(pending.isEmpty()) break
-                synchronized(pending) {
-                    val requests = pending.iterator().asSequence()
+                if(pending.isEmpty()) continue
+                val requests = synchronized(pending) {
+                    pending.asSequence()
                         .filter { currentTimeMs > it.value }        // passed timeout
                         .map { it.key }                             // get guildId
                         .chunked(50)                                // chunk w/ maximum size per chunk of 50
                         .toCollection(LinkedList())
-
                     // push to a separate collection in order to evade
                     //concurrent modification of underlying set.
-                    requests.forEach(this@GuildSetupManager::sendChunkRequest)
                 }
+
+                requests.forEach(this@GuildSetupManager::sendChunkRequest)
             }
         }
     }
@@ -209,11 +211,14 @@ internal class GuildSetupManager(val bot: DiscordBotImpl): AutoCloseable {
     override fun close() {
         if(::worker.isInitialized)
             worker.cancel()
+    }
+
+    fun shutdown() {
         dispatcher.close()
     }
 
     companion object {
-        private const val ChunkTimeout = 1000L
+        private const val ChunkTimeout = 10000L
 
         val Log = createLogger(GuildSetupManager::class)
     }

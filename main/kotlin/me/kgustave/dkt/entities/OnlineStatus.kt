@@ -26,7 +26,6 @@ enum class OnlineStatus {
     DO_NOT_DISTURB("DND"),
     INVISIBLE,
     OFFLINE,
-    @Deprecated("Use DO_NOT_DISTURB instead!", ReplaceWith("DO_NOT_DISTURB")) DND,
     UNKNOWN;
 
     val statusName: String
@@ -38,9 +37,6 @@ enum class OnlineStatus {
     @Serializer(OnlineStatus::class)
     companion object {
         @JvmStatic fun of(name: String): OnlineStatus {
-            @Suppress("DEPRECATION")
-            if(name.toUpperCase() == DND.statusName) return DO_NOT_DISTURB
-
             return values().firstOrNull { it.statusName == name.toUpperCase() } ?: UNKNOWN
         }
 

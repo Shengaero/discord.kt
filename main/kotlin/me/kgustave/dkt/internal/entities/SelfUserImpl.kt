@@ -20,4 +20,8 @@ import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.internal.data.RawSelfUser
 
 @DktInternal
-class SelfUserImpl internal constructor(bot: DiscordBotImpl, raw: RawSelfUser): SelfUser, UserImpl(bot, raw, false)
+class SelfUserImpl internal constructor(bot: DiscordBotImpl, raw: RawSelfUser): SelfUser, UserImpl(bot, raw, false) {
+    override fun openPrivateChannel(): Nothing {
+        throw UnsupportedOperationException("Opening private channels with SelfUser is not supported!")
+    }
+}

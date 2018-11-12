@@ -27,16 +27,17 @@ import me.kgustave.dkt.internal.cache.SnowflakeCacheImpl
 import me.kgustave.dkt.internal.cache.SortableSnowflakeCache
 import me.kgustave.dkt.promises.RestPromise
 import me.kgustave.dkt.promises.restPromise
-import me.kgustave.dkt.requests.Requester
-import me.kgustave.dkt.requests.Route
+import me.kgustave.dkt.rest.DiscordRequester
+import me.kgustave.dkt.rest.Route
 import me.kgustave.dkt.util.delegates.weak
 
 @DktInternal
-class GuildImpl(override val id: Long, bot: DiscordBotImpl, override var unavailable: Boolean = true): Guild {
+class GuildImpl
+internal constructor(override val id: Long, bot: DiscordBotImpl, override var unavailable: Boolean = true): Guild {
     companion object {
         // 1: ID, 2: hash
-        private const val IconUrlFormat   = "${Requester.CDNBaseUrl}/icons/%d/%s.png"
-        private const val SplashUrlFormat = "${Requester.CDNBaseUrl}/splashes/%d/%s.png"
+        private const val IconUrlFormat   = "${DiscordRequester.CDNBaseUrl}/icons/%d/%s.png"
+        private const val SplashUrlFormat = "${DiscordRequester.CDNBaseUrl}/splashes/%d/%s.png"
     }
 
     override val bot: DiscordBotImpl by weak(bot)
@@ -147,18 +148,18 @@ class GuildImpl(override val id: Long, bot: DiscordBotImpl, override var unavail
     }
 
     override val roleCache = SortableSnowflakeCache(RoleImpl::name, Comparator.reverseOrder())
-    override val emoteCache = SnowflakeCacheImpl(GuildEmoteImpl::name)
+    override val emojiCache = SnowflakeCacheImpl(GuildEmojiImpl::name)
     override val memberCache = MemberCacheImpl()
     override val categoryCache = SortableSnowflakeCache(CategoryImpl::name, Comparator.naturalOrder())
     override val textChannelCache = SortableSnowflakeCache(TextChannelImpl::name, Comparator.naturalOrder())
     override val voiceChannelCache = SortableSnowflakeCache(VoiceChannelImpl::name, Comparator.naturalOrder())
 
-    override val roles: List<Role>                 get() = roleCache.toList()
-    override val emotes: List<GuildEmote>          get() = emoteCache.toList()
-    override val members: List<Member>             get() = memberCache.toList()
-    override val categories: List<Category>        get() = categoryCache.toList()
-    override val textChannels: List<TextChannel>   get() = textChannelCache.toList()
-    override val voiceChannels: List<VoiceChannel> get() = voiceChannelCache.toList()
+    override val roles: List<Role>                 get() = roleCache.toList<Role>()
+    override val emojis: List<GuildEmoji>          get() = emojiCache.toList<GuildEmoji>()
+    override val members: List<Member>             get() = memberCache.toList<Member>()
+    override val categories: List<Category>        get() = categoryCache.toList<Category>()
+    override val textChannels: List<TextChannel>   get() = textChannelCache.toList<TextChannel>()
+    override val voiceChannels: List<VoiceChannel> get() = voiceChannelCache.toList<VoiceChannel>()
 
     override fun getCategoriesByName(name: String, ignoreCase: Boolean): List<Category> {
         return categoryCache.getByName(name, ignoreCase)
@@ -208,6 +209,14 @@ class GuildImpl(override val id: Long, bot: DiscordBotImpl, override var unavail
             throw call.response.receive<RequestException>()
         }
     }
+
+    @Suppress("DEPRECATION")
+    @Deprecated("GuildEmote is now deprecated in favor of GuildEmoji")
+    override val emoteCache = SnowflakeCacheImpl(GuildEmoteImpl::name)
+
+    @Suppress("DeprecatedCallableAddReplaceWith", "DEPRECATION")
+    @Deprecated("GuildEmote is now deprecated in favor of GuildEmoji")
+    override val emotes: List<GuildEmote> get() = emoteCache.toList<GuildEmote>()
 
     override fun hashCode(): Int = id.hashCode()
     override fun equals(other: Any?): Boolean = other is Guild && Snowflake.equals(this, other)

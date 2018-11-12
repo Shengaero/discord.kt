@@ -15,7 +15,7 @@
  */
 package me.kgustave.dkt.entities
 
-import me.kgustave.dkt.util.snowflakeTimeOf
+import me.kgustave.dkt.internal.util.snowflakeTimeOf
 import java.time.OffsetDateTime
 
 /**
@@ -76,8 +76,6 @@ interface Snowflake {
          *         two have equivalent [IDs][Snowflake.id].
          */
         fun <S: Snowflake> equals(s1: S, s2: S): Boolean = s1 === s2 || s1.id == s2.id
-
-        fun hashcode(snowflake: Snowflake): Long = snowflake.id
 
         /**
          * Converts the provided [Snowflake] to a string using the provided

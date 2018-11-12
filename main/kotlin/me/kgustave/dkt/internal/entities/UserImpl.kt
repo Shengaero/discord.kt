@@ -18,6 +18,7 @@ package me.kgustave.dkt.internal.entities
 import io.ktor.client.call.receive
 import kotlinx.serialization.json.json
 import me.kgustave.dkt.entities.PrivateChannel
+import me.kgustave.dkt.entities.Snowflake
 import me.kgustave.dkt.entities.User
 import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.internal.data.RawChannel
@@ -25,16 +26,17 @@ import me.kgustave.dkt.internal.data.RawUserData
 import me.kgustave.dkt.promises.RestPromise
 import me.kgustave.dkt.promises.emptyPromise
 import me.kgustave.dkt.promises.restPromise
-import me.kgustave.dkt.requests.Route
+import me.kgustave.dkt.rest.Route
 
 @DktInternal
-open class UserImpl(override val bot: DiscordBotImpl, raw: RawUserData, override var untracked: Boolean): User {
+open class UserImpl
+internal constructor(override val bot: DiscordBotImpl, raw: RawUserData, override var untracked: Boolean): User {
     override val id: Long = raw.id
     override val isBot: Boolean = raw.bot
     override var name: String = raw.username
-    override var discriminator: Int = raw.discriminator.toInt()
+    override var discriminator: String = raw.discriminator
     override var avatarHash: String? = raw.avatar
-    override val defaultAvatarHash: String get() = User.DefaultAvatarHashes[discriminator % 5]
+    override val defaultAvatarHash: String get() = User.DefaultAvatarHashes[discriminator.toInt() % 5]
     override val avatarUrl: String get() {
         avatarHash?.let { avatarHash ->
             val suffix = if(avatarHash.startsWith("a_")) "gif" else "png"
@@ -54,15 +56,7 @@ open class UserImpl(override val bot: DiscordBotImpl, raw: RawUserData, override
         }
     }
 
-    /**
-     * Patches the [UserImpl] with the data contained by the
-     * provided [raw] user instance.
-     */
-    internal fun patch(raw: RawUserData) {
-        require(id == raw.id) { "User ID mismatch! Expected $id, Actual: ${raw.id}" }
-
-        this.name = raw.username
-        this.discriminator = raw.discriminator.toInt()
-        this.avatarHash = raw.avatar
-    }
+    final override fun hashCode(): Int = id.hashCode()
+    final override fun equals(other: Any?): Boolean = other is UserImpl && Snowflake.equals(this, other)
+    final override fun toString(): String = Snowflake.toString("U", this)
 }

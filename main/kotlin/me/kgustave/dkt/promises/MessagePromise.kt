@@ -30,8 +30,8 @@ import kotlinx.serialization.json.json
 import me.kgustave.dkt.entities.Message
 import me.kgustave.dkt.entities.MessageChannel
 import me.kgustave.dkt.internal.entities.DiscordBotImpl
-import me.kgustave.dkt.requests.DiscordCall
-import me.kgustave.dkt.requests.Route
+import me.kgustave.dkt.rest.DiscordCall
+import me.kgustave.dkt.rest.Route
 import me.kgustave.dkt.util.stringify
 import java.io.File
 import java.io.InputStream

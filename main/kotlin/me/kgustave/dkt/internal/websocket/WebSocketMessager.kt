@@ -45,17 +45,15 @@ internal class WebSocketMessager(
 
     fun start() {
         shutdown = false
-        job = launch(context, block = { run() }).also {
-            it.invokeOnCompletion { t ->
-                if(t is CancellationException) {
-                    DiscordWebSocket.Log.debug(
-                        "WebSocketMessager has been interrupted. " +
-                        "This is most likely due to a shutdown!"
-                    )
-                }
-                job = null
-                webSocket.nullifyMessager()
+        job = launch(context) { runLoop() }
+        job?.invokeOnCompletion { t ->
+            if(t is CancellationException) {
+                DiscordWebSocket.Log.debug(
+                    "WebSocketMessager has been interrupted. " +
+                    "This is most likely due to a shutdown!"
+                )
             }
+            job = null
         }
     }
 
@@ -64,7 +62,7 @@ internal class WebSocketMessager(
         job?.cancel()
     }
 
-    private tailrec suspend fun run() {
+    private tailrec suspend fun runLoop() {
         try {
             // Wait until we're authenticated to send any messages.
             // Note: awaitAuthentication returns false if we shut down.
@@ -81,6 +79,8 @@ internal class WebSocketMessager(
 
             DiscordWebSocket.Log.debug("Sending message to websocket: ${message.type} - ${message.text}")
             if(!webSocket.sendMessage(message.text, queue = true)) {
+                // Fast path, we shut down between the time we selected the message we just
+                //sent and the time we finished sending it, return now, do not rate-limit!
                 if(shutdown) return
                 handleRateLimitedMessage(message)
             } else when(message) {
@@ -91,7 +91,7 @@ internal class WebSocketMessager(
             webSocket.unlockIfNeeded()
         }
 
-        run()
+        runLoop()
     }
 
     private suspend fun awaitAuthentication(): Boolean {

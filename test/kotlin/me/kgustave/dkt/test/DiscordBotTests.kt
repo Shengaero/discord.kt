@@ -42,6 +42,7 @@ import kotlin.test.assertTrue
 
 @Slow
 @UsesAPI
+@Disabled
 @EnabledIfResourcePresent(TestConfigRes)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DiscordBotTests: CoroutineTestBase() {

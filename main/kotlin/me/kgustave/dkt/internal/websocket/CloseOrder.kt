@@ -17,4 +17,5 @@ package me.kgustave.dkt.internal.websocket
 
 import io.ktor.http.cio.websocket.CloseReason
 
+@Deprecated("not necessary anymore")
 internal data class CloseOrder(val reason: CloseReason, val isClient: Boolean)

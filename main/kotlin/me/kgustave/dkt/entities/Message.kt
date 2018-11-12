@@ -21,6 +21,7 @@ import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.Serializer
 import me.kgustave.dkt.DiscordBot
+import me.kgustave.dkt.promises.MessagePromise
 import me.kgustave.dkt.promises.RestPromise
 
 interface Message: Snowflake {
@@ -47,15 +48,21 @@ interface Message: Snowflake {
     val author: User
     val member: Member?
     val embeds: List<Embed>
+    val reactions: List<Reaction>
     val attachments: List<Attachment>
     val mentionedUsers: List<User>
-    val mentionedEmotes: List<Emote>
     val mentionedChannels: List<TextChannel>
     val isWebhook: Boolean
+
+    fun edit(text: String): MessagePromise = TODO("implement")
 
     fun delete(): RestPromise<Unit>
 
     infix fun mentions(mentionable: Mentionable): Boolean
+
+    @Suppress("DeprecatedCallableAddReplaceWith", "DEPRECATION")
+    @Deprecated("Emote deprecated, no longer supporting this property", level = DeprecationLevel.ERROR)
+    val mentionedEmotes: List<Emote> get() = emptyList()
 
     data class Attachment internal constructor(
         val id: Long,

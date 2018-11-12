@@ -17,7 +17,7 @@ package me.kgustave.dkt.test
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.parse
-import me.kgustave.dkt.util.JsonParser
+import me.kgustave.dkt.internal.util.JsonParser
 
 const val TestConfigRes = "/test-config.json"
 const val TestGuildConfigRes = "/test-guild-config.json"
@@ -26,7 +26,7 @@ const val TestGuildConfigRes = "/test-guild-config.json"
 
 @Serializable data class GuildConfig(val id: Long, val name: String, val member: MemberConfig, val channel: ChannelConfig) {
     @Serializable data class ChannelConfig(val id: Long)
-    @Serializable data class MemberConfig(val id: Long, val name: String, val discriminator: Int)
+    @Serializable data class MemberConfig(val id: Long, val name: String, val discriminator: String)
 }
 
 private val instance by lazy {

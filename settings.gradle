@@ -25,3 +25,5 @@ rootProject.name = 'discord.kt'
 
 include ':http-client'
 include ':opus'
+include ':rest'
+include ':util'

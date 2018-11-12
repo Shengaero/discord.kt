@@ -16,24 +16,20 @@
 package me.kgustave.dkt.internal.data.serializers
 
 import kotlinx.serialization.*
-import kotlinx.serialization.internal.ArrayClassDesc
-import kotlinx.serialization.internal.IntDescriptor
-import me.kgustave.dkt.util.IntPair
 
-@Serializer(forClass = IntPair::class)
-object IntPairArraySerializer {
+object IntPairArraySerializer: KSerializer<Pair<Int, Int>> {
     override val descriptor: SerialDescriptor = Int.serializer().list.descriptor
 
-    override fun deserialize(input: Decoder): IntPair {
+    override fun deserialize(input: Decoder): Pair<Int, Int> {
         @Suppress("NAME_SHADOWING")
         val input = input.beginStructure(descriptor, Int.serializer())
         val first = input.decodeIntElement(descriptor, 1)
         val second = input.decodeIntElement(descriptor, 2)
         input.endStructure(descriptor)
-        return IntPair(first, second)
+        return first to second
     }
 
-    override fun serialize(output: Encoder, obj: IntPair) {
+    override fun serialize(output: Encoder, obj: Pair<Int, Int>) {
         @Suppress("NAME_SHADOWING")
         val output = output.beginCollection(descriptor, 2, Int.serializer())
         output.encodeIntElement(descriptor, 1, obj.first)

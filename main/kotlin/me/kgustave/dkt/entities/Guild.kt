@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("unused")
 package me.kgustave.dkt.entities
 
 import me.kgustave.dkt.DiscordBot
 import me.kgustave.dkt.entities.cache.MemberCache
 import me.kgustave.dkt.entities.cache.SnowflakeCache
+import me.kgustave.dkt.managers.VoiceManager
 import me.kgustave.dkt.promises.RestPromise
+import me.kgustave.dkt.voice.ExperimentalVoiceAPI
 
 interface Guild: Snowflake, ChannelHolder {
     val bot: DiscordBot
@@ -29,13 +32,6 @@ interface Guild: Snowflake, ChannelHolder {
     val splashUrl: String?
     val owner: Member
     val publicRole: Role
-
-    @Deprecated(
-        message = "renamed to publicRole for API consistency",
-        replaceWith = ReplaceWith("publicRole")
-    )
-    val everyoneRole: Role get() = publicRole
-
     val systemChannel: TextChannel?
     val afkChannel: VoiceChannel?
     val features: List<String>
@@ -48,18 +44,27 @@ interface Guild: Snowflake, ChannelHolder {
     val explicitContentFilter: ExplicitContentFilter
 
     val roleCache: SnowflakeCache<out Role>
-    val emoteCache: SnowflakeCache<out GuildEmote>
+    val emojiCache: SnowflakeCache<out GuildEmoji>
     val memberCache: MemberCache
     val categoryCache: SnowflakeCache<out Category>
     val textChannelCache: SnowflakeCache<out TextChannel>
     val voiceChannelCache: SnowflakeCache<out VoiceChannel>
 
     val roles: List<Role>
-    val emotes: List<GuildEmote>
+    val emojis: List<GuildEmoji>
     val members: List<Member>
     val categories: List<Category>
 
+    /** Gets the [Member] representing the currently logged in account. */
     val self: Member
+
+    /**
+     * The voice manager for this guild.
+     *
+     * This API is experimental, and currently unimplemented.
+     */
+    @ExperimentalVoiceAPI
+    val voiceManager: VoiceManager get() = TODO("not implemented")
 
     fun getCategoriesByName(name: String, ignoreCase: Boolean = false): List<Category>
     fun getTextChannelsByName(name: String, ignoreCase: Boolean = false): List<TextChannel>
@@ -85,6 +90,14 @@ interface Guild: Snowflake, ChannelHolder {
      * @return A [RestPromise] to leave the Guild.
      */
     fun leave(): RestPromise<Unit>
+
+    @Suppress("DEPRECATION")
+    @Deprecated("GuildEmote is now deprecated in favor of GuildEmoji")
+    val emoteCache: SnowflakeCache<out GuildEmote>
+
+    @Suppress("DEPRECATION")
+    @Deprecated("GuildEmote is now deprecated in favor of GuildEmoji")
+    val emotes: List<GuildEmote>
 
     enum class MFALevel {
         NONE,

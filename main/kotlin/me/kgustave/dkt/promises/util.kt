@@ -19,9 +19,9 @@ package me.kgustave.dkt.promises
 import io.ktor.http.Headers
 import io.ktor.http.headersOf
 import me.kgustave.dkt.internal.entities.DiscordBotImpl
-import me.kgustave.dkt.requests.DiscordCall
-import me.kgustave.dkt.requests.FakeRoute
-import me.kgustave.dkt.requests.Route
+import me.kgustave.dkt.rest.DiscordCall
+import me.kgustave.dkt.rest.FakeRoute
+import me.kgustave.dkt.rest.Route
 import java.lang.UnsupportedOperationException
 
 internal inline fun <reified T> DiscordBotImpl.restPromise(
@@ -36,9 +36,12 @@ internal inline fun <reified T> DiscordBotImpl.restPromise(
 }
 
 internal fun <T> DiscordBotImpl.emptyPromise(value: T): RestPromise<T> =
-    PreCompletedRestTask(this, value)
+    PreCompletedRestPromise(this, value)
 
-private class PreCompletedRestTask<T>(bot: DiscordBotImpl, val value: T): RestPromise<T>(bot, FakeRoute) {
+private class PreCompletedRestPromise<T>(
+    bot: DiscordBotImpl,
+    val value: T
+): RestPromise<T>(bot, FakeRoute) {
     override suspend fun await(): T = value
 
     override suspend fun handle(call: DiscordCall): T {

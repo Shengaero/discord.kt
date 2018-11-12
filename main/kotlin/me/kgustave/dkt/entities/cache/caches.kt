@@ -18,21 +18,21 @@ package me.kgustave.dkt.entities.cache
 import me.kgustave.dkt.entities.Snowflake
 import java.lang.UnsupportedOperationException
 
-// FIXME simplify type hierarchy for caches
 // TODO possibly add type variance to values?
 
-interface Cache<V>: Map<Long, V>, Collection<V> {
-    override fun contains(element: V): Boolean = values.contains(element)
-    override fun containsAll(elements: Collection<V>): Boolean = values.containsAll(elements)
-    override fun iterator(): Iterator<V> = values.iterator()
+interface Cache<V>: Collection<V> {
+    fun getById(id: Long): V?
 
-    fun toList(): List<V>
-
-    fun getById(id: Long): V? = this[id]
+    operator fun get(key: Long): V? = getById(key)
+    operator fun contains(key: Long): Boolean
 
     fun getByName(name: String, ignoreCase: Boolean = false): List<V> {
         throw UnsupportedOperationException("Getting cached entities by name is not supported by this cache!")
     }
+
+    @Deprecated("replace with normal stdlib extension",
+        ReplaceWith("toList<V>()", imports = ["kotlin.collections.toList"]))
+    fun toList(): List<V> = toList<V>()
 }
 
 interface SnowflakeCache<S: Snowflake>: Cache<S>

@@ -16,14 +16,16 @@
 @file:Suppress("MemberVisibilityCanBePrivate", "MoveLambdaOutsideParentheses")
 package me.kgustave.dkt.promises
 
+import io.ktor.client.utils.EmptyContent
+import io.ktor.http.headersOf
 import me.kgustave.dkt.internal.entities.DiscordBotImpl
-import me.kgustave.dkt.requests.RestTask
-import me.kgustave.dkt.requests.Route
+import me.kgustave.dkt.rest.DiscordCall
+import me.kgustave.dkt.rest.DiscordRequest
+import me.kgustave.dkt.rest.Route
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.startCoroutine
 
-abstract class RestPromise<T>
-internal constructor(protected val bot: DiscordBotImpl, route: Route): RestTask<T>(bot.requester, route) {
+abstract class RestPromise<T> internal constructor(protected val bot: DiscordBotImpl, internal val route: Route) {
     companion object {
         private var defaultFailureHandle = { t: Throwable ->
 
@@ -32,6 +34,16 @@ internal constructor(protected val bot: DiscordBotImpl, route: Route): RestTask<
         fun defaultFailure(block: (t: Throwable) -> Unit) {
             defaultFailureHandle = block
         }
+    }
+
+    open val headers = headersOf()
+    open val rateLimit = true
+    open val body: Any get() = EmptyContent
+
+    open suspend fun await(): T {
+        val request = DiscordRequest(route, headers, body, rateLimit)
+        val response = bot.requester.request(request)
+        return handle(DiscordCall(request, response))
     }
 
     fun promise() = promise({})
@@ -44,4 +56,6 @@ internal constructor(protected val bot: DiscordBotImpl, route: Route): RestTask<
 
         suspend { this.await() }.startCoroutine(cont)
     }
+
+    abstract suspend fun handle(call: DiscordCall): T
 }

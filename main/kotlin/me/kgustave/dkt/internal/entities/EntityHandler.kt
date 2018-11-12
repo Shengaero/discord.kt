@@ -16,14 +16,13 @@
 @file:Suppress("MemberVisibilityCanBePrivate", "FoldInitializerAndIfToElvis", "LiftReturnOrAssignment")
 package me.kgustave.dkt.internal.entities
 
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.content
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.int
+import kotlinx.serialization.json.*
 import me.kgustave.dkt.entities.*
 import me.kgustave.dkt.internal.DktInternal
 import me.kgustave.dkt.internal.cache.EventCache
 import me.kgustave.dkt.internal.data.*
+import me.kgustave.dkt.internal.util.snowflake
+import me.kgustave.dkt.internal.util.snowflakeOrNull
 import me.kgustave.dkt.util.*
 import me.kgustave.dkt.util.delegates.weak
 
@@ -37,7 +36,7 @@ internal class EntityHandler(bot: DiscordBotImpl) {
             bot.selfIsInit() -> bot.self.apply {
                 // patch in new data
                 name = raw.username
-                discriminator = raw.discriminator.toInt()
+                discriminator = raw.discriminator
                 avatarHash = raw.avatar
             }
 
@@ -97,7 +96,7 @@ internal class EntityHandler(bot: DiscordBotImpl) {
 
         with(user) {
             name = raw.username
-            discriminator = raw.discriminator.toInt()
+            discriminator = raw.discriminator
             avatarHash = raw.avatar
         }
 
@@ -131,7 +130,7 @@ internal class EntityHandler(bot: DiscordBotImpl) {
 
         raw.roles.forEach { role -> handleRole(role, guild) }
         raw.channels.forEach { channel -> handleGuildChannel(channel, guild) }
-        raw.emojis.forEach { emote -> handleGuildEmote(emote, guild) }
+        raw.emojis.forEach { emote -> handleGuildEmoji(emote, guild) }
         raw.voiceStates.forEach { voiceState -> handleVoiceState(voiceState, guild) }
         raw.presences.forEach { presence ->
             val userId = presence.user["id"].snowflake
@@ -309,22 +308,22 @@ internal class EntityHandler(bot: DiscordBotImpl) {
         return override
     }
 
-    fun handleGuildEmote(raw: RawEmoji, guild: GuildImpl): GuildEmoteImpl {
+    fun handleGuildEmoji(raw: RawEmoji, guild: GuildImpl): GuildEmojiImpl {
         val id = requireNotNull(raw.id) { "RawEmote id was null!" }
         val roles = raw.roles
-        val emote = guild.emoteCache.computeIfAbsent(id) { GuildEmoteImpl(id, guild) }
+        val emoji = guild.emojiCache.computeIfAbsent(id) { GuildEmojiImpl(id, guild) }
 
-        val emoteRoles = emote.roles.also { it.clear() }
-        roles.asSequence().mapNotNull { guild.getRoleById(it) as RoleImpl }.toCollection(emoteRoles)
-        raw.user?.let { user -> emote.user = bot.userCache[user.id] ?: handleUntrackedUser(user, false) }
+        val emojiRoles = emoji.roles.also { it.clear() }
+        roles.asSequence().mapNotNull { guild.getRoleById(it) as? RoleImpl }.toCollection(emojiRoles)
+        raw.user?.let { user -> emoji.user = bot.userCache[user.id] ?: handleUntrackedUser(user, false) }
 
-        with(emote) {
+        with(emoji) {
             name = raw.name
             isAnimated = raw.animated
             isManaged = raw.managed
         }
 
-        return emote
+        return emoji
     }
 
     fun handleVoiceState(raw: RawVoiceState, guild: GuildImpl): GuildVoiceStateImpl? {
@@ -391,7 +390,24 @@ internal class EntityHandler(bot: DiscordBotImpl) {
 
         val type = Message.Type.of(raw["type"].int)
 
-        // TODO reactions
+        val reactions = raw.getOrNull("reactions")?.jsonArray?.asSequence()
+            ?.map { it.jsonObject }
+            ?.map { obj ->
+                val count = obj["count"].int
+                val me = obj["me"].boolean
+                val emoji = obj["emoji"].jsonObject
+                val emojiId = emoji["id"].snowflakeOrNull
+                val name = emoji["name"].content
+
+                return@map ReactionImpl(
+                    channel = channel,
+                    emoji = EmojiImpl(bot, emojiId).also { it.name = name },
+                    messageId = id,
+                    count = count,
+                    self = me
+                )
+            }
+            ?.toList() ?: emptyList()
 
         var user: User?
 
@@ -431,6 +447,7 @@ internal class EntityHandler(bot: DiscordBotImpl) {
                 content = content ?: "",
                 author = user,
                 embeds = embeds,
+                reactions = reactions,
                 attachments = attachments,
                 isWebhook = webhookId != null
             )

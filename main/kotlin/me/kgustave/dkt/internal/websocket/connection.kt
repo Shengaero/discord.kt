@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("OverridingDeprecatedMember")
+@file:Suppress("OverridingDeprecatedMember", "MemberVisibilityCanBePrivate")
 package me.kgustave.dkt.internal.websocket
 
 import me.kgustave.dkt.DiscordBot
 
-open class WebSocketConnection(val webSocket: DiscordWebSocket, val reconnect: Boolean) {
+data class WebSocketConnection(val webSocket: DiscordWebSocket, val reconnect: Boolean) {
     val bot get() = webSocket.bot
-
-    @Deprecated("to be removed in a future release")
-    open suspend fun connect() {}
 
     internal suspend fun run(last: Boolean) {
         if(webSocket.isShutdown) return
@@ -39,16 +36,4 @@ open class WebSocketConnection(val webSocket: DiscordWebSocket, val reconnect: B
             DiscordWebSocket.Log.debug("Shutdown while trying to make connection!")
         }
     }
-}
-
-@Deprecated("to be removed in a future release")
-class InitialWebSocketConnection
-internal constructor(webSocket: DiscordWebSocket): WebSocketConnection(webSocket, false) {
-    override suspend fun connect() = webSocket.connect()
-}
-
-@Deprecated("to be removed in a future release")
-class ReconnectWebSocketConnection
-internal constructor(webSocket: DiscordWebSocket): WebSocketConnection(webSocket, true) {
-    override suspend fun connect() = webSocket.reconnect()
 }

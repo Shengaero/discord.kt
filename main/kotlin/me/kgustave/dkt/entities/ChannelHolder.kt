@@ -15,6 +15,12 @@
  */
 package me.kgustave.dkt.entities
 
+/**
+ * A channel holder entity, that can have child [text][TextChannel]
+ * and [voice][VoiceChannel] channels.
+ *
+ * Instances of this are either a [Guild] or a [Category].
+ */
 interface ChannelHolder {
     val textChannels: List<TextChannel>
     val voiceChannels: List<VoiceChannel>

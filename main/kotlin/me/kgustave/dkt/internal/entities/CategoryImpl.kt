@@ -21,10 +21,8 @@ import me.kgustave.dkt.entities.VoiceChannel
 import me.kgustave.dkt.internal.DktInternal
 
 @DktInternal
-class CategoryImpl internal constructor(
-    id: Long,
-    guild: GuildImpl
-): Category, AbstractGuildChannelImpl(id, guild) {
+class CategoryImpl
+internal constructor(id: Long, guild: GuildImpl): Category, AbstractGuildChannelImpl(id, guild) {
     override val parent: CategoryImpl? get() = null
     override val position: Int get() = guild.categories.binarySearch(this)
 

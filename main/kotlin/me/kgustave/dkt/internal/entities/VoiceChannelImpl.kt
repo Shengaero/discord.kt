@@ -20,18 +20,15 @@ import me.kgustave.dkt.entities.VoiceChannel
 import me.kgustave.dkt.internal.DktInternal
 
 @DktInternal
-class VoiceChannelImpl(
-    id: Long,
-    guild: GuildImpl
-): VoiceChannel, AbstractGuildChannelImpl(id, guild) {
+class VoiceChannelImpl
+internal constructor(id: Long, guild: GuildImpl): VoiceChannel, AbstractGuildChannelImpl(id, guild) {
     internal var parentId: Long? = null
-    internal val connectedMembers = hashMapOf<Long, Member>()
-
-    override val parent: CategoryImpl? get() = parentId?.let { guild.categoryCache[it] }
-
     override var userLimit = 0
     override var bitrate = 0
 
+    internal val connectedMembers = hashMapOf<Long, Member>()
+
+    override val parent: CategoryImpl? get() = parentId?.let { guild.categoryCache[it] }
     override val position: Int get() = guild.voiceChannels.binarySearch(this)
 
     override fun compareTo(other: VoiceChannel): Int {

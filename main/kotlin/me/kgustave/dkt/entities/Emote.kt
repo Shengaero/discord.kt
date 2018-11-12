@@ -17,6 +17,7 @@ package me.kgustave.dkt.entities
 
 import me.kgustave.dkt.DiscordBot
 
+@Deprecated("Emote is now deprecated in favor of Emoji")
 interface Emote: Snowflake, Mentionable {
     val bot: DiscordBot
     val name: String

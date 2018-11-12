@@ -20,6 +20,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import me.kgustave.dkt.internal.data.serializers.ISO8601Serializer
 import me.kgustave.dkt.internal.data.serializers.SnowflakeArraySerializer
+import me.kgustave.dkt.internal.data.serializers.SnowflakeSerializer
 import java.time.OffsetDateTime
 
 @Serializable
@@ -33,5 +34,10 @@ internal data class RawMember(
     @Serializable(ISO8601Serializer::class)
     val joinedAt: OffsetDateTime,
     val deaf: Boolean,
-    val mute: Boolean
+    val mute: Boolean,
+
+    // available GUILD_MEMBER_ADD events
+    @SerialName("guild_id")
+    @Serializable(SnowflakeSerializer::class)
+    @Optional val guildId: Long? = null
 )
