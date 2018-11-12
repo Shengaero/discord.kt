@@ -12,17 +12,17 @@ when offering contributions.
 - Extracting websocket package contents from `me.kgustave.dkt.internal.websocket`
   to `me.kgustave.dkt.websocket`.
   - This is because not everything is going to end up as internal.
-- Setup after receiving `READY` event
-- Handle events
+- ~~Setup after receiving `READY` event~~
+- Handle events (Update: Getting there...)
 - Cache entities
   - I want to make sure that caching **is optional**
-- The entire basic requester needs to be stripped out of the main
-  module, and reallocated to a submodule
+- ~~The entire basic requester needs to be stripped out of the main
+  module, and reallocated to a submodule~~
   - I may consider extracting the entire library down to a module
     as well, mostly to avoid dependency circulation or repeated/copied
     utilities (which could therefore be placed in a common module).
-  - RestPromise is excluded from this on account it wraps a DiscordBotImpl
-    instance inside it for access to things like the promise dispatcher.
+  - ~~RestPromise is excluded from this on account it wraps a DiscordBotImpl
+    instance inside it for access to things like the promise dispatcher.~~
 
 ### Low Priority
 - More detailed contribution documentation.
