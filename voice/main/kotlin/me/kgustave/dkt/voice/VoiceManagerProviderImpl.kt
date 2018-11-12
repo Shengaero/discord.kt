@@ -13,19 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
+package me.kgustave.dkt.voice
+
+import me.kgustave.dkt.core.internal.entities.GuildImpl
+import me.kgustave.dkt.core.managers.VoiceManager
+import me.kgustave.dkt.core.voice.ExperimentalVoiceAPI
+
+@ExperimentalVoiceAPI
+@Suppress("RemoveEmptyPrimaryConstructor")
+internal class VoiceManagerProviderImpl(): VoiceManager.Provider {
+    override fun provide(guild: GuildImpl): VoiceManager = VoiceManagerImpl(guild)
 }
-
-rootProject.name = 'discord.kt'
-
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'
-include ':voice'

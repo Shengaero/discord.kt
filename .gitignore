@@ -20,4 +20,4 @@ test-*-config.json
 ### Temp Ignores ###
 # FIXME Examples
 examples/
-/voice/
+#/voice/

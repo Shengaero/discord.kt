@@ -13,19 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
+package me.kgustave.dkt.voice.websocket
+
+class VoiceWebSocket internal constructor() {
+
+    companion object {
+        const val VoiceGatewayVersion = 3
+
+        private val UDPKeepAlive = byteArrayOf(0xC9.toByte(), 0, 0, 0, 0, 0, 0, 0, 0)
     }
 }
-
-rootProject.name = 'discord.kt'
-
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'
-include ':voice'

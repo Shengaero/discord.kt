@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
+package me.kgustave.dkt.voice.websocket
+
+// Voice Op Codes
+object VOP {
+    const val Identify = 0 // client
+    const val SelectProtocol = 1 // client
+    const val Ready = 2 // server
+    const val Heartbeat = 3 // client
+    const val SessionDescription = 4 // server
+    const val Speaking = 5 // client & server
+    const val HeartbeatACK = 6 // server
+    const val Resume = 7 // client
+    const val Hello = 8 // server
+    const val Resumed = 9 // server
+    const val ClientDisconnect = 13 // server
 }
-
-rootProject.name = 'discord.kt'
-
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'
-include ':voice'
