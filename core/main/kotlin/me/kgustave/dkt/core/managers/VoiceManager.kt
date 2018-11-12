@@ -21,6 +21,7 @@ import me.kgustave.dkt.core.voice.ExperimentalVoiceAPI
 import me.kgustave.dkt.core.entities.Guild
 import me.kgustave.dkt.core.entities.VoiceChannel
 import me.kgustave.dkt.core.internal.DktInternalExperiment
+import me.kgustave.dkt.core.internal.entities.GuildImpl
 
 @ExperimentalVoiceAPI
 interface VoiceManager {
@@ -42,5 +43,10 @@ interface VoiceManager {
 
         @DktInternalExperiment
         suspend fun awaitToProvide() {}
+    }
+
+    @ExperimentalVoiceAPI
+    interface Provider {
+        fun provide(guild: GuildImpl): VoiceManager
     }
 }
