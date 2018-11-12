@@ -13,18 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
-}
+@file:Suppress("CanBeParameter", "MemberVisibilityCanBePrivate")
+package me.kgustave.dkt.core.exceptions
 
-rootProject.name = 'discord.kt'
-
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'
+class RateLimitedException(val retryAfter: Long): RuntimeException("RateLimited! Retry in $retryAfter")

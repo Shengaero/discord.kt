@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
+package me.kgustave.dkt.core.entities
+
+interface Presence {
+    val status: OnlineStatus
+    val afk: Boolean
+    val activity: Activity?
+
+    class Builder internal constructor(base: Presence = Default) {
+        var status = base.status
+        var afk = base.afk
+        var activity = base.activity
+    }
+
+    companion object Default: Presence {
+        override val status = OnlineStatus.ONLINE
+        override val afk = false
+        override val activity = null as Activity?
     }
 }
-
-rootProject.name = 'discord.kt'
-
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'

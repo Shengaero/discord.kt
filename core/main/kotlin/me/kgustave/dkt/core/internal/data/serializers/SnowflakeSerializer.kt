@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
+package me.kgustave.dkt.core.internal.data.serializers
+
+import kotlinx.serialization.*
+import kotlinx.serialization.json.JSON
+import kotlinx.serialization.json.JsonPrimitive
+
+object SnowflakeSerializer: KSerializer<Long> by Long.serializer() {
+    override fun deserialize(input: Decoder): Long = input.decodeString().toLong()
+
+    override fun serialize(output: Encoder, obj: Long) {
+        val json = output as JSON.JsonOutput
+        json.writeTree(JsonPrimitive("$obj"))
     }
 }
 
-rootProject.name = 'discord.kt'
-
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'
+object SnowflakeArraySerializer: KSerializer<List<Long>> by SnowflakeSerializer.list

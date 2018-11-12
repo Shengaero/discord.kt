@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
+@file:Suppress("MemberVisibilityCanBePrivate")
+package me.kgustave.dkt.core
+
+object DiscordKt {
+    const val GitHub = "https://github.com/Shengaero/discord.kt"
+    const val RESTVersion = 6
+    const val GatewayVersion = 6
+    object Version {
+        const val Major = 0
+        const val Minor = 1
+        const val Patch = 0
+        const val Number = "$Major.$Minor.$Patch"
+        override fun toString(): String = Number
     }
 }
-
-rootProject.name = 'discord.kt'
-
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'

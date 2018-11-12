@@ -13,18 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
-}
+@file:Suppress("MemberVisibilityCanBePrivate")
+package me.kgustave.dkt.core.exceptions
 
-rootProject.name = 'discord.kt'
+import kotlinx.serialization.Serializable
 
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'
+@Serializable
+data class RequestException(
+    override val message: String,
+    val code: Int
+): RuntimeException()

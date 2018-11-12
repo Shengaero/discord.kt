@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
-}
+package me.kgustave.dkt.core.events
 
-rootProject.name = 'discord.kt'
+import me.kgustave.dkt.core.DiscordBot
+import java.time.OffsetDateTime
 
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'
+class ReadyEvent internal constructor(override val bot: DiscordBot): Event
+
+class ShutdownEvent internal constructor(override val bot: DiscordBot, val time: OffsetDateTime, val code: Int): Event
+
+class ReconnectEvent internal constructor(override val bot: DiscordBot): Event
+
+class ResumeEvent internal constructor(override val bot: DiscordBot): Event

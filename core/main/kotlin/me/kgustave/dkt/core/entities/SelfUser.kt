@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
+package me.kgustave.dkt.core.entities
+
+/**
+ * Represents a the currently logged in [User].
+ *
+ * This is a separate interface to have documentation changes
+ * as well as for any functions that would be more appropriately
+ * placed here than in the [DiscordBot][me.kgustave.dkt.DiscordBot]
+ * interface.
+ */
+interface SelfUser: User {
+
+    /**
+     * This is unsupported for [SelfUser]!
+     *
+     * @throws UnsupportedOperationException
+     */
+    override fun openPrivateChannel(): Nothing
 }
-
-rootProject.name = 'discord.kt'
-
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'

@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
+package me.kgustave.dkt.core.entities
+
+import me.kgustave.dkt.core.promises.MessagePromise
+
+interface MessageChannel: Channel {
+    val lastMessageId: Long?
+
+    fun send(text: String): MessagePromise
 }
-
-rootProject.name = 'discord.kt'
-
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'

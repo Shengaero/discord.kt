@@ -22,15 +22,11 @@ import java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME
 
 /** The current [system][System] time in milliseconds. */
 inline val currentTimeMs: Long
-    @JvmSynthetic inline get() = System.currentTimeMillis()
+    inline get() = System.currentTimeMillis()
 
 /** The current [OffsetDateTime]. */
 inline val currentOffsetDateTime: OffsetDateTime
-    // Interestingly enough, this is the most efficient form.
-    //I personally would have thought the not-null assertion (IE: !!)
-    //would "weight less" bytecode wise, but according to kotlinc,
-    //allowing intrinsics to check it like this is just a tad smaller.
-    @JvmSynthetic inline get() = OffsetDateTime.now()
+    inline get() = OffsetDateTime.now()
 
 /**
  * Parses the provided [time] string using the provided [formatter], returning

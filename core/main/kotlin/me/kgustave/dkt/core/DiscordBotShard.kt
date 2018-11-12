@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
+package me.kgustave.dkt.core
+
+interface DiscordBotShard: DiscordBot {
+    val shardId: Int
+    val shardTotal: Int
+
+    class Config: DiscordBot.Config() {
+        var shardId: Int = 0
+        var shardTotal: Int = 0
+
+        // var shardManager: ShardManager = ...
     }
 }
-
-rootProject.name = 'discord.kt'
-
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'

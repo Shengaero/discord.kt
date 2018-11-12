@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
-}
+package me.kgustave.dkt.core.internal
 
-rootProject.name = 'discord.kt'
-
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'
+/**
+ * Internal marker for cross-module internal APIs.
+ *
+ * __DO NOT USE ANYTHING MARKED WITH THIS__
+ *
+ * These APIs are subject to massively breaking changes at any time, and without notice!
+ */
+@Experimental
+@MustBeDocumented
+annotation class DktInternal

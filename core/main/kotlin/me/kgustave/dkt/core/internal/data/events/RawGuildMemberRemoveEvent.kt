@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
-}
+package me.kgustave.dkt.core.internal.data.events
 
-rootProject.name = 'discord.kt'
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import me.kgustave.dkt.core.internal.data.RawUser
+import me.kgustave.dkt.core.internal.data.serializers.SnowflakeSerializer
 
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'
+@Serializable
+internal data class RawGuildMemberRemoveEvent(
+    @SerialName("guild_id")
+    @Serializable(SnowflakeSerializer::class)
+    val guildId: Long,
+    val user: RawUser
+)

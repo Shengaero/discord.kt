@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
+package me.kgustave.dkt.core.internal.data.responses
+
+import kotlinx.serialization.*
+
+@Serializable
+internal data class GatewayInfo(
+    val url: String,
+    val shards: Int,
+    @SerialName("session_start_limit")
+    val sessionStartLimit: SessionStartLimit
+) {
+    @Serializable
+    data class SessionStartLimit(
+        val total: Int,
+        val remaining: Int,
+        @SerialName("reset_after") val resetAfter: Long
+    )
 }
-
-rootProject.name = 'discord.kt'
-
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'

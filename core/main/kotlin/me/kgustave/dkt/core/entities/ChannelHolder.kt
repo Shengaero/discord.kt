@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
+package me.kgustave.dkt.core.entities
+
+/**
+ * A channel holder entity, that can have child [text][TextChannel]
+ * and [voice][VoiceChannel] channels.
+ *
+ * Instances of this are either a [Guild] or a [Category].
+ */
+interface ChannelHolder {
+    val textChannels: List<TextChannel>
+    val voiceChannels: List<VoiceChannel>
 }
-
-rootProject.name = 'discord.kt'
-
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'

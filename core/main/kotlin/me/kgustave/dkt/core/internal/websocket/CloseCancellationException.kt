@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
+@file:Suppress("MemberVisibilityCanBePrivate")
+package me.kgustave.dkt.core.internal.websocket
+
+import io.ktor.http.cio.websocket.CloseReason
+import kotlinx.coroutines.CancellationException
+
+internal class CloseCancellationException(val reason: CloseReason): CancellationException() {
+    override val message: String get() = reason.message
+    val code get() = reason.code
+
+    @Deprecated("not necessary anymore")
+    @Suppress("DeprecatedCallableAddReplaceWith", "DEPRECATION")
+    fun toCloseOrder(): CloseOrder = error("No longer supported")
 }
-
-rootProject.name = 'discord.kt'
-
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'

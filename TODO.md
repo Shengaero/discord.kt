@@ -18,9 +18,9 @@ when offering contributions.
   - I want to make sure that caching **is optional**
 - ~~The entire basic requester needs to be stripped out of the main
   module, and reallocated to a submodule~~
-  - I may consider extracting the entire library down to a module
+  - ~~I may consider extracting the entire library down to a module
     as well, mostly to avoid dependency circulation or repeated/copied
-    utilities (which could therefore be placed in a common module).
+    utilities (which could therefore be placed in a common module).~~
   - ~~RestPromise is excluded from this on account it wraps a DiscordBotImpl
     instance inside it for access to things like the promise dispatcher.~~
 

@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
+package me.kgustave.dkt.core.entities
+
+interface GuildChannel: Channel {
+    val name: String
+    val overrides: List<PermissionOverride>
+    val position: Int
+    val rawPosition: Int
+    val parent: Category?
+
+    override val guild: Guild // override guild for documentation changes and non-nullability
+
+    fun permissionOverrideFor(member: Member): PermissionOverride?
+    fun permissionOverrideFor(role: Role): PermissionOverride?
 }
-
-rootProject.name = 'discord.kt'
-
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'

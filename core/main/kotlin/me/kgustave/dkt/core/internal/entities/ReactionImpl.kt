@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
-}
+package me.kgustave.dkt.core.internal.entities
 
-rootProject.name = 'discord.kt'
+import me.kgustave.dkt.core.entities.MessageChannel
+import me.kgustave.dkt.core.entities.Reaction
+import me.kgustave.dkt.core.internal.DktInternal
 
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'
+@DktInternal
+class ReactionImpl internal constructor(
+    override val channel: MessageChannel,
+    override val emoji: EmojiImpl,
+    override val messageId: Long,
+    override val count: Int,
+    override val self: Boolean
+): Reaction

@@ -1,0 +1,63 @@
+/*
+ * Copyright 2018 Kaidan Gustave
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+apply plugin: 'kotlinx-atomicfu'
+apply plugin: 'kotlinx-serialization'
+
+dependencies {
+    // kotlin
+    compileOnly "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compileOnly "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    compileOnly "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    compileOnly "org.jetbrains.kotlinx:atomicfu:$atomicfu_version"
+    compile "org.jetbrains.kotlinx:kotlinx-io-jvm:$io_version"
+    compile "org.jetbrains.kotlinx:kotlinx-coroutines-io-jvm:$io_version"
+    compile "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serialization_version"
+
+    // logging
+    compile "org.slf4j:slf4j-api:$slf4j_version"
+
+    // http libraries
+    compile "com.squareup.okhttp3:okhttp:$ok_http_version"
+    compile "io.ktor:ktor-client-core-jvm:$ktor_version"
+    compile "io.ktor:ktor-client-json-jvm:$ktor_version"
+    compile "io.ktor:ktor-http-cio:$ktor_version"
+
+    // sub-projects
+    compile project(':http-client')
+    compile project(':rest')
+    compile project(':util')
+
+    // kotlin (test)
+    testRuntime "org.jetbrains.kotlinx:atomicfu:$atomicfu_version"
+
+    // logging (test)
+    testCompile "ch.qos.logback:logback-classic:$logback_version"
+}
+
+useExperimental('me.kgustave.dkt.core.handle.ExperimentalEventListeners')
+useExperimental('me.kgustave.dkt.http.engine.DiscordKtHttpEngineAPI')
+useExperimental('me.kgustave.dkt.rest.ExperimentalDktREST')
+useExperimental('me.kgustave.dkt.core.internal.DktInternal')
+useExperimental('me.kgustave.dkt.core.internal.DktInternalExperiment')
+useExperimental('kotlinx.serialization.ImplicitReflectionSerializer')
+useExperimental('kotlinx.coroutines.ExperimentalCoroutinesApi')
+useExperimental('kotlinx.coroutines.ObsoleteCoroutinesApi')
+
+test {
+    useJUnitPlatform {
+        excludeTags 'me.kgustave.dkt.test.tags.UsesAPI'
+    }
+}

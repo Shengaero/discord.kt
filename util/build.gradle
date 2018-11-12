@@ -15,6 +15,5 @@
  */
 dependencies {
     compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
-    compile "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serialization_version"
     compile "org.slf4j:slf4j-api:$slf4j_version"
 }

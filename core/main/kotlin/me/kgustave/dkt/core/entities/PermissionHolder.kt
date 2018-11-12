@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
+package me.kgustave.dkt.core.entities
+
+import me.kgustave.dkt.core.Permission
+
+interface PermissionHolder {
+    val permissions: List<Permission>
+    val rawPermissions: Long
+
+    fun canInteractWith(member: Member): Boolean
+    fun canInteractWith(role: Role): Boolean
 }
-
-rootProject.name = 'discord.kt'
-
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'

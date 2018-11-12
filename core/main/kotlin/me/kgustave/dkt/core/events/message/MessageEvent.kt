@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
+package me.kgustave.dkt.core.events.message
+
+import me.kgustave.dkt.core.entities.Guild
+import me.kgustave.dkt.core.entities.MessageChannel
+import me.kgustave.dkt.core.entities.PrivateChannel
+import me.kgustave.dkt.core.entities.TextChannel
+import me.kgustave.dkt.core.events.Event
+
+interface MessageEvent: Event {
+    val messageId: Long
+    val channel: MessageChannel
+    val guild: Guild? get() = channel.guild
+    val textChannel: TextChannel? get() = channel as? TextChannel
+    val privateChannel: PrivateChannel? get() = channel as? PrivateChannel
 }
-
-rootProject.name = 'discord.kt'
-
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'

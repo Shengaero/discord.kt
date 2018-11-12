@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
+package me.kgustave.dkt.core.internal.entities
+
+import me.kgustave.dkt.core.DiscordBot
+import me.kgustave.dkt.core.DiscordBotShard
+import me.kgustave.dkt.core.internal.DktInternal
+
+@UseExperimental(DktInternal::class)
+class DiscordBotShardImpl
+internal constructor(config: DiscordBotShard.Config): DiscordBotShard, DiscordBot by DiscordBotImpl(config) {
+    override val shardId = config.shardId
+    override val shardTotal = config.shardTotal
 }
-
-rootProject.name = 'discord.kt'
-
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'

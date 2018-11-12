@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
+package me.kgustave.dkt.core.test
+
+import io.ktor.client.HttpClient
+import io.ktor.client.features.json.JsonFeature
+import me.kgustave.dkt.http.engine.OkHttp
+import me.kgustave.dkt.core.internal.util.DiscordSerializer
+
+fun defaultHttpClient() = HttpClient(OkHttp) {
+    install(JsonFeature) {
+        serializer = DiscordSerializer()
     }
 }
-
-rootProject.name = 'discord.kt'
-
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'

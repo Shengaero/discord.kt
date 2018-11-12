@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
+package me.kgustave.dkt.core.entities
+
+import me.kgustave.dkt.core.DiscordBot
+
+interface Member: Mentionable, PermissionHolder {
+    val bot: DiscordBot
+    val guild: Guild
+    val user: User
+    val nickname: String?
+    val roles: List<Role>
+    val voiceState: GuildVoiceState
+    val activity: Activity?
+    val status: OnlineStatus
+
+    val name: String get() = nickname ?: user.name
+    val isOwner: Boolean get() = this == guild.owner
+    override val mention: String get() = if(nickname != null) "<@!${user.id}>" else user.mention
 }
-
-rootProject.name = 'discord.kt'
-
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'

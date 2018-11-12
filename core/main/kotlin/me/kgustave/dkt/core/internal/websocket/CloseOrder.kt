@@ -13,18 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
-}
+package me.kgustave.dkt.core.internal.websocket
 
-rootProject.name = 'discord.kt'
+import io.ktor.http.cio.websocket.CloseReason
 
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'
+@Deprecated("not necessary anymore")
+internal data class CloseOrder(val reason: CloseReason, val isClient: Boolean)

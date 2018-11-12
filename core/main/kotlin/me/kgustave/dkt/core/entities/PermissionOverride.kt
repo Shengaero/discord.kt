@@ -13,18 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
+package me.kgustave.dkt.core.entities
+
+import me.kgustave.dkt.core.DiscordBot
+import me.kgustave.dkt.core.Permission
+import me.kgustave.dkt.core.promises.RestPromise
+
+interface PermissionOverride {
+    val rawAllowed: Long
+    val rawInherited: Long
+    val rawDenied: Long
+
+    val allowed: List<Permission>
+    val inherited: List<Permission>
+    val denied: List<Permission>
+
+    val bot: DiscordBot
+    val channel: GuildChannel
+    val member: Member?
+    val role: Role?
+    val guild: Guild get() = channel.guild
+
+    fun delete(): RestPromise<Unit>
 }
-
-rootProject.name = 'discord.kt'
-
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'

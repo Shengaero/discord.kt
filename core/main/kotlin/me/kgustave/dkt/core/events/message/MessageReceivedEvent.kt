@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
+package me.kgustave.dkt.core.events.message
+
+import me.kgustave.dkt.core.DiscordBot
+import me.kgustave.dkt.core.entities.Message
+
+class MessageReceivedEvent(override val bot: DiscordBot, val message: Message): MessageEvent {
+    override val messageId = message.id
+    override val channel = message.channel
 }
-
-rootProject.name = 'discord.kt'
-
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'

@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
-}
+@file:JvmName("SerializationUtil__Internal")
+package me.kgustave.dkt.core.internal.util
 
-rootProject.name = 'discord.kt'
+import kotlinx.serialization.CompositeEncoder
+import kotlinx.serialization.Encoder
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerialDescriptor
 
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'
+internal inline fun Encoder.createStructure(
+    desc: SerialDescriptor,
+    vararg typeParams: KSerializer<*>,
+    block: CompositeEncoder.() -> Unit
+) = beginStructure(desc, *typeParams).apply(block).endStructure(desc)

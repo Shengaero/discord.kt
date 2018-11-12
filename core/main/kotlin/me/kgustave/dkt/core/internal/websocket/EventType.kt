@@ -13,18 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
+package me.kgustave.dkt.core.internal.websocket
+
+enum class EventType {
+    READY,
+    RESUMED,
+    CHANNEL_CREATE,
+    CHANNEL_UPDATE,
+    CHANNEL_DELETE,
+    GUILD_CREATE,
+    GUILD_DELETE,
+    GUILD_BAN_ADD,
+    GUILD_BAN_REMOVE,
+    GUILD_MEMBER_ADD,
+    GUILD_MEMBER_UPDATE,
+    GUILD_MEMBER_REMOVE,
+    GUILD_MEMBERS_CHUNK,
+    MESSAGE_CREATE,
+    TYPING_START,
+    UNKNOWN;
+
+    companion object {
+        @JvmStatic fun of(value: String) = values().firstOrNull { it.name == value } ?: UNKNOWN
     }
 }
-
-rootProject.name = 'discord.kt'
-
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'

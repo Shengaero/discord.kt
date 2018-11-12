@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-pluginManagement {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-        maven { url 'http://dl.bintray.com/kotlin/kotlin-eap' }
-    }
+package me.kgustave.dkt.core.entities
+
+import me.kgustave.dkt.core.DiscordBot
+
+@Deprecated("Emote is now deprecated in favor of Emoji")
+interface Emote: Snowflake, Mentionable {
+    val bot: DiscordBot
+    val name: String
+    val guild: Guild?
+    val user: User?
+    val isAnimated: Boolean
+    val isManaged: Boolean
+    val imageUrl: String
+    val roles: List<Role>?
+
+    override val mention: String get() = "<:$name:$id>"
 }
-
-rootProject.name = 'discord.kt'
-
-include ':core'
-include ':http-client'
-include ':opus'
-include ':rest'
-include ':util'
