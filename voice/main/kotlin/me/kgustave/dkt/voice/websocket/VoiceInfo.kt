@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.voice
+package me.kgustave.dkt.voice.websocket
 
 import me.kgustave.dkt.core.internal.DktInternalExperiment
 import me.kgustave.dkt.core.internal.entities.GuildImpl
-import me.kgustave.dkt.core.managers.VoiceManager
 import me.kgustave.dkt.core.voice.ExperimentalVoiceAPI
+import me.kgustave.dkt.voice.VoiceConnection
 
 @ExperimentalVoiceAPI
 @DktInternalExperiment
-@Suppress("RemoveEmptyPrimaryConstructor")
-internal class VoiceManagerProviderImpl(): VoiceManager.Provider {
-    override fun provide(guild: GuildImpl): VoiceManager = VoiceManagerImpl(guild)
-}
+internal data class VoiceInfo(
+    val connection: VoiceConnection,
+    val guild: GuildImpl,
+    val endpoint: String,
+    val sessionId: String,
+    val token: String,
+    val shouldReconnect: Boolean
+)

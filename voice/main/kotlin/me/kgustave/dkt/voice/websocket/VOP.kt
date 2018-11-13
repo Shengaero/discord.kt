@@ -15,7 +15,12 @@
  */
 package me.kgustave.dkt.voice.websocket
 
+import me.kgustave.dkt.core.internal.DktInternalExperiment
+import me.kgustave.dkt.core.voice.ExperimentalVoiceAPI
+
 // Voice Op Codes
+@ExperimentalVoiceAPI
+@DktInternalExperiment
 object VOP {
     const val Identify = 0 // client
     const val SelectProtocol = 1 // client

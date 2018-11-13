@@ -13,16 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.voice
+package me.kgustave.dkt.core.voice
 
-import me.kgustave.dkt.core.internal.DktInternalExperiment
-import me.kgustave.dkt.core.internal.entities.GuildImpl
-import me.kgustave.dkt.core.managers.VoiceManager
-import me.kgustave.dkt.core.voice.ExperimentalVoiceAPI
+import me.kgustave.dkt.core.entities.VoiceChannel
+import java.net.DatagramPacket
+import java.net.DatagramSocket
+import java.net.InetSocketAddress
+import java.nio.ByteBuffer
 
 @ExperimentalVoiceAPI
-@DktInternalExperiment
-@Suppress("RemoveEmptyPrimaryConstructor")
-internal class VoiceManagerProviderImpl(): VoiceManager.Provider {
-    override fun provide(guild: GuildImpl): VoiceManager = VoiceManagerImpl(guild)
+interface PacketChannel {
+    val channel: VoiceChannel
+    val udp: DatagramSocket
+    val address: InetSocketAddress
+
+    suspend fun nextPacketRaw(nowTalking: Boolean): ByteBuffer?
+
+    suspend fun nextPacket(nowTalking: Boolean): DatagramPacket?
+
+    fun onConnectionLost()
 }

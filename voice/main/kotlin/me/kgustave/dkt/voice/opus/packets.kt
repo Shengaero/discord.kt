@@ -16,15 +16,21 @@
 @file:Suppress("FunctionName")
 package me.kgustave.dkt.voice.opus
 
+import com.iwebpp.crypto.TweetNaclFast
+import me.kgustave.dkt.core.internal.DktInternalExperiment
+import me.kgustave.dkt.core.voice.ExperimentalVoiceAPI
 import java.net.DatagramPacket
+import java.nio.Buffer
 import java.nio.ByteBuffer
 import kotlin.experimental.and
 
-private const val SequenceIndex = 2
-private const val TimestampIndex = 4
-private const val SSRCIndex = 8
-private const val RTPHeaderByteLength = 12
+internal const val SequenceIndex = 2
+internal const val TimestampIndex = 4
+internal const val SSRCIndex = 8
+internal const val RTPHeaderByteLength = 12
 
+@ExperimentalVoiceAPI
+@DktInternalExperiment
 internal data class AudioPacket(
     val sequence: Short,
     val timestamp: Int,
@@ -34,6 +40,32 @@ internal data class AudioPacket(
 ) {
     constructor(sequence: Short, timestamp: Int, ssrc: Int, encodedAudio: ByteArray, buffer: ByteBuffer):
         this(sequence, timestamp, ssrc, encodedAudio, buffer.loadBuffer(sequence, timestamp, ssrc, encodedAudio).array())
+
+    private fun getNoncePadded(): ByteArray {
+        val nonce = ByteArray(TweetNaclFast.SecretBox.nonceLength)
+        System.arraycopy(rawData, 0, nonce, 0, RTPHeaderByteLength)
+        return nonce
+    }
+
+    fun asEncryptedPacket(buffer: ByteBuffer, secretKey: ByteArray, nonce: ByteArray?, nlen: Int): ByteBuffer {
+        val extendedNonce = nonce ?: getNoncePadded()
+
+        val boxer = TweetNaclFast.SecretBox(secretKey)
+        val encryptedAudio = boxer.box(encodedAudio, extendedNonce)
+
+        buffer.clear()
+
+        val capacity = rtpOffset(encryptedAudio.size + nlen)
+        val targetBuffer = when {
+            capacity > buffer.remaining() -> ByteBuffer.allocate(capacity)
+            else -> buffer.loadBuffer(sequence, timestamp, ssrc, encryptedAudio)
+        }
+
+        if(nonce != null)
+            targetBuffer.put(nonce, 0, nlen)
+
+        return targetBuffer
+    }
 
     override fun equals(other: Any?): Boolean {
         if(this === other) return true
@@ -79,8 +111,12 @@ private fun payloadOffset(data: ByteArray, csrcLength: Int): Int {
     return i
 }
 
+@ExperimentalVoiceAPI
+@DktInternalExperiment
 internal val DatagramPacket.audioPacket get() = AudioPacket(data.copyOf())
 
+@ExperimentalVoiceAPI
+@DktInternalExperiment
 internal fun AudioPacket(rawData: ByteArray): AudioPacket {
     val buffer = ByteBuffer.wrap(rawData)
 

@@ -13,16 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.voice
+package me.kgustave.dkt.voice.websocket
 
 import me.kgustave.dkt.core.internal.DktInternalExperiment
-import me.kgustave.dkt.core.internal.entities.GuildImpl
-import me.kgustave.dkt.core.managers.VoiceManager
 import me.kgustave.dkt.core.voice.ExperimentalVoiceAPI
 
 @ExperimentalVoiceAPI
 @DktInternalExperiment
-@Suppress("RemoveEmptyPrimaryConstructor")
-internal class VoiceManagerProviderImpl(): VoiceManager.Provider {
-    override fun provide(guild: GuildImpl): VoiceManager = VoiceManagerImpl(guild)
+internal enum class Encryption {
+
+    XSALSA20_POLY1305_LITE,
+    XSALSA20_POLY1305_SUFFIX,
+    XSALSA20_POLY1305;
+
+    val key get() = name.toLowerCase()
+
+    companion object {
+        @JvmStatic fun get(key: String) = Encryption.valueOf(key.toUpperCase())
+    }
 }

@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.dkt.voice
-
-import me.kgustave.dkt.core.internal.DktInternalExperiment
-import me.kgustave.dkt.core.internal.entities.GuildImpl
-import me.kgustave.dkt.core.managers.VoiceManager
-import me.kgustave.dkt.core.voice.ExperimentalVoiceAPI
+package me.kgustave.dkt.core.voice
 
 @ExperimentalVoiceAPI
-@DktInternalExperiment
-@Suppress("RemoveEmptyPrimaryConstructor")
-internal class VoiceManagerProviderImpl(): VoiceManager.Provider {
-    override fun provide(guild: GuildImpl): VoiceManager = VoiceManagerImpl(guild)
+enum class VoiceMode(val raw: Int) {
+    VOICE(1),
+    SOUNDSHARE(2),
+    PRIORITY(4);
+
+    companion object {
+        fun rawOf(vararg modes: VoiceMode): Int = modes.fold(0) { mask, mode -> mask or mode.raw }
+        fun rawOf(modes: Iterable<VoiceMode>): Int = modes.fold(0) { mask, mode -> mask or mode.raw }
+    }
 }

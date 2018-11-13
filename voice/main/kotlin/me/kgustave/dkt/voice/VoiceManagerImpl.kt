@@ -17,31 +17,42 @@ package me.kgustave.dkt.voice
 
 import me.kgustave.dkt.core.entities.VoiceChannel
 import me.kgustave.dkt.core.internal.DktInternal
+import me.kgustave.dkt.core.internal.DktInternalExperiment
 import me.kgustave.dkt.core.internal.entities.GuildImpl
 import me.kgustave.dkt.core.internal.entities.VoiceChannelImpl
 import me.kgustave.dkt.core.managers.VoiceManager
 import me.kgustave.dkt.core.voice.ExperimentalVoiceAPI
 import me.kgustave.dkt.util.delegates.cleaningRef
 import me.kgustave.dkt.util.delegates.weak
+import java.util.concurrent.locks.ReentrantLock
 
 @DktInternal
 @ExperimentalVoiceAPI
+@DktInternalExperiment
 internal class VoiceManagerImpl(guild: GuildImpl): VoiceManager {
-    override val guild by weak(guild)
-    override val bot get() = guild.bot
-    override val connectedChannel: VoiceChannel
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
-    override var sender: VoiceManager.Sender?
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
-        set(value) {}
+    override var sender: VoiceManager.Sender? = null
 
     internal var connectingChannel: VoiceChannelImpl? by cleaningRef(threadSafe = true)
 
+    private var _connectedChannel: VoiceChannel? = null
+
+    override val guild by weak(guild)
+
+    override val bot get() = guild.bot
+
+    // FIXME This should be nullable
+    override val connectedChannel: VoiceChannel get() = _connectedChannel ?: error("No connected channel")
+
+    internal val connectionLock = ReentrantLock()
+
     override fun connectTo(channel: VoiceChannel) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        require(guild == channel.guild) { "VoiceChannel was not from the same Guild!" }
+        require(!guild.unavailable) { "Guild is not available!" }
+
+        val self = guild.self
+
     }
 
     override fun disconnect() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }
