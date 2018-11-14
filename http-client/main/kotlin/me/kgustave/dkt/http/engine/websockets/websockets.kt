@@ -38,6 +38,8 @@ typealias ClientWebSocketSession = DiscordWebSocketSession
 @DiscordKtHttpEngineAPI
 interface DiscordWebSocketSession: WebSocketSession {
     val call: HttpClientCall
+
+    val isOpen: Boolean
 }
 
 @DiscordKtHttpEngineAPI
