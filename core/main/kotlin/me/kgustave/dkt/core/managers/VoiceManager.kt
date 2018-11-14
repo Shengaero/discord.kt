@@ -38,7 +38,7 @@ interface VoiceManager {
     interface Sender {
         val isOpus: Boolean
 
-        fun provide20MsAudio(): ByteArray
+        fun provide20MsAudio(): ByteArray?
         fun canProvide(): Boolean
 
         @DktInternalExperiment

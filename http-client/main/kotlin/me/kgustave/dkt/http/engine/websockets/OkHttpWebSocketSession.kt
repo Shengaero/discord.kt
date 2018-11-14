@@ -59,6 +59,8 @@ internal class OkHttpWebSocketSession(
     //thread, this should buffer sequentially and fairly.
     override val incoming = Channel<Frame>(1)
 
+    override val isOpen: Boolean get() = !consumed
+
     // Outgoing is a channel buffer with a maximum capacity of 8 that
     //assures the websocket receives frames sequentially and fairly, but
     //allows the caller to quickly return when sending to this actor.

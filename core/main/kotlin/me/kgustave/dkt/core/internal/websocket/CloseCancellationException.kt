@@ -19,11 +19,7 @@ package me.kgustave.dkt.core.internal.websocket
 import io.ktor.http.cio.websocket.CloseReason
 import kotlinx.coroutines.CancellationException
 
-internal class CloseCancellationException(val reason: CloseReason): CancellationException() {
+class CloseCancellationException(val reason: CloseReason): CancellationException() {
     override val message: String get() = reason.message
     val code get() = reason.code
-
-    @Deprecated("not necessary anymore")
-    @Suppress("DeprecatedCallableAddReplaceWith", "DEPRECATION")
-    fun toCloseOrder(): CloseOrder = error("No longer supported")
 }

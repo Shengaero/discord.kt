@@ -24,24 +24,23 @@ internal object VoiceProviderLoader {
     private const val TargetFQN = "me.kgustave.dkt.voice.VoiceManagerProvideImpl"
 
     @Suppress("ObjectPropertyName")
-    private var _provider: VoiceManager.Provider? = null
+    private var _provider: VoiceManager.Provider = Default
     private var hasInitialized = false
 
     @get:Synchronized internal val provider: VoiceManager.Provider get() {
         if(hasInitialized) {
-            return _provider ?: Default
+            return _provider
         }
 
         hasInitialized = true
 
-        val clazz = runCatching { Class.forName(TargetFQN) }.getOrNull() ?: return Default
-        val constructor = clazz.constructors.find { it.parameters.isEmpty() } ?: return Default
+        val clazz = runCatching { Class.forName(TargetFQN) }.getOrNull() ?: return _provider
+        val constructor = clazz.constructors.find { it.parameters.isEmpty() } ?: return _provider
         if(VoiceManager.Provider::class.java.isAssignableFrom(clazz)) {
-            _provider = constructor.newInstance() as? VoiceManager.Provider
-            return _provider ?: Default
+            (constructor.newInstance() as? VoiceManager.Provider)?.let { _provider = it }
         }
 
-        return Default
+        return _provider
     }
 
     private object Default: VoiceManager.Provider {
