@@ -40,6 +40,7 @@ class RoleImpl internal constructor(override val guild: GuildImpl, override val 
     override var color: Color = Color(colorInt)
         private set
 
+    override val isHoisted: Boolean get() = TODO("not implemented")
     override val permissions: List<Permission> get() = Permission.setOf(rawPermissions).toList()
     override val position: Int get() {
         if(this == guild.publicRole) return -1

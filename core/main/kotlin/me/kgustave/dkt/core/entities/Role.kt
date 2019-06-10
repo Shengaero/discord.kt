@@ -27,6 +27,7 @@ interface Role: Snowflake, Mentionable, PermissionHolder, Comparable<Role> {
     val colorInt: Int
     val position: Int
     val rawPosition: Int
+    val isHoisted: Boolean
 
     val isPublicRole: Boolean get() = this == guild.publicRole
     override val mention: String get() = "<@&$id>"
